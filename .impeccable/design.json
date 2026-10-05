@@ -1,0 +1,673 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-05T16:15:14.746Z",
+  "title": "Design System: Tecvol · Reparación de transformadores",
+  "extensions": {
+    "colorMeta": {
+      "naranja": {
+        "role": "primary",
+        "displayName": "Tecvol Orange · brand and action, never state",
+        "canonical": "oklch(74.7% 0.174 53.7)",
+        "tonalRamp": [
+          "oklch(15% 0.060 53.7)",
+          "oklch(25% 0.090 53.7)",
+          "oklch(35% 0.115 53.7)",
+          "oklch(48% 0.145 53.7)",
+          "oklch(60% 0.165 53.7)",
+          "oklch(74.7% 0.174 53.7)",
+          "oklch(84% 0.110 53.7)",
+          "oklch(95% 0.040 53.7)"
+        ]
+      },
+      "acero": {
+        "role": "neutral",
+        "displayName": "Steel (Tecvol logo grey) · structure",
+        "canonical": "oklch(56.0% 0.006 286.2)",
+        "tonalRamp": [
+          "oklch(15% 0.006 286.2)",
+          "oklch(25% 0.006 286.2)",
+          "oklch(35% 0.006 286.2)",
+          "oklch(48% 0.006 286.2)",
+          "oklch(56% 0.006 286.2)",
+          "oklch(72% 0.006 286.2)",
+          "oklch(84% 0.006 286.2)",
+          "oklch(95% 0.006 286.2)"
+        ]
+      },
+      "grafito": {
+        "role": "neutral",
+        "displayName": "Graphite (Tecvol logo dark grey) · secondary text",
+        "canonical": "oklch(47.5% 0 0)",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(25% 0 0)",
+          "oklch(35% 0 0)",
+          "oklch(47.5% 0 0)",
+          "oklch(60% 0 0)",
+          "oklch(72% 0 0)",
+          "oklch(84% 0 0)",
+          "oklch(95% 0 0)"
+        ]
+      },
+      "tinta": {
+        "role": "neutral",
+        "displayName": "Signal Black · text, sign borders, focus, floor",
+        "canonical": "oklch(21.8% 0 0)",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(21.8% 0 0)",
+          "oklch(35% 0 0)",
+          "oklch(48% 0 0)",
+          "oklch(60% 0 0)",
+          "oklch(72% 0 0)",
+          "oklch(84% 0 0)",
+          "oklch(95% 0 0)"
+        ]
+      },
+      "esmalte": {
+        "role": "neutral",
+        "displayName": "Enamel White · surface",
+        "canonical": "oklch(96.6% 0.004 106.5)",
+        "tonalRamp": [
+          "oklch(15% 0.004 106.5)",
+          "oklch(25% 0.004 106.5)",
+          "oklch(35% 0.004 106.5)",
+          "oklch(48% 0.004 106.5)",
+          "oklch(60% 0.004 106.5)",
+          "oklch(72% 0.004 106.5)",
+          "oklch(84% 0.004 106.5)",
+          "oklch(96.6% 0.004 106.5)"
+        ]
+      },
+      "blanco": {
+        "role": "neutral",
+        "displayName": "Pure White · lockout tag, focused line, exterior",
+        "canonical": "oklch(100% 0 0)",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(25% 0 0)",
+          "oklch(35% 0 0)",
+          "oklch(48% 0 0)",
+          "oklch(60% 0 0)",
+          "oklch(72% 0 0)",
+          "oklch(84% 0 0)",
+          "oklch(100% 0 0)"
+        ]
+      },
+      "amarillo": {
+        "role": "state",
+        "displayName": "Safety Yellow · en trabajo",
+        "canonical": "oklch(86.7% 0.177 90.8)",
+        "tonalRamp": [
+          "oklch(15% 0.050 90.8)",
+          "oklch(25% 0.070 90.8)",
+          "oklch(35% 0.090 90.8)",
+          "oklch(48% 0.110 90.8)",
+          "oklch(60% 0.130 90.8)",
+          "oklch(72% 0.150 90.8)",
+          "oklch(86.7% 0.177 90.8)",
+          "oklch(95% 0.080 90.8)"
+        ]
+      },
+      "azul": {
+        "role": "state",
+        "displayName": "Signal Blue (RAL 5005) · requiere su aprobación",
+        "canonical": "oklch(40.7% 0.121 256.6)",
+        "tonalRamp": [
+          "oklch(15% 0.070 256.6)",
+          "oklch(25% 0.095 256.6)",
+          "oklch(35% 0.120 256.6)",
+          "oklch(40.7% 0.121 256.6)",
+          "oklch(60% 0.121 256.6)",
+          "oklch(72% 0.121 256.6)",
+          "oklch(84% 0.097 256.6)",
+          "oklch(95% 0.070 256.6)"
+        ]
+      },
+      "verde": {
+        "role": "state",
+        "displayName": "Signal Green (RAL 6032) · listo",
+        "canonical": "oklch(53.1% 0.111 157.4)",
+        "tonalRamp": [
+          "oklch(15% 0.070 157.4)",
+          "oklch(25% 0.095 157.4)",
+          "oklch(35% 0.111 157.4)",
+          "oklch(53.1% 0.111 157.4)",
+          "oklch(60% 0.111 157.4)",
+          "oklch(72% 0.111 157.4)",
+          "oklch(84% 0.097 157.4)",
+          "oklch(95% 0.070 157.4)"
+        ]
+      },
+      "rojo": {
+        "role": "error",
+        "displayName": "Signal Red · errors only",
+        "canonical": "oklch(46.3% 0.162 23.8)",
+        "tonalRamp": [
+          "oklch(15% 0.070 23.8)",
+          "oklch(25% 0.095 23.8)",
+          "oklch(35% 0.120 23.8)",
+          "oklch(46.3% 0.162 23.8)",
+          "oklch(60% 0.157 23.8)",
+          "oklch(72% 0.128 23.8)",
+          "oklch(84% 0.097 23.8)",
+          "oklch(95% 0.070 23.8)"
+        ]
+      },
+      "durazno": {
+        "role": "secondary",
+        "displayName": "Peach · the pliego's banner and drawing fills",
+        "canonical": "oklch(90.4% 0.048 63.1)",
+        "tonalRamp": [
+          "oklch(15% 0.02 63.1)",
+          "oklch(25% 0.03 63.1)",
+          "oklch(35% 0.04 63.1)",
+          "oklch(48% 0.05 63.1)",
+          "oklch(60% 0.06 63.1)",
+          "oklch(72% 0.06 63.1)",
+          "oklch(84% 0.05 63.1)",
+          "oklch(90.4% 0.048 63.1)"
+        ]
+      }
+    },
+    "contrast": [
+      {
+        "pair": "tinta on naranja",
+        "ratio": "7.34:1",
+        "use": "Primary plate, band plate, action band."
+      },
+      {
+        "pair": "tinta on amarillo",
+        "ratio": "11.59:1",
+        "use": "Work sign pictogram and label strip."
+      },
+      {
+        "pair": "grafito on esmalte",
+        "ratio": "6.07:1",
+        "use": "Secondary text."
+      },
+      {
+        "pair": "acero on esmalte",
+        "ratio": "4.22:1",
+        "use": "Large text only: the scene numeral. Never a headline."
+      },
+      {
+        "pair": "tinta on blanco",
+        "ratio": "17.4:1",
+        "use": "Headlines and text on the white plates."
+      },
+      {
+        "pair": "blanco on acero",
+        "ratio": "4.65:1",
+        "use": "All text on the /ingresar top band, caption bands and service name plates. Esmalte on acero (4.22:1) is not used for text."
+      },
+      {
+        "pair": "tinta on durazno",
+        "ratio": "13:1",
+        "use": "The pliego's banner question and its outlined action; all text in the footer band."
+      },
+      {
+        "pair": "naranja on esmalte",
+        "ratio": "2.1:1",
+        "use": "Lines, fills and link underlines only. Never text."
+      }
+    ],
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "The single page question in the pliego. 3rem on phones, 4rem from 640px, clamp(4rem, 5.4vw, 6.25rem) from 1024px; leading 0.92. In tinta."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Section headings in tinta. Uppercase; 2.5rem, 3rem from 640px, 3.5rem from 1024px."
+      },
+      "numeral": {
+        "displayName": "Scene numeral",
+        "purpose": "Station number in the scene header, acero. 4.5rem, 6rem from 1024px."
+      },
+      "code": {
+        "displayName": "Code",
+        "purpose": "The 8-character tracking code line. 2.5rem, 3rem from 1024px."
+      },
+      "station-number": {
+        "displayName": "Station number",
+        "purpose": "Stencilled bay numbers in the scene: 1.75rem, 2.5rem from 1024px. Legend table numbers: 2rem, 2.5rem from 640px."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "State names in label strips (1.125rem under the pliego sign plate, 1.25rem from 1024px; 1.75rem in the scene from 1024px), list item names, service names, confirmation headings. Uppercase, extra-bold."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Reading text, 42 to 60ch, tabular lining figures."
+      },
+      "body-lead": {
+        "displayName": "Lead",
+        "purpose": "Section leads and result data; up to 1.25rem in the sheet."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Form labels, definition terms, band links, footer headings. Uppercase."
+      },
+      "label-sm": {
+        "displayName": "Small label",
+        "purpose": "Table headers, stage names, tags, scene counter and bay names. Uppercase."
+      },
+      "button": {
+        "displayName": "Button",
+        "purpose": "Plate text. 1.125rem primary, 1rem band plate, 0.9375rem secondary."
+      },
+      "banner": {
+        "displayName": "Banner",
+        "purpose": "The question on the pliego's peach banner. 1.625rem, 2.25rem from 1024px; semibold, sentence case."
+      },
+      "firma": {
+        "displayName": "Signature",
+        "purpose": "The pliego's closing line of services. 1.25rem, 1.5rem from 640px; uppercase, 0.08em tracking, tinta with an orange dot."
+      }
+    },
+    "shadows": [
+      {
+        "name": "shadow-cartel",
+        "value": "0 2px 4px rgb(26 26 26 / 0.06), 0 36px 64px -32px rgb(26 26 26 / 0.4)",
+        "purpose": "Mount shadow of the /ingresar sheet."
+      },
+      {
+        "name": "shadow-placa",
+        "value": "0 1px 2px rgb(26 26 26 / 0.07), 0 16px 32px -18px rgb(26 26 26 / 0.3)",
+        "purpose": "Mount shadow of every other white plate: the result's sign plate, portal example, services plate, inquiry form and its confirmation."
+      },
+      {
+        "name": "floor-shadow",
+        "value": "flat tinta ellipse, height 12px, width calc(var(--carga-w) * 0.95), border-radius 50%, opacity calc(0.3 - var(--elev) * 0.2), scaleX(calc(1 - var(--elev) * 0.4))",
+        "purpose": "Under the hanging transformer in the workshop scene."
+      }
+    ],
+    "gradients": [
+      {
+        "name": "destello",
+        "value": "linear-gradient white, stop-opacity 0 / 0.7 / 0, clipped to the sign silhouette",
+        "purpose": "The only blended gradient: the reflective glint inside an active sign."
+      },
+      {
+        "name": "hard-stop patterns",
+        "value": "repeating-linear-gradient / linear-gradient / radial-gradient with hard stops only",
+        "purpose": "Drawing tool for the scene wall, window band, near columns and beam rivets. Never a blend."
+      }
+    ],
+    "lineWeights": [
+      {
+        "name": "sheet",
+        "value": "5px acero (6px from 1024px)",
+        "purpose": "Border of the /ingresar sheet."
+      },
+      {
+        "name": "section-rule",
+        "value": "6px acero",
+        "purpose": "Top rule of each section; top and bottom rules of the scene viewer."
+      },
+      {
+        "name": "frame",
+        "value": "3px acero",
+        "purpose": "Form lines, result rules, table header rule, list headings."
+      },
+      {
+        "name": "plate-rim",
+        "value": "2px acero",
+        "purpose": "Rim of the screwed content plates and the rule above their closing row."
+      },
+      {
+        "name": "frame-focus",
+        "value": "5px tinta",
+        "purpose": "Form line on focus."
+      },
+      {
+        "name": "plate-border",
+        "value": "3px naranja (2px on band plate)",
+        "purpose": "Primary plates; tinta on hover."
+      },
+      {
+        "name": "outline",
+        "value": "2px acero",
+        "purpose": "Secondary plate, lockout tag and its ring."
+      },
+      {
+        "name": "hairline",
+        "value": "1px acero (tinta mixed 25% into durazno in the footer)",
+        "purpose": "List and table row separators."
+      },
+      {
+        "name": "focus-ring",
+        "value": "3px solid var(--color-tinta), offset 3px",
+        "purpose": "Keyboard focus everywhere except form lines; esmalte inside steel bands."
+      },
+      {
+        "name": "crop-mark",
+        "value": "1.5px acero, 20px arms",
+        "purpose": "The pliego's corner crop marks."
+      },
+      {
+        "name": "illustration",
+        "value": "2.25 units naranja, round caps and joins",
+        "purpose": "The pliego's line drawing."
+      },
+      {
+        "name": "footer-illustration",
+        "value": "2 units naranja, round caps and joins",
+        "purpose": "The footer's power line at dusk."
+      }
+    ],
+    "scene": [
+      {
+        "name": "--paso",
+        "value": "92vw; min(52vw, 820px) from 1024px",
+        "purpose": "Camera step between stations."
+      },
+      {
+        "name": "--viga-h / --carro-h / --piso",
+        "value": "30px / 24px / 64px; 40px / 32px / 80px from 1024px",
+        "purpose": "Beam height, trolley height, floor band."
+      },
+      {
+        "name": "--lift",
+        "value": "min(88px, 10svh); min(120px, 12svh) from 1024px",
+        "purpose": "Lift height of the load."
+      },
+      {
+        "name": "--carga-w",
+        "value": "min(140px, 17svh); min(270px, 30svh) from 1024px",
+        "purpose": "Transformer width."
+      },
+      {
+        "name": "--cartel-w / --cadena",
+        "value": "96px / 56px; min(220px, 24svh) / 22px from 1024px",
+        "purpose": "Hanging sign width and chain length."
+      },
+      {
+        "name": "--frente-fase",
+        "value": "0.7; 0.38 from 1024px",
+        "purpose": "Rest phase of the near columns, in stations, so they never cover the unit or a sign at rest."
+      },
+      {
+        "name": "parallax",
+        "value": "wall 0.5×, track 1×, near columns 1.4×",
+        "purpose": "Depth by speed."
+      },
+      {
+        "name": "scroll",
+        "value": "100svh + 70svh per station; manoeuvre = first 42% of each span",
+        "purpose": "Scroll budget of the scene."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-salida",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "The system easing for plates and sign motion."
+      },
+      {
+        "name": "plate-invert",
+        "value": "background-color 160ms, color 160ms var(--ease-salida)",
+        "purpose": "Hover inversion on all plates."
+      },
+      {
+        "name": "senal-entra",
+        "value": "420ms var(--ease-salida); opacity 0.4 to 1, scale 0.94 to 1",
+        "purpose": "A sign switching on. Reduced motion: none."
+      },
+      {
+        "name": "destello",
+        "value": "900ms var(--ease-salida) 120ms; skewX(-16deg) translateX(-40px to 260px)",
+        "purpose": "An active sign catches light once. Reduced motion: none."
+      },
+      {
+        "name": "camera-inertia",
+        "value": "actual += (target - actual) * (1 - 0.002^dt)",
+        "purpose": "Frame-rate-independent follow of the scroll."
+      },
+      {
+        "name": "manoeuvre",
+        "value": "lift 0 to 0.2, travel 0.2 to 0.65, set down 0.65 to 0.85, cubic in-out on each",
+        "purpose": "The crane's lift, travel and set-down per station."
+      },
+      {
+        "name": "sway",
+        "value": "damped pendulum, stiffness 60, damping 6, target clamp ±6°, scaled by min(1, elev × 2.5)",
+        "purpose": "Load sway only while it hangs."
+      },
+      {
+        "name": "drum",
+        "value": "rotate(calc(var(--elev) * 540deg))",
+        "purpose": "The hoist drum turns as the cable winds."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "prefers-reduced-motion: reduce hides .escena-recorrido and shows .leyenda-estatica",
+        "purpose": "The static legend table replaces the scene."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px",
+        "purpose": "The pliego's two columns; the workshop scene's desktop scale."
+      },
+      {
+        "name": "xl",
+        "value": "1280px",
+        "purpose": "Header section links and the pliego's side rails."
+      },
+      {
+        "name": "container",
+        "value": "1680px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary plate",
+      "kind": "button",
+      "refersTo": "placa",
+      "description": "The primary action: an orange plate with black text that inverts to black with orange text on hover; dashed and colourless while loading.",
+      "html": "<button class=\"ds-placa\">Consultar estado <svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" aria-hidden=\"true\"><path d=\"M4 12 H19 M13 6 L19 12 L13 18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg></button> <button class=\"ds-placa\" disabled>Consultando…</button>",
+      "css": ".ds-placa { display: inline-flex; align-items: center; justify-content: center; gap: 0.625rem; min-height: 3.5rem; padding: 0 1.75rem; border: 3px solid var(--color-naranja, #ff8929); border-radius: 0.25rem; background: var(--color-naranja, #ff8929); color: var(--color-tinta, #1a1a1a); font-family: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif; font-size: 1.125rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; white-space: nowrap; cursor: pointer; transition: background-color 160ms cubic-bezier(0.16,1,0.3,1), color 160ms cubic-bezier(0.16,1,0.3,1); } .ds-placa:hover { border-color: var(--color-tinta, #1a1a1a); background: var(--color-tinta, #1a1a1a); color: var(--color-naranja, #ff8929); } .ds-placa:active { transform: translateY(1px); } .ds-placa:focus-visible { outline: 3px solid var(--color-tinta, #1a1a1a); outline-offset: 3px; } .ds-placa:disabled { cursor: progress; border-color: var(--color-acero, #747478); border-style: dashed; background: var(--color-esmalte, #f4f4f1); color: var(--color-tinta, #1a1a1a); }"
+    },
+    {
+      "name": "Secondary plate",
+      "kind": "button",
+      "refersTo": "placa-secundaria",
+      "description": "A secondary action: steel outline plate that fills black on hover.",
+      "html": "<button class=\"ds-placa-secundaria\">Consultar otro código</button>",
+      "css": ".ds-placa-secundaria { display: inline-flex; align-items: center; min-height: 2.75rem; padding: 0 1.125rem; border: 2px solid var(--color-acero, #747478); border-radius: 0.25rem; background: transparent; color: var(--color-tinta, #1a1a1a); font-family: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif; font-size: 0.9375rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; transition: background-color 160ms cubic-bezier(0.16,1,0.3,1), color 160ms cubic-bezier(0.16,1,0.3,1); } .ds-placa-secundaria:hover { background: var(--color-tinta, #1a1a1a); color: var(--color-esmalte, #f4f4f1); } .ds-placa-secundaria:focus-visible { outline: 3px solid var(--color-tinta, #1a1a1a); outline-offset: 3px; }"
+    },
+    {
+      "name": "Top band",
+      "kind": "nav",
+      "refersTo": "banda",
+      "description": "The steel band across the top of the sheet: logo on its light plate, trade line, section links and the orange band plate.",
+      "html": "<header class=\"ds-banda\"><a class=\"ds-marca\" href=\"#\"><span class=\"ds-placa-logo\"><span class=\"ds-logo\" role=\"img\" aria-label=\"Tecvol (public/marca/tecvol-logo.png, 1600 x 379)\"></span></span><span class=\"ds-marca-barra\"></span><span class=\"ds-rotulo\">Reparación de transformadores</span></a><nav class=\"ds-banda-nav\"><a class=\"ds-rotulo\" href=\"#\">Cómo se lee el estado</a><a class=\"ds-rotulo\" href=\"#\">Servicios</a></nav><a class=\"ds-placa-banda\" href=\"#\">Ingresar</a></header>",
+      "css": ".ds-banda { display: flex; align-items: center; gap: 1rem; padding: 1rem 2rem; background: var(--color-acero, #747478); color: var(--color-esmalte, #f4f4f1); } .ds-marca { display: flex; align-items: center; gap: 1rem; color: inherit; text-decoration: none; } .ds-placa-logo { display: inline-flex; align-items: center; padding: 0.375rem 0.75rem; border-radius: 0.375rem; background: var(--color-esmalte, #f4f4f1); } .ds-logo { display: block; width: 118px; height: 28px; } .ds-marca-barra { width: 3px; height: 1.75rem; background: var(--color-esmalte, #f4f4f1); } .ds-rotulo { font-family: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif; font-size: 0.9375rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; line-height: 1.1; color: inherit; text-decoration: none; } .ds-banda-nav { margin-left: auto; display: flex; gap: 1.75rem; } .ds-banda-nav a:hover { text-decoration: underline; text-decoration-color: var(--color-naranja, #ff8929); text-decoration-thickness: 2px; text-underline-offset: 0.2em; } .ds-banda a:focus-visible { outline: 3px solid var(--color-esmalte, #f4f4f1); outline-offset: 3px; } .ds-placa-banda { display: inline-flex; align-items: center; min-height: 2.75rem; padding: 0 1rem; margin-left: 0.5rem; border: 2px solid var(--color-naranja, #ff8929); border-radius: 0.25rem; background: var(--color-naranja, #ff8929); color: var(--color-tinta, #1a1a1a); font-family: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif; font-size: 1rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; text-decoration: none; transition: background-color 160ms cubic-bezier(0.16,1,0.3,1), color 160ms cubic-bezier(0.16,1,0.3,1); } .ds-placa-banda:hover { background: var(--color-tinta, #1a1a1a); color: var(--color-naranja, #ff8929); }"
+    },
+    {
+      "name": "Banner (pliego)",
+      "kind": "custom",
+      "refersTo": "banner",
+      "description": "The peach banner near the top of the pliego: the door for new customers, one link to the inquiry form.",
+      "html": "<a class=\"ds-banner\" href=\"#\"><span class=\"ds-banner-texto\">¿Tiene un transformador para reparar?</span><span class=\"ds-banner-accion\">Enviar consulta <svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" aria-hidden=\"true\"><path d=\"M4 12 H19 M13 6 L19 12 L13 18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg></span></a>",
+      "css": ".ds-banner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.75rem 2.5rem; border-radius: 1rem; background: var(--color-durazno, #f7d9bf); color: var(--color-tinta, #1a1a1a); text-decoration: none; font-family: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif; } .ds-banner-texto { font-size: 2.25rem; font-weight: 600; line-height: 1.25; } .ds-banner-accion { display: inline-flex; align-items: center; gap: 0.5rem; min-height: 2.75rem; padding: 0 1rem; border: 2px solid var(--color-tinta, #1a1a1a); border-radius: 0.5rem; font-size: 0.9375rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; transition: background-color 160ms, color 160ms; } .ds-banner:hover .ds-banner-accion { background: var(--color-tinta, #1a1a1a); color: var(--color-durazno, #f7d9bf); } .ds-banner:focus-visible { outline: 3px solid var(--color-tinta, #1a1a1a); outline-offset: 3px; }"
+    },
+    {
+      "name": "Form line (renglón)",
+      "kind": "input",
+      "refersTo": "renglon",
+      "description": "A field drawn as the fill-in line of a notice: a steel line that turns black and thickens on focus, red on error.",
+      "html": "<label class=\"ds-renglon-wrap\"><span class=\"ds-renglon-label\">Empresa</span><input class=\"ds-renglon\" /></label><label class=\"ds-renglon-wrap\"><span class=\"ds-renglon-label\">Email</span><input class=\"ds-renglon\" aria-invalid=\"true\" value=\"nombre@\" /></label>",
+      "css": ".ds-renglon-wrap { display: block; margin-bottom: 1.75rem; } .ds-renglon-label { display: block; font-family: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif; font-size: 0.9375rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; line-height: 1.1; color: var(--color-tinta, #1a1a1a); } .ds-renglon { display: block; width: 100%; margin-top: 0.25rem; border: 0; border-bottom: 3px solid var(--color-acero, #747478); background: transparent; padding: 0.5rem 0 0.375rem; color: var(--color-tinta, #1a1a1a); font-family: Barlow, 'Arial Narrow', Arial, sans-serif; font-size: 1.125rem; appearance: none; } .ds-renglon:focus-visible { outline: none; border-bottom-color: var(--color-tinta, #1a1a1a); border-bottom-width: 5px; padding-bottom: 0.25rem; background: var(--color-blanco, #ffffff); } .ds-renglon[aria-invalid=\"true\"] { border-bottom-color: var(--color-rojo, #a02128); }"
+    },
+    {
+      "name": "Example tag (etiqueta)",
+      "kind": "chip",
+      "refersTo": "etiqueta",
+      "description": "Solid black tag that labels fictitious or example content, and nothing else.",
+      "html": "<span class=\"ds-etiqueta\">Ejemplo</span>",
+      "css": ".ds-etiqueta { display: inline-flex; align-items: center; padding: 0.125rem 0.5rem; border-radius: 0.125rem; background: var(--color-tinta, #1a1a1a); color: var(--color-esmalte, #f4f4f1); font-family: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif; font-size: 0.8125rem; font-weight: 700; letter-spacing: 0.1em; line-height: 1.4; text-transform: uppercase; white-space: nowrap; }"
+    },
+    {
+      "name": "Lockout tag (tarjeta de bloqueo)",
+      "kind": "chip",
+      "refersTo": "tarjeta-bloqueo",
+      "description": "Padlock-tag silhouette that marks only pending or not-yet-enabled items.",
+      "html": "<span class=\"ds-bloqueo\">En preparación</span> <span class=\"ds-bloqueo\">Pendiente</span>",
+      "css": ".ds-bloqueo { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.125rem 0.625rem 0.125rem 0.5rem; border: 2px solid var(--color-acero, #747478); border-radius: 0.125rem 0.75rem 0.75rem 0.125rem; background: var(--color-blanco, #ffffff); color: var(--color-tinta, #1a1a1a); font-family: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif; font-size: 0.8125rem; font-weight: 700; letter-spacing: 0.08em; line-height: 1.4; text-transform: uppercase; white-space: nowrap; } .ds-bloqueo::before { content: ''; width: 0.5rem; height: 0.5rem; border: 2px solid var(--color-acero, #747478); border-radius: 999px; }"
+    },
+    {
+      "name": "Señal with label strip",
+      "kind": "custom",
+      "refersTo": "franja-advertencia",
+      "description": "The state sign: normed shape and colour, filled pictogram, and a label strip in the state colour. Shown: active work triangle, approval circle, ready square, and the dashed pending outline.",
+      "html": "<div class=\"ds-senales\"><figure class=\"ds-senal\"><svg viewBox=\"0 0 120 120\"><path d=\"M60 10 L113 103 L7 103 Z\" stroke-linejoin=\"round\" fill=\"var(--color-amarillo, #ffcd00)\" stroke=\"var(--color-tinta, #1a1a1a)\" stroke-width=\"9\"/><g transform=\"translate(31 42) scale(0.58)\" fill=\"var(--color-tinta, #1a1a1a)\"><rect x=\"31\" y=\"22\" width=\"8\" height=\"20\" rx=\"2\"/><rect x=\"46\" y=\"22\" width=\"8\" height=\"20\" rx=\"2\"/><rect x=\"61\" y=\"22\" width=\"8\" height=\"20\" rx=\"2\"/><rect x=\"24\" y=\"38\" width=\"52\" height=\"50\" rx=\"4\"/></g></svg><figcaption class=\"ds-franja ds-franja-advertencia\">En reparación</figcaption></figure><figure class=\"ds-senal\"><svg viewBox=\"0 0 120 120\"><path d=\"M60 4 a56 56 0 1 1 0 112 a56 56 0 1 1 0 -112 Z\" fill=\"var(--color-azul, #154889)\"/><g transform=\"translate(24 24) scale(0.72)\" fill=\"var(--color-esmalte, #f4f4f1)\"><rect x=\"24\" y=\"38\" width=\"52\" height=\"50\" rx=\"4\"/></g></svg><figcaption class=\"ds-franja ds-franja-obligacion\">Presupuesto</figcaption></figure><figure class=\"ds-senal\"><svg viewBox=\"0 0 120 120\"><path d=\"M14 4 H106 a10 10 0 0 1 10 10 V106 a10 10 0 0 1 -10 10 H14 a10 10 0 0 1 -10 -10 V14 a10 10 0 0 1 10 -10 Z\" fill=\"var(--color-verde, #237f52)\"/><g transform=\"translate(24 24) scale(0.72)\" fill=\"var(--color-esmalte, #f4f4f1)\"><rect x=\"24\" y=\"38\" width=\"52\" height=\"50\" rx=\"4\"/></g></svg><figcaption class=\"ds-franja ds-franja-seguridad\">Listo</figcaption></figure><figure class=\"ds-senal\"><svg viewBox=\"0 0 120 120\"><path d=\"M14 4 H106 a10 10 0 0 1 10 10 V106 a10 10 0 0 1 -10 10 H14 a10 10 0 0 1 -10 -10 V14 a10 10 0 0 1 10 -10 Z\" fill=\"none\" stroke=\"var(--color-acero, #747478)\" stroke-width=\"4\" stroke-dasharray=\"7 7\"/></svg><figcaption class=\"ds-franja ds-franja-registro\">Consultando…</figcaption></figure></div>",
+      "css": ".ds-senales { display: flex; flex-wrap: wrap; gap: 1.5rem; } .ds-senal { margin: 0; width: 9rem; display: flex; flex-direction: column; } .ds-senal svg { display: block; width: 100%; } .ds-franja { margin-top: 0.75rem; padding: 0.625rem 0.75rem; border-radius: 0.375rem; text-align: center; font-family: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif; font-size: 1.25rem; font-weight: 800; letter-spacing: 0.06em; line-height: 1.25; text-transform: uppercase; } .ds-franja-registro { background: var(--color-tinta, #1a1a1a); color: var(--color-esmalte, #f4f4f1); } .ds-franja-advertencia { background: var(--color-amarillo, #ffcd00); color: var(--color-tinta, #1a1a1a); } .ds-franja-obligacion { background: var(--color-azul, #154889); color: var(--color-esmalte, #f4f4f1); } .ds-franja-seguridad { background: var(--color-verde, #237f52); color: var(--color-esmalte, #f4f4f1); }"
+    },
+    {
+      "name": "Screwed plate (marco)",
+      "kind": "card",
+      "refersTo": "marco",
+      "description": "White content plate screwed to the wall like a transformer nameplate: 4px corners, 2px acero rim, a screw at each corner, optional steel caption band, rows divided by hairlines.",
+      "html": "<figure class=\"ds-marco\"><span class=\"ds-tornillo ds-t-si\"></span><span class=\"ds-tornillo ds-t-sd\"></span><span class=\"ds-tornillo ds-t-ii\"></span><span class=\"ds-tornillo ds-t-id\"></span><figcaption class=\"ds-marco-banda\"><span>Sus equipos</span><span class=\"ds-marco-etiqueta\">Ejemplo</span></figcaption><div class=\"ds-marco-fila\"><strong>Reparación y rebobinado</strong><p>El taller diagnostica cada equipo, le envía el presupuesto para aprobar, lo repara y lo ensaya.</p></div><div class=\"ds-marco-fila\"><strong>Mantenimiento y ensayos</strong><p>Para cooperativas eléctricas, distribuidoras e industrias.</p></div></figure>",
+      "css": ".ds-marco { margin: 0; overflow: hidden; position: relative; border: 2px solid var(--color-acero, #747478); border-radius: 0.25rem; box-shadow: 0 1px 2px rgb(26 26 26 / 0.07), 0 16px 32px -18px rgb(26 26 26 / 0.3); background: var(--color-blanco, #ffffff); box-shadow: 0 1px 2px rgb(26 26 26 / 0.07), 0 16px 32px -18px rgb(26 26 26 / 0.3); color: var(--color-tinta, #1a1a1a); font-family: Barlow, 'Arial Narrow', Arial, sans-serif; } .ds-marco-banda { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1.25rem; background: var(--color-acero, #747478); color: var(--color-esmalte, #f4f4f1); font-family: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; } .ds-marco-etiqueta { padding: 0.125rem 0.5rem; border-radius: 0.125rem; background: var(--color-esmalte, #f4f4f1); color: var(--color-tinta, #1a1a1a); font-size: 0.8125rem; letter-spacing: 0.1em; } .ds-marco-fila { padding: 2rem; } .ds-marco-fila + .ds-marco-fila { border-top: 3px solid var(--color-acero, #747478); } .ds-marco-fila strong { display: inline-block; padding: 0.5rem 0.75rem; border-radius: 0.375rem; background: var(--color-acero, #747478); color: var(--color-esmalte, #f4f4f1); font-family: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif; font-size: 1.25rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; } .ds-marco-fila p { margin: 0.75rem 0 0; font-size: 1.125rem; line-height: 1.5; max-width: 52ch; } .ds-tornillo { position: absolute; width: 10px; height: 10px; border: 2px solid var(--color-acero, #747478); border-radius: 50%; } .ds-tornillo::after { content: \"\"; position: absolute; left: 50%; top: 50%; width: 6px; height: 2px; background: var(--color-acero, #747478); transform: translate(-50%, -50%) rotate(45deg); } .ds-t-si { top: 7px; left: 7px; border-color: #fff; } .ds-t-sd { top: 7px; right: 7px; border-color: #fff; } .ds-t-si::after, .ds-t-sd::after { background: #fff; } .ds-t-ii { bottom: 7px; left: 7px; } .ds-t-id { bottom: 7px; right: 7px; }"
+    },
+    {
+      "name": "Workshop scene header and counter",
+      "kind": "custom",
+      "refersTo": "progreso-actual",
+      "description": "The scene's station header: acero numeral, label strip (state colour when set down, dashed acero while travelling), graphite meaning, and the stage counter with an orange current square.",
+      "html": "<div class=\"ds-escena\"><p class=\"ds-escena-num\">4</p><div class=\"ds-escena-texto\"><p class=\"ds-franja-escena\">En reparación</p><p class=\"ds-escena-sig\">El taller está reparando su equipo.</p></div><div class=\"ds-escena-cont\"><p>Etapa 4 de 7</p><div class=\"ds-cuadros\"><span class=\"ds-c ds-c-pasada\"></span><span class=\"ds-c ds-c-pasada\"></span><span class=\"ds-c ds-c-pasada\"></span><span class=\"ds-c ds-c-actual\"></span><span class=\"ds-c\"></span><span class=\"ds-c\"></span><span class=\"ds-c\"></span></div></div></div>",
+      "css": ".ds-escena { display: flex; align-items: flex-start; gap: 2.5rem; padding: 2.25rem 3rem 1.5rem; background: var(--color-esmalte, #f4f4f1); border-block: 6px solid var(--color-acero, #747478); } .ds-escena-num { margin: 0; font-family: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif; font-size: 6rem; font-weight: 700; line-height: 0.8; color: var(--color-acero, #747478); } .ds-escena-texto { flex: 1; } .ds-franja-escena { display: inline-block; margin: 0; padding: 0.5rem 0.75rem; border-radius: 0.375rem; background: var(--color-amarillo, #ffcd00); color: var(--color-tinta, #1a1a1a); font-family: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif; font-size: 1.75rem; font-weight: 800; letter-spacing: 0.06em; line-height: 1.25; text-transform: uppercase; } .ds-escena-sig { margin: 0.75rem 0 0; max-width: 46ch; font-family: Barlow, 'Arial Narrow', Arial, sans-serif; font-size: 1.125rem; color: var(--color-grafito, #5c5c5c); } .ds-escena-cont { display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem; } .ds-escena-cont p { margin: 0; font-family: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif; font-size: 0.8125rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-grafito, #5c5c5c); } .ds-cuadros { display: flex; gap: 0.375rem; } .ds-c { width: 12px; height: 12px; border-radius: 2px; border: 2px solid var(--color-acero, #747478); box-sizing: border-box; } .ds-c-pasada { background: var(--color-acero, #747478); } .ds-c-actual { border-color: var(--color-tinta, #1a1a1a); background: var(--color-naranja, #ff8929); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Señalización de taller",
+    "overview": "The interface is a workshop wall in Tecvol's colours. The page is the light wall (esmalte). The first viewport is a printed sheet (the pliego) pasted straight onto it: crop marks at the corners, a narrow rail down each side, the question in large black condensed type, and an orange line drawing of the customers' world (a cooperative's rural line with a windmill and a pole-mounted transformer, and the workshop shed with a transformer going in). At the end, the same line runs on to the horizon under a setting sun: the page starts by day and ends at dusk. Below the first viewport, content panels are pure white enamel plates fixed to the wall, each lifted by a short mount shadow. Tecvol's steel grey draws the structure (the plate rims, the section rules, the footer, the fill-in lines of the form); signal black is kept for what must read hardest: every headline, the text, the borders of the safety signs, the focus ring and the floor line. Tecvol orange is the hand you act with and the brand's own ink: every primary plate, the opening segment of each section rule, the line drawing and its sun, and the overhead crane in the workshop scene. Hierarchy comes from black condensed capitals, line weight, bands and the step from wall to plate.\n\nColour that carries meaning enters only to say what state a repair is in, using the safety-sign grammar the customer already reads in their plant (IRAM 10005 / ISO 7010). A white rectangle is a record (received, delivered). A yellow triangle means the workshop is working. A blue circle means the next step is the customer's: their approval is needed. A green square means ready. Red belongs to errors and nothing else. Orange is the brand and the action and never a state, so it never fills a sign.\n\nThe page is dense and direct, like a notice on a workshop wall, and it moves once at length: a scroll-driven walk along the workshop floor where an orange crane carries a grey transformer from bay to bay and each bay's sign lights up when the unit is set down. The world rejects the trade's stock landing page (substation photo, navy with yellow, a row of service cards) and rejects yellow-and-black hazard tape as ornament.",
+    "keyCharacteristics": [
+      "A light wall: a printed pliego with crop marks as the first viewport, pure white plates mounted below; steel-grey structure; signal-black headlines, text and sign borders.",
+      "An orange line drawing in the pliego, swapped for the customer's sign and data when a code is looked up, and its continuation at dusk across the footer.",
+      "Tecvol orange for brand and action only; four state colours bound to sign shapes; red only for errors.",
+      "The official logo always sits on a light plate.",
+      "Barlow Condensed capitals for bands, labels and actions; Barlow for reading; every headline in tinta.",
+      "Tabular, lining figures everywhere.",
+      "Two depths only: the wall (with the pliego printed on it) and the plates mounted on it. Everything inside a plate is flat and drawn with line weight.",
+      "Motion: the sign catches light once when it changes, and the workshop scene follows the scroll."
+    ],
+    "rules": [
+      {
+        "name": "The Colour Is State Rule",
+        "body": "Yellow, blue and green appear only to mean a repair state, and red only to mean an error. Section backgrounds, headings, links, icons and decoration never use them.",
+        "section": "colors"
+      },
+      {
+        "name": "The Orange Is Action Rule",
+        "body": "Tecvol orange marks the brand and what you can do: primary plates, the line drawing, the crane, the current-position marker, list markers and link underlines. It never fills a sign, a label strip or anything that could be read as a status.",
+        "section": "colors"
+      },
+      {
+        "name": "The Orange Ink Rule",
+        "body": "Orange on esmalte or white is 2.1:1, so it draws lines, fills shapes and underlines links but never sets text on a light ground. Text on orange is tinta.",
+        "section": "colors"
+      },
+      {
+        "name": "The Steel Structure Rule",
+        "body": "Structure is drawn in acero: plate rims, bands, rules, form lines. Headlines and text are tinta, never acero; tinta also draws sign borders, focus and the floor line.",
+        "section": "colors"
+      },
+      {
+        "name": "The Inverted Selection Rule",
+        "body": "Text selection is a tinta/esmalte inversion (black background, enamel text; reversed inside steel bands). Selection never borrows a state colour or orange.",
+        "section": "colors"
+      },
+      {
+        "name": "The Black Headline Rule",
+        "body": "The page question and every section headline are tinta. Grey type is only secondary text in grafito; acero never sets a headline.",
+        "section": "typography"
+      },
+      {
+        "name": "The Sign Lettering Rule",
+        "body": "Uppercase is reserved for Barlow Condensed: bands, labels, plates, state names and section headlines. Body text in Barlow is never set in capitals.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tabular Rule",
+        "body": "Every date, code and number uses tabular lining figures (set globally on body).",
+        "section": "typography"
+      },
+      {
+        "name": "The Usted Rule",
+        "body": "Copy addresses the customer as \"usted\"; buttons use impersonal infinitives (\"Consultar estado\", \"Enviar consulta\", \"Ingresar al portal\").",
+        "section": "typography"
+      },
+      {
+        "name": "The Mounted Plate Rule",
+        "body": "Only a white plate on the wall gets a shadow (content plates are screwed on, a screw at each corner), and only the two mount shadows. The pliego is printed on the wall: no rim, no shadow. Inside a plate, separate, group and emphasise with a heavier line or a band: no nested shadows, no raised cards within cards, no tonal gradients.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Hard-Stop Pattern Rule",
+        "body": "Where a gradient function is used to draw (the scene's wall and window band, the near columns and the rivets on the beam), every stop is hard: it draws flat lines and dots, never a blend.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Meaningful Sign Rule",
+        "body": "A Señal appears only where it means a state. Services, features and decoration never get signs.",
+        "section": "components"
+      },
+      {
+        "name": "The Simple Figure Rule",
+        "body": "At small sizes, use the single-figure simple pictograms.",
+        "section": "components"
+      },
+      {
+        "name": "The One Glint Rule",
+        "body": "The glint plays once, when an active sign switches on: the sign plate when a lookup returns, a scene sign at set-down. Never on small signs, never in a loop.",
+        "section": "components"
+      },
+      {
+        "name": "The Example and Lockout Rule",
+        "body": "The black example tag labels only example content; the lockout tag marks only pending or locked items. The two are never swapped or reused for other labels.",
+        "section": "components"
+      }
+    ],
+    "dos": [
+      "**Do** mount content on white screwed plates over the esmalte wall (4px corners, 2px acero rim, a screw at each corner), draw structure in acero (6 / 4 / 3 / 2 / 1px) and keep tinta for headlines, text, sign borders, focus and the floor line.",
+      "**Do** use Tecvol orange with black text for primary actions, inverting to black with orange text on hover.",
+      "**Do** place the logo on its light plate, in the headers and the footer.",
+      "**Do** open the page with the pliego: crop marks, the peach banner for new customers, the question with the code line, and the line drawing that gives way to the sign plate on a lookup.",
+      "**Do** bind each state colour to its shape: yellow triangle in work, blue circle needs approval, green square ready, white rectangle record.",
+      "**Do** mark example content with the black example tag and pending or locked items with the lockout tag, and keep the two apart.",
+      "**Do** draw form fields as 3px acero bottom lines that turn tinta and thicken to 5px on focus.",
+      "**Do** show loading as a dashed, colourless record outline and a dashed plate.",
+      "**Do** use the simple pictogram set at small sizes.",
+      "**Do** replace the workshop scene with the static legend table under reduced motion.",
+      "**Do** write to the customer as \"usted\" and label buttons with impersonal infinitives."
+    ],
+    "donts": [
+      "**Don't** use yellow, blue, green or red for anything that is not a state or an error: no coloured headings, links, icons, backgrounds or selection.",
+      "**Don't** use orange as a state, in a sign or in a label strip.",
+      "**Don't** put the logo directly on steel, orange or a photo.",
+      "**Don't** add shadows beyond the two mount shadows, raise anything inside a plate, or use tonal gradients (the sign glint is the one exception).",
+      "**Don't** set headlines in acero or in two tones.",
+      "**Don't** set text in orange on esmalte or white; orange text belongs only on tinta.",
+      "**Don't** add illustrations beyond the pliego's drawing and its continuation in the footer, or turn either into a status display.",
+      "**Don't** place a Señal as decoration, on a service, or on a feature list.",
+      "**Don't** use yellow-and-black hazard tape as ornament.",
+      "**Don't** fall back on the trade's stock landing: substation photo, navy with yellow, a row of service cards.",
+      "**Don't** show an example state while a real one is loading."
+    ]
+  }
+}

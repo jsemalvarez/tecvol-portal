@@ -1,0 +1,715 @@
+@import "tailwindcss";
+
+/*
+ * Señalización de taller, con la marca Tecvol.
+ * Esmalte blanco y negro señal como material. Colores de estado: amarillo = en trabajo,
+ * azul = requiere su aprobación, verde = listo, rojo = error. Naranja Tecvol = marca y
+ * acción, nunca estado. Grises del logo: grafito (texto secundario) y acero (líneas, taller).
+ */
+@theme {
+  --color-esmalte: #f4f4f1;
+  --color-blanco: #ffffff;
+  --color-tinta: #1a1a1a;
+  --color-amarillo: #ffcd00;
+  --color-naranja: #ff8929;
+  --color-grafito: #5c5c5c;
+  --color-acero: #747478;
+  --color-azul: #154889;
+  --color-verde: #237f52;
+  --color-rojo: #a02128;
+
+  /* Naranja al 25 % en esmalte: la placa de nuevos clientes del pliego y los rellenos de su ilustración. */
+  --color-durazno: #f7d9bf;
+
+  --font-sans: var(--font-barlow), "Arial Narrow", Arial, sans-serif;
+  --font-cartel: var(--font-barlow-condensed), "Arial Narrow", Arial, sans-serif;
+
+  --radius-cartel: 1.25rem;
+  --radius-placa: 0.25rem;
+
+  /* Placas de esmalte blanco montadas sobre la pared: una sombra corta de apoyo y una larga y suave. */
+  --shadow-placa: 0 1px 2px rgb(26 26 26 / 0.07), 0 16px 32px -18px rgb(26 26 26 / 0.3);
+  --shadow-cartel: 0 2px 4px rgb(26 26 26 / 0.06), 0 36px 64px -32px rgb(26 26 26 / 0.4);
+  --ease-salida: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html {
+    background: var(--color-esmalte);
+    color: var(--color-tinta);
+    scrollbar-color: var(--color-tinta) var(--color-esmalte);
+    -webkit-text-size-adjust: 100%;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+
+  body {
+    font-family: var(--font-sans);
+    font-size: 1.0625rem;
+    line-height: 1.5;
+    font-variant-numeric: tabular-nums lining-nums;
+    caret-color: var(--color-tinta);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* El color solo significa estado: la selección es una inversión negro/esmalte. */
+  ::selection {
+    background: var(--color-tinta);
+    color: var(--color-esmalte);
+  }
+
+  .sobre-tinta ::selection {
+    background: var(--color-esmalte);
+    color: var(--color-tinta);
+  }
+
+  a {
+    text-underline-offset: 0.2em;
+    text-decoration-thickness: 2px;
+    text-decoration-color: var(--color-naranja);
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-tinta);
+    outline-offset: 3px;
+  }
+
+  .sobre-tinta :focus-visible {
+    outline-color: var(--color-esmalte);
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  [id] {
+    scroll-margin-top: 1.5rem;
+  }
+}
+
+@layer components {
+  /* Rótulo de cartel: Barlow Condensed en mayúsculas. */
+  .rotulo {
+    font-family: var(--font-cartel);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    line-height: 1.1;
+  }
+
+  /* Filete de sección: la regla gris con el tramo inicial naranja de la marca. */
+  .filete-seccion {
+    position: relative;
+    border-top: 6px solid var(--color-acero);
+  }
+
+  .filete-seccion::before {
+    content: "";
+    position: absolute;
+    top: -6px;
+    left: 0;
+    width: 5rem;
+    height: 6px;
+    background: var(--color-naranja);
+  }
+
+  /* Placa de acción: naranja Tecvol con texto negro; al pasar, negra con texto naranja. */
+  .placa {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.625rem;
+    min-height: 3.5rem;
+    padding-inline: 1.75rem;
+    border: 3px solid var(--color-naranja);
+    border-radius: var(--radius-placa);
+    background: var(--color-naranja);
+    color: var(--color-tinta);
+    font-family: var(--font-cartel);
+    font-size: 1.125rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+      background-color 160ms var(--ease-salida),
+      color 160ms var(--ease-salida);
+  }
+
+  .placa:hover {
+    border-color: var(--color-tinta);
+    background: var(--color-tinta);
+    color: var(--color-naranja);
+  }
+
+  .placa:active {
+    transform: translateY(1px);
+  }
+
+  .placa:disabled,
+  .placa[aria-disabled="true"] {
+    cursor: progress;
+    border-color: var(--color-acero);
+    background: var(--color-esmalte);
+    color: var(--color-tinta);
+    border-style: dashed;
+  }
+
+  /* Placa sobre la banda gris: naranja con texto negro; al pasar, negra con texto naranja. */
+  .placa-banda {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+    padding-inline: 1rem;
+    border: 2px solid var(--color-naranja);
+    border-radius: var(--radius-placa);
+    background: var(--color-naranja);
+    color: var(--color-tinta);
+    font-family: var(--font-cartel);
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+    white-space: nowrap;
+    transition:
+      background-color 160ms var(--ease-salida),
+      color 160ms var(--ease-salida);
+  }
+
+  .placa-banda:hover {
+    background: var(--color-tinta);
+    color: var(--color-naranja);
+  }
+
+  /* Placa del logo: el logo oficial va siempre sobre fondo claro. */
+  .placa-logo {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.375rem;
+    background: var(--color-esmalte);
+  }
+
+  /* Renglón de formulario: el campo es la línea para completar del cartel. */
+  .renglon {
+    width: 100%;
+    border: 0;
+    border-bottom: 3px solid var(--color-acero);
+    background: transparent;
+    padding: 0.5rem 0 0.375rem;
+    color: var(--color-tinta);
+    font: inherit;
+    font-size: 1.125rem;
+    appearance: none;
+  }
+
+  .renglon:focus-visible {
+    outline: none;
+    border-bottom-color: var(--color-tinta);
+    border-bottom-width: 5px;
+    padding-bottom: 0.25rem;
+    background: var(--color-blanco);
+  }
+
+  .renglon[aria-invalid="true"] {
+    border-bottom-color: var(--color-rojo);
+  }
+
+  .renglon::placeholder {
+    color: var(--color-tinta);
+    opacity: 1;
+  }
+
+  /* Placa secundaria: contorno gris Tecvol y texto negro; al pasar, se rellena de negro. */
+  .placa-secundaria {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    padding-inline: 1.125rem;
+    border: 2px solid var(--color-acero);
+    border-radius: var(--radius-placa);
+    background: transparent;
+    color: var(--color-tinta);
+    font-family: var(--font-cartel);
+    font-size: 0.9375rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition:
+      background-color 160ms var(--ease-salida),
+      color 160ms var(--ease-salida);
+  }
+
+  .placa-secundaria:hover {
+    background: var(--color-tinta);
+    color: var(--color-esmalte);
+  }
+
+  /* Etiqueta: rotula contenido de ejemplo. No confundir con la tarjeta de bloqueo. */
+  .etiqueta {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.5rem;
+    border-radius: 0.125rem;
+    background: var(--color-tinta);
+    color: var(--color-esmalte);
+    font-family: var(--font-cartel);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    line-height: 1.4;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .sobre-tinta .etiqueta {
+    background: var(--color-esmalte);
+    color: var(--color-tinta);
+  }
+
+  /* Tarjeta de bloqueo: marca solo lo pendiente o lo que todavía no está habilitado. */
+  .tarjeta-bloqueo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.125rem 0.625rem 0.125rem 0.5rem;
+    border: 2px solid var(--color-acero);
+    border-radius: 0.125rem 0.75rem 0.75rem 0.125rem;
+    background: var(--color-blanco);
+    color: var(--color-tinta);
+    font-family: var(--font-cartel);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    line-height: 1.4;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .tarjeta-bloqueo::before {
+    content: "";
+    width: 0.5rem;
+    height: 0.5rem;
+    border: 2px solid var(--color-acero);
+    border-radius: 999px;
+  }
+}
+
+/* Destello reflectivo: la señal agarra luz una vez cuando cambia. */
+.senal-destello {
+  transform: skewX(-16deg) translateX(-40px);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .senal-destello {
+    animation: destello 900ms var(--ease-salida) 120ms both;
+  }
+
+  .senal-entra {
+    animation: senal-entra 420ms var(--ease-salida) both;
+  }
+}
+
+@keyframes destello {
+  from {
+    transform: skewX(-16deg) translateX(-40px);
+  }
+  to {
+    transform: skewX(-16deg) translateX(260px);
+  }
+}
+
+@keyframes senal-entra {
+  from {
+    opacity: 0.4;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/*
+ * Recorrido del taller: escena fija atada al scroll.
+ * Variables que escribe el script: --x (posición de la cámara, en estaciones), --elev (0–1, carga
+ * levantada) y --balanceo (grados). Sin script, la escena queda en su primer cuadro.
+ * Capas: pared (0,5×), pista con portones, estaciones y exterior (1×), columnas cercanas (1,4×).
+ */
+.escena-visor {
+  --paso: 92vw;
+  --viga-h: 30px;
+  --carro-h: 24px;
+  --piso: 64px;
+  --lift: min(88px, 10svh);
+  --carga-w: min(140px, 17svh);
+  --cartel-w: 96px;
+  --cadena: 56px;
+  --separacion: 10px;
+  --porton-w: calc(var(--carga-w) * 1.5);
+  /* Fase de las columnas cercanas en reposo, en estaciones: en el celular quedan fuera de cuadro. */
+  --frente-fase: 0.7;
+  --separacion-final: var(--separacion);
+}
+
+@media (min-width: 64rem) {
+  .escena-visor {
+    --paso: min(52vw, 820px);
+    --viga-h: 40px;
+    --carro-h: 32px;
+    --piso: 80px;
+    --lift: min(120px, 12svh);
+    --carga-w: min(270px, 30svh);
+    --cartel-w: min(220px, 24svh);
+    --cadena: 22px;
+    --separacion: 24px;
+    /* En escritorio, una columna queda entre el equipo y la señal siguiente, sin tapar ninguna. */
+    --frente-fase: 0.38;
+    --separacion-final: calc(var(--paso) * var(--frente-fase) - var(--carga-w) / 2 + 30px);
+  }
+}
+
+/* Pared del taller: columnas y banda de ventanas, a media velocidad. */
+.escena-pared {
+  position: absolute;
+  top: var(--viga-h);
+  bottom: var(--piso);
+  left: -100vw;
+  width: calc(300vw + 11 * var(--paso));
+  transform: translateX(calc(var(--x) * var(--paso) * -0.5));
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 calc(var(--paso) * 0.5 - 12px),
+      color-mix(in srgb, var(--color-acero) 50%, var(--color-esmalte)) calc(var(--paso) * 0.5 - 12px) calc(var(--paso) * 0.5)
+    ),
+    linear-gradient(
+      color-mix(in srgb, var(--color-acero) 55%, var(--color-esmalte)) 0 3px,
+      transparent 3px calc(100% - 3px),
+      color-mix(in srgb, var(--color-acero) 55%, var(--color-esmalte)) calc(100% - 3px)
+    ),
+    repeating-linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--color-acero) 55%, var(--color-esmalte)) 0 3px,
+      transparent 3px 56px
+    );
+  background-size:
+    auto,
+    100% 64px,
+    100% 64px;
+  background-position:
+    0 0,
+    0 28px,
+    0 28px;
+  background-repeat: repeat, repeat-x, repeat-x;
+  will-change: transform;
+}
+
+.escena-pista {
+  position: absolute;
+  inset: 0;
+  transform: translateX(calc(var(--x) * var(--paso) * -1));
+  will-change: transform;
+}
+
+/* Exterior: más allá de los portones, un plano liso sin pared. */
+.escena-afuera {
+  position: absolute;
+  top: var(--viga-h);
+  bottom: var(--piso);
+  background: var(--color-blanco);
+}
+
+.escena-afuera--ingreso {
+  right: calc(50% - var(--g) * var(--paso) - var(--porton-w) / 2 + 8px);
+  width: calc(200vw + 4 * var(--paso));
+}
+
+.escena-afuera--salida {
+  left: calc(50% + var(--g) * var(--paso) - var(--porton-w) / 2 + 8px);
+  width: calc(200vw + 4 * var(--paso));
+}
+
+.escena-porton {
+  position: absolute;
+  top: calc(var(--viga-h) + 40px);
+  bottom: var(--piso);
+  width: var(--porton-w);
+  left: calc(50% + var(--g) * var(--paso));
+  transform: translateX(-50%);
+  border: 8px solid var(--color-tinta);
+  border-bottom: 0;
+  border-radius: 6px 6px 0 0;
+}
+
+.escena-estacion {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: var(--paso);
+  left: calc(50% + var(--pos) * var(--paso) - var(--paso) / 2);
+}
+
+/* La señal cuelga junto al lugar donde se apoya el equipo. */
+.escena-cartel {
+  position: absolute;
+  top: calc(var(--viga-h) + var(--cadena));
+  left: calc(50% - var(--carga-w) / 2 - var(--separacion) - var(--cartel-w));
+  width: var(--cartel-w);
+}
+
+.escena-cartel--derecha {
+  left: calc(50% + var(--carga-w) / 2 + var(--separacion-final));
+}
+
+.escena-cartel::before,
+.escena-cartel::after {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  width: 2px;
+  height: calc(var(--cadena) + 2px);
+  background: var(--color-tinta);
+}
+
+.escena-cartel::before {
+  left: 24%;
+}
+
+.escena-cartel::after {
+  right: 24%;
+}
+
+/* Bahía de la estación: el frente de la base, con su número estarcido. */
+.escena-bahia {
+  position: absolute;
+  left: 50%;
+  top: calc(100% - var(--piso) + 6px);
+  height: calc(var(--piso) - 20px);
+  width: calc(var(--carga-w) * 1.3);
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  border: 3px solid var(--color-tinta);
+  border-top: 0;
+  border-radius: 0 0 4px 4px;
+}
+
+.escena-sombra {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--piso) - 9px);
+  width: calc(var(--carga-w) * 0.95);
+  height: 12px;
+  border-radius: 50%;
+  background: var(--color-tinta);
+  opacity: calc(0.3 - var(--elev) * 0.2);
+  transform: translateX(-50%) scaleX(calc(1 - var(--elev) * 0.4));
+}
+
+.escena-viga {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--viga-h);
+  border-block: 5px solid var(--color-tinta);
+  background-color: var(--color-naranja);
+  background-image: radial-gradient(circle, var(--color-tinta) 0 2.5px, transparent 3px);
+  background-size: 48px 100%;
+  background-position-x: calc(var(--x) * var(--paso) * -1);
+}
+
+.escena-carro {
+  position: absolute;
+  top: calc(var(--viga-h) - 10px);
+  left: 50%;
+  width: calc(var(--carga-w) * 0.62);
+  transform: translateX(-50%);
+}
+
+/* El tambor del aparejo gira mientras enrolla el cable. */
+.escena-tambor {
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: rotate(calc(var(--elev) * 540deg));
+}
+
+.escena-pendulo {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--viga-h) - 18px + var(--carga-w) * 0.195);
+  bottom: var(--piso);
+  width: 0;
+  transform: rotate(var(--balanceo));
+  transform-origin: 0 0;
+}
+
+.escena-cable {
+  position: absolute;
+  left: -1.5px;
+  top: 0;
+  width: 3px;
+  bottom: calc(var(--carga-w) * 1.4 + var(--elev) * var(--lift) - 2px);
+  background: var(--color-tinta);
+}
+
+.escena-carga {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: var(--carga-w);
+  transform: translate(-50%, calc(var(--elev) * var(--lift) * -1));
+}
+
+.escena-piso {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--piso) - 6px);
+  height: 6px;
+  background: var(--color-tinta);
+}
+
+/*
+ * Columnas cercanas, más rápidas que la pista (1,4×). Todas las posiciones de reposo son enteras,
+ * así que en reposo las columnas caen siempre en --frente-fase + 1,4·k estaciones: nunca sobre el
+ * equipo ni sobre una señal.
+ */
+.escena-frente {
+  position: absolute;
+  top: 0;
+  bottom: calc(var(--piso) - 6px);
+  left: calc(50% + var(--paso) * var(--frente-fase) - 9px - 20 * var(--paso) * 1.4);
+  width: calc(40 * var(--paso) * 1.4);
+  transform: translateX(calc(var(--x) * var(--paso) * -1.4));
+  background-image: linear-gradient(90deg, var(--color-grafito) 0 18px, transparent 18px);
+  background-size: calc(var(--paso) * 1.4) 100%;
+  background-repeat: repeat-x;
+  pointer-events: none;
+  will-change: transform;
+}
+
+/* Movimiento reducido: la leyenda estática reemplaza la escena. */
+.leyenda-estatica {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .escena-recorrido {
+    display: none;
+  }
+
+  .leyenda-estatica {
+    display: block;
+  }
+}
+
+/*
+ * Marco: contenedor de contenido sobre la pared (ejemplo del portal, servicios, formulario de consulta),
+ * atornillado como la placa de características de un transformador: esquinas casi rectas, borde gris de 2px,
+ * un tornillo en cada esquina y la sombra de montaje.
+ */
+@layer components {
+  .marco {
+    --marco-px: 2rem;
+    position: relative;
+    overflow: hidden;
+    border: 2px solid var(--color-acero);
+    border-radius: var(--radius-placa);
+    background: var(--color-blanco);
+    box-shadow: var(--shadow-placa);
+  }
+
+  @media (min-width: 40rem) {
+    .marco {
+      --marco-px: 2.5rem;
+    }
+  }
+
+  .marco-cabecera {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem var(--marco-px);
+    background: var(--color-acero);
+    color: var(--color-blanco);
+  }
+
+  .marco-cabecera .etiqueta {
+    background: var(--color-esmalte);
+    color: var(--color-tinta);
+  }
+
+  .marco-fila:not(:first-child) {
+    border-top: 1px solid var(--color-acero);
+  }
+
+  .marco-pie {
+    border-top: 2px solid var(--color-acero);
+  }
+
+  .marco-cuerpo {
+    padding: 1.5rem var(--marco-px);
+  }
+
+  @media (min-width: 40rem) {
+    .marco-cuerpo {
+      padding-block: 2rem;
+    }
+  }
+
+  /* Un tornillo por esquina: gris sobre la placa, blanco sobre la banda gris de la cabecera. */
+  .marco-tornillo {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border: 2px solid currentColor;
+    border-radius: 50%;
+    color: var(--color-acero);
+    pointer-events: none;
+  }
+
+  .marco-tornillo::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 6px;
+    height: 2px;
+    background: currentColor;
+    transform: translate(-50%, -50%) rotate(45deg);
+  }
+
+  .marco-tornillo[data-esquina="si"] { top: 7px; left: 7px; }
+  .marco-tornillo[data-esquina="sd"] { top: 7px; right: 7px; }
+  .marco-tornillo[data-esquina="ii"] { bottom: 7px; left: 7px; }
+  .marco-tornillo[data-esquina="id"] { bottom: 7px; right: 7px; }
+
+  .marco:has(> .marco-cabecera) .marco-tornillo:is([data-esquina="si"], [data-esquina="sd"]) {
+    color: var(--color-blanco);
+  }
+}
