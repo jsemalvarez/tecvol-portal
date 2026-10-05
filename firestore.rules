@@ -53,6 +53,25 @@ service cloud.firestore {
       allow list, write: if false;
     }
 
+    // Empresa de cada cuenta de cliente. El cliente lee solo la suya; la asocia el personal.
+    match /clientes/{uid} {
+      allow get: if request.auth != null && request.auth.uid == uid;
+      allow read, write: if esPersonal();
+    }
+
+    function empresaDelCliente() {
+      return get(/databases/$(database)/documents/clientes/$(request.auth.uid)).data.empresa;
+    }
+
+    // Datos privados de cada orden (empresa, referencia del cliente, serie). Un cliente lee solo
+    // las órdenes de su empresa; la consulta del portal filtra por empresa para que esto se cumpla.
+    match /ordenes/{codigo} {
+      allow read: if request.auth != null
+        && exists(/databases/$(database)/documents/clientes/$(request.auth.uid))
+        && resource.data.empresa == empresaDelCliente();
+      allow read, write: if esPersonal();
+    }
+
     match /{documento=**} {
       allow read, write: if false;
     }

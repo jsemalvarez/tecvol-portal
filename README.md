@@ -50,8 +50,36 @@ El código de seguimiento se genera con `generarCodigo()` en `src/lib/dominio/co
 **Correo electrónico/contraseña** (Authentication → Método de acceso). No hay registro público: las cuentas
 las crea el taller (Authentication → Usuarios → Agregar usuario).
 
-Después de ingresar, el cliente va a `/portal` y el personal a `/panel` (las dos, provisorias hasta construir
-el portal y el panel). El enlace "¿Olvidó su contraseña?" envía el email de Firebase para elegir una nueva.
+Después de ingresar, el cliente va a `/portal` y el personal a `/panel` (provisorio hasta construir el panel).
+El enlace "¿Olvidó su contraseña?" envía el email de Firebase para elegir una nueva.
+
+### Portal de clientes
+
+El portal es de consulta: el cliente ve los equipos de su empresa, el estado de cada uno, la fecha de cada etapa
+y los entregados. No aprueba presupuestos ni manda mensajes desde la app; eso se arregla con el taller. Hasta
+que exista el panel, el personal carga los datos a mano en la consola de Firestore:
+
+1. **Cuenta del cliente:** crear el usuario en Authentication y, con su UID, el documento `clientes/{uid}`:
+
+   | Campo | Tipo | Contenido |
+   |---|---|---|
+   | `empresa` | string | Identificador de la empresa, el mismo en todas sus cuentas y órdenes (p. ej. `coop-norte`) |
+   | `nombre` | string | Nombre de la empresa, como se muestra en el portal |
+
+2. **Cada equipo:** además de `seguimiento/{codigo}` (estado y etapas), el documento privado
+   `ordenes/{codigo}`, con el mismo código como ID:
+
+   | Campo | Tipo | Contenido |
+   |---|---|---|
+   | `empresa` | string | El identificador de la empresa dueña del equipo |
+   | `referencia` | string, opcional | Cómo identifica el cliente al equipo, p. ej. `Subestación Barrio Norte` |
+   | `serie` | string, opcional | Número de serie de la placa |
+
+3. **Cada cambio de estado:** solo en `seguimiento/{codigo}`: `estado`, la fecha en `etapas` y `actualizado`.
+   El portal y la consulta pública leen el mismo documento.
+
+Las reglas dejan que cada cliente lea solo su `clientes/{uid}` y las órdenes de su empresa. Una cuenta sin
+`clientes/{uid}` entra al portal y ve el aviso de que todavía no está asociada a una empresa.
 
 ### Personal del taller
 

@@ -1,4 +1,4 @@
-import type { ConsultaNueva, SeguimientoPublico, Sesion } from "@/lib/dominio/tipos";
+import type { ConsultaNueva, PortalCliente, SeguimientoPublico, Sesion } from "@/lib/dominio/tipos";
 import { firebaseConfigurado } from "./firebase/config";
 
 /**
@@ -22,6 +22,11 @@ export interface AutenticacionRepositorio {
   restablecerClave(email: string): Promise<void>;
   /** Avisa la sesión actual y cada cambio. Devuelve la función para dejar de escuchar. */
   observarSesion(alCambiar: (sesion: Sesion | null) => void): () => void;
+}
+
+export interface PortalRepositorio {
+  /** Empresa y equipos de una cuenta de cliente. `null` si la cuenta no está asociada a una empresa. */
+  obtenerPortal(uid: string): Promise<PortalCliente | null>;
 }
 
 export type MotivoErrorDeIngreso = "credenciales" | "intentos" | "deshabilitada" | "conexion" | "desconocido";
@@ -92,6 +97,26 @@ async function cargarAutenticacion(): Promise<AutenticacionRepositorio> {
   if (modoDatos === "local") {
     const { AutenticacionLocal } = await import("./local/autenticacion");
     return new AutenticacionLocal();
+  }
+  throw new ServicioNoConfiguradoError();
+}
+
+let portal: Promise<PortalRepositorio> | null = null;
+
+/** Los datos del portal también se cargan aparte: solo los necesita quien ingresó como cliente. */
+export function obtenerPortal(): Promise<PortalRepositorio> {
+  portal ??= cargarPortal();
+  return portal;
+}
+
+async function cargarPortal(): Promise<PortalRepositorio> {
+  if (modoDatos === "firebase") {
+    const { PortalFirestore } = await import("./firebase/portal");
+    return new PortalFirestore();
+  }
+  if (modoDatos === "local") {
+    const { PortalLocal } = await import("./local/portal");
+    return new PortalLocal();
   }
   throw new ServicioNoConfiguradoError();
 }

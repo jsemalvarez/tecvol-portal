@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { EstadoReparacion } from "@/lib/dominio/estados";
+import type { EstadoReparacion, FormaSenal } from "@/lib/dominio/estados";
 
 /**
  * Pictogramas de las señales, en el idioma de ISO 7010: siluetas rellenas sobre
@@ -7,6 +7,14 @@ import type { EstadoReparacion } from "@/lib/dominio/estados";
  * `var(--fondo)`, el color de la señal sobre la que se dibujan.
  */
 export type IdPictograma = EstadoReparacion | "transformador" | "pregunta" | "enviado";
+
+/** Un pictograma por familia de señal, para las claves de lectura. */
+export const PICTOGRAMA_DE_FORMA: Record<FormaSenal, IdPictograma> = {
+  registro: "ingresado",
+  advertencia: "reparacion",
+  obligacion: "presupuesto",
+  seguridad: "listo",
+};
 
 const FONDO = "var(--fondo)";
 

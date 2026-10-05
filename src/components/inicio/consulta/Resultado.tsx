@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Flecha } from "@/components/iconos";
 import { DEFINICIONES } from "@/lib/dominio/estados";
 import { formatearFecha } from "@/lib/dominio/fechas";
 import type { SeguimientoPublico } from "@/lib/dominio/tipos";
@@ -10,7 +9,6 @@ export function Resultado({ seguimiento, onOtra }: { seguimiento: SeguimientoPub
   const definicion = DEFINICIONES[seguimiento.estado];
   const desde = seguimiento.etapas[seguimiento.estado];
   const terminado = seguimiento.estado === "listo" || seguimiento.estado === "entregado";
-  const requiereAccion = definicion.forma === "obligacion";
 
   return (
     <>
@@ -31,19 +29,12 @@ export function Resultado({ seguimiento, onOtra }: { seguimiento: SeguimientoPub
       </dl>
       <p className="mt-4">{definicion.significado}</p>
       <div className="mt-5 flex flex-col items-start gap-4">
-        {requiereAccion ? (
-          <Link href="/ingresar" className="placa">
-            Aprobar en el portal
-            <Flecha />
+        <p>
+          Todos los equipos de su empresa y su historial:{" "}
+          <Link href="/ingresar" className="font-semibold underline">
+            ingresar al portal
           </Link>
-        ) : (
-          <p>
-            Presupuesto, novedades e historial:{" "}
-            <Link href="/ingresar" className="font-semibold underline">
-              ingresar al portal
-            </Link>
-          </p>
-        )}
+        </p>
         {!PORTAL_HABILITADO && (
           <p className="flex flex-wrap items-center gap-x-3 gap-y-2 pt-1 text-[0.9375rem]">
             <span className="tarjeta-bloqueo">En preparación</span>

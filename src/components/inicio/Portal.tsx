@@ -5,18 +5,17 @@ import { DEFINICIONES, type EstadoReparacion } from "@/lib/dominio/estados";
 import { PORTAL_HABILITADO } from "@/lib/etapas-demo";
 import { TornillosMarco } from "./TornillosMarco";
 
-/** Vista de ejemplo del portal. Equipos ficticios, rotulados como tales. */
-const EQUIPOS_EJEMPLO: { equipo: string; estado: EstadoReparacion; desde: string; novedad: string }[] = [
-  { equipo: "Trifásico 500 kVA · 13,2/0,4 kV", estado: "presupuesto", desde: "29/09", novedad: "Presupuesto cargado para su aprobación." },
-  { equipo: "Trifásico 315 kVA · 13,2/0,4 kV", estado: "reparacion", desde: "08/09", novedad: "Comenzó la reparación." },
-  { equipo: "Monofásico 25 kVA · 7,62/0,231 kV", estado: "listo", desde: "12/09", novedad: "Terminaron los ensayos finales." },
+/** Vista de ejemplo del portal, con las mismas filas que el portal real. Equipos ficticios, rotulados como tales. */
+const EQUIPOS_EJEMPLO: { referencia: string; equipo: string; estado: EstadoReparacion; desde: string }[] = [
+  { referencia: "Planta de bombeo 2", equipo: "Trifásico 500 kVA · 13,2/0,4 kV", estado: "presupuesto", desde: "29/09" },
+  { referencia: "Línea rural, km 12", equipo: "Monofásico 25 kVA · 7,62/0,231 kV", estado: "listo", desde: "12/09" },
+  { referencia: "Subestación Barrio Norte", equipo: "Trifásico 315 kVA · 13,2/0,4 kV", estado: "reparacion", desde: "08/09" },
 ];
 
 const DISPONIBLE = [
+  "Todos los equipos de su empresa, en un solo lugar",
   "Estado de cada equipo y fecha de cada etapa",
-  "Novedades del taller, en una línea de tiempo",
-  "Presupuestos para aprobar en línea",
-  "Historial de cada transformador",
+  "Historial de los equipos entregados",
 ];
 
 const EN_PREPARACION = ["Protocolos de ensayo para descargar", "Fotos del equipo"];
@@ -63,17 +62,20 @@ export function Portal() {
                 const d = DEFINICIONES[e.estado];
                 return (
                   <li
-                    key={e.equipo}
+                    key={e.referencia}
                     className="marco-fila grid grid-cols-[auto_1fr] items-center gap-x-4 gap-y-1 px-[var(--marco-px)] py-4 sm:grid-cols-[auto_minmax(0,1.1fr)_minmax(0,1fr)] sm:gap-x-6"
                   >
                     <Senal forma={d.forma} pictograma={e.estado} simple className="row-span-2 size-12 sm:row-span-1 sm:size-14" />
                     <div>
                       <p className="rotulo text-lg font-extrabold">{d.rotulo}</p>
+                      <p className="text-[0.9375rem]">
+                        {d.nombre} desde el {e.desde}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="font-semibold">{e.referencia}</p>
                       <p className="text-[0.9375rem]">{e.equipo}</p>
                     </div>
-                    <p className="text-[0.9375rem] sm:text-base">
-                      <span className="font-semibold">{e.desde}</span> · {e.novedad}
-                    </p>
                   </li>
                 );
               })}

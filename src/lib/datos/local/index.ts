@@ -12,7 +12,7 @@ function fechas(valores: Partial<Record<EstadoReparacion, string>>) {
   ) as Partial<Record<EstadoReparacion, Date>>;
 }
 
-const SEGUIMIENTOS: SeguimientoPublico[] = [
+export const SEGUIMIENTOS_DE_PRUEBA: SeguimientoPublico[] = [
   {
     codigo: "K7RM4XPA",
     estado: "reparacion",
@@ -61,16 +61,58 @@ const SEGUIMIENTOS: SeguimientoPublico[] = [
     }),
     actualizado: new Date("2026-08-03T12:00:00-03:00"),
   },
+  {
+    codigo: "M5TC7WQE",
+    estado: "ingresado",
+    equipo: "Transformador trifásico 200 kVA · 13,2/0,4 kV",
+    etapas: fechas({ ingresado: "2026-10-02" }),
+    actualizado: new Date("2026-10-02T12:00:00-03:00"),
+  },
+  {
+    codigo: "R8VJ3NDS",
+    estado: "diagnostico",
+    equipo: "Transformador trifásico 100 kVA · 13,2/0,4 kV",
+    etapas: fechas({ ingresado: "2026-09-29", diagnostico: "2026-09-30" }),
+    actualizado: new Date("2026-09-30T12:00:00-03:00"),
+  },
+  {
+    codigo: "P6XH9EBK",
+    estado: "ensayos",
+    equipo: "Transformador trifásico 250 kVA · 13,2/0,4 kV",
+    etapas: fechas({
+      ingresado: "2026-08-25",
+      diagnostico: "2026-08-26",
+      presupuesto: "2026-08-28",
+      reparacion: "2026-09-02",
+      ensayos: "2026-09-28",
+    }),
+    actualizado: new Date("2026-09-28T12:00:00-03:00"),
+  },
+  {
+    codigo: "W2SG5MZU",
+    estado: "entregado",
+    equipo: "Transformador monofásico 10 kVA · 7,62/0,231 kV",
+    etapas: fechas({
+      ingresado: "2026-04-13",
+      diagnostico: "2026-04-14",
+      presupuesto: "2026-04-16",
+      reparacion: "2026-04-21",
+      ensayos: "2026-05-04",
+      listo: "2026-05-05",
+      entregado: "2026-05-08",
+    }),
+    actualizado: new Date("2026-05-08T12:00:00-03:00"),
+  },
 ];
 
-export const CODIGOS_DE_PRUEBA = SEGUIMIENTOS.map((s) => s.codigo);
+export const CODIGOS_DE_PRUEBA = SEGUIMIENTOS_DE_PRUEBA.map((s) => s.codigo);
 
 const esperar = (ms: number) => new Promise((resolver) => setTimeout(resolver, ms));
 
 export class SeguimientoLocal implements SeguimientoRepositorio {
   async obtenerPorCodigo(codigo: string): Promise<SeguimientoPublico | null> {
     await esperar(450);
-    return SEGUIMIENTOS.find((s) => s.codigo === codigo) ?? null;
+    return SEGUIMIENTOS_DE_PRUEBA.find((s) => s.codigo === codigo) ?? null;
   }
 }
 

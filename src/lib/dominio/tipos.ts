@@ -14,6 +14,23 @@ export interface SeguimientoPublico {
   actualizado: Date | null;
 }
 
+/**
+ * Equipo de una empresa cliente, tal como lo ve en el portal: los datos públicos del seguimiento más
+ * los privados de la orden (`ordenes/{codigo}`), que solo lee la empresa dueña.
+ */
+export interface EquipoCliente extends SeguimientoPublico {
+  /** Cómo identifica el cliente a este equipo, p. ej. "Subestación Barrio Norte". */
+  referencia?: string;
+  /** Número de serie de la placa de características. */
+  serie?: string;
+}
+
+/** Lo que ve una cuenta de cliente en el portal: su empresa y sus equipos. */
+export interface PortalCliente {
+  empresa: string;
+  equipos: EquipoCliente[];
+}
+
 /** Consulta de un cliente potencial desde la página pública. */
 export interface ConsultaNueva {
   empresa: string;

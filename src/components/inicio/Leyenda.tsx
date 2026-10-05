@@ -1,14 +1,7 @@
 import { Senal } from "@/components/senal/Senal";
-import type { IdPictograma } from "@/components/senal/pictogramas";
-import { DEFINICIONES, ESTADOS, FORMAS, type FormaSenal } from "@/lib/dominio/estados";
+import { PICTOGRAMA_DE_FORMA } from "@/components/senal/pictogramas";
+import { DEFINICIONES, ESTADOS, FORMAS } from "@/lib/dominio/estados";
 import { EscenaRecorrido } from "./EscenaRecorrido";
-
-const PICTOGRAMA_DE_FORMA: Record<FormaSenal, IdPictograma> = {
-  registro: "ingresado",
-  advertencia: "reparacion",
-  obligacion: "presupuesto",
-  seguridad: "listo",
-};
 
 export function Leyenda() {
   return (

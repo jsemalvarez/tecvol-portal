@@ -52,7 +52,7 @@ export const DEFINICIONES: Record<EstadoReparacion, DefinicionEstado> = {
     rotulo: "Presupuesto para aprobar",
     forma: "obligacion",
     significado:
-      "El presupuesto está listo y espera su aprobación. Se aprueba desde el portal.",
+      "El presupuesto está listo y espera su aprobación.",
   },
   reparacion: {
     id: "reparacion",
