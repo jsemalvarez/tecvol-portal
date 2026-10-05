@@ -46,6 +46,13 @@ service cloud.firestore {
       allow read, update, delete: if esPersonal();
     }
 
+    // Cada usuario puede leer solo su propio documento de personal: así la app sabe si
+    // va al panel. Nadie puede listar la colección ni escribirla desde la app.
+    match /personal/{uid} {
+      allow get: if request.auth != null && request.auth.uid == uid;
+      allow list, write: if false;
+    }
+
     match /{documento=**} {
       allow read, write: if false;
     }

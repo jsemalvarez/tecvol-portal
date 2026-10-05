@@ -24,12 +24,10 @@
   --font-sans: var(--font-barlow), "Arial Narrow", Arial, sans-serif;
   --font-cartel: var(--font-barlow-condensed), "Arial Narrow", Arial, sans-serif;
 
-  --radius-cartel: 1.25rem;
   --radius-placa: 0.25rem;
 
   /* Placas de esmalte blanco montadas sobre la pared: una sombra corta de apoyo y una larga y suave. */
   --shadow-placa: 0 1px 2px rgb(26 26 26 / 0.07), 0 16px 32px -18px rgb(26 26 26 / 0.3);
-  --shadow-cartel: 0 2px 4px rgb(26 26 26 / 0.06), 0 36px 64px -32px rgb(26 26 26 / 0.4);
   --ease-salida: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -172,7 +170,7 @@
     border-style: dashed;
   }
 
-  /* Placa sobre la banda gris: naranja con texto negro; al pasar, negra con texto naranja. */
+  /* Placa chica de la cabecera del pliego: naranja con texto negro; al pasar, negra con texto naranja. */
   .placa-banda {
     display: inline-flex;
     align-items: center;
@@ -200,13 +198,13 @@
     color: var(--color-naranja);
   }
 
-  /* Placa del logo: el logo oficial va siempre sobre fondo claro. */
+  /* Placa del logo: el logo oficial va siempre sobre una placa blanca. */
   .placa-logo {
     display: inline-flex;
     align-items: center;
     padding: 0.375rem 0.75rem;
     border-radius: 0.375rem;
-    background: var(--color-esmalte);
+    background: var(--color-blanco);
   }
 
   /* Renglón de formulario: el campo es la línea para completar del cartel. */

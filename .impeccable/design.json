@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-05T16:15:14.746Z",
+  "generatedAt": "2026-10-05T20:21:14.964Z",
   "title": "Design System: Tecvol · Reparación de transformadores",
   "extensions": {
     "colorMeta": {
@@ -199,7 +199,7 @@
       {
         "pair": "blanco on acero",
         "ratio": "4.65:1",
-        "use": "All text on the /ingresar top band, caption bands and service name plates. Esmalte on acero (4.22:1) is not used for text."
+        "use": "All text on caption bands and service name plates. Esmalte on acero (4.22:1) is not used for text."
       },
       {
         "pair": "tinta on durazno",
@@ -243,7 +243,7 @@
       },
       "body-lead": {
         "displayName": "Lead",
-        "purpose": "Section leads and result data; up to 1.25rem in the sheet."
+        "purpose": "Section leads and result data; up to 1.25rem in the pliego."
       },
       "label": {
         "displayName": "Label",
@@ -268,14 +268,9 @@
     },
     "shadows": [
       {
-        "name": "shadow-cartel",
-        "value": "0 2px 4px rgb(26 26 26 / 0.06), 0 36px 64px -32px rgb(26 26 26 / 0.4)",
-        "purpose": "Mount shadow of the /ingresar sheet."
-      },
-      {
         "name": "shadow-placa",
         "value": "0 1px 2px rgb(26 26 26 / 0.07), 0 16px 32px -18px rgb(26 26 26 / 0.3)",
-        "purpose": "Mount shadow of every other white plate: the result's sign plate, portal example, services plate, inquiry form and its confirmation."
+        "purpose": "Mount shadow of every white plate: the result's sign plate, portal example, services plate, inquiry form and its confirmation."
       },
       {
         "name": "floor-shadow",
@@ -296,11 +291,6 @@
       }
     ],
     "lineWeights": [
-      {
-        "name": "sheet",
-        "value": "5px acero (6px from 1024px)",
-        "purpose": "Border of the /ingresar sheet."
-      },
       {
         "name": "section-rule",
         "value": "6px acero",
@@ -489,14 +479,6 @@
       "css": ".ds-placa-secundaria { display: inline-flex; align-items: center; min-height: 2.75rem; padding: 0 1.125rem; border: 2px solid var(--color-acero, #747478); border-radius: 0.25rem; background: transparent; color: var(--color-tinta, #1a1a1a); font-family: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif; font-size: 0.9375rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; transition: background-color 160ms cubic-bezier(0.16,1,0.3,1), color 160ms cubic-bezier(0.16,1,0.3,1); } .ds-placa-secundaria:hover { background: var(--color-tinta, #1a1a1a); color: var(--color-esmalte, #f4f4f1); } .ds-placa-secundaria:focus-visible { outline: 3px solid var(--color-tinta, #1a1a1a); outline-offset: 3px; }"
     },
     {
-      "name": "Top band",
-      "kind": "nav",
-      "refersTo": "banda",
-      "description": "The steel band across the top of the sheet: logo on its light plate, trade line, section links and the orange band plate.",
-      "html": "<header class=\"ds-banda\"><a class=\"ds-marca\" href=\"#\"><span class=\"ds-placa-logo\"><span class=\"ds-logo\" role=\"img\" aria-label=\"Tecvol (public/marca/tecvol-logo.png, 1600 x 379)\"></span></span><span class=\"ds-marca-barra\"></span><span class=\"ds-rotulo\">Reparación de transformadores</span></a><nav class=\"ds-banda-nav\"><a class=\"ds-rotulo\" href=\"#\">Cómo se lee el estado</a><a class=\"ds-rotulo\" href=\"#\">Servicios</a></nav><a class=\"ds-placa-banda\" href=\"#\">Ingresar</a></header>",
-      "css": ".ds-banda { display: flex; align-items: center; gap: 1rem; padding: 1rem 2rem; background: var(--color-acero, #747478); color: var(--color-esmalte, #f4f4f1); } .ds-marca { display: flex; align-items: center; gap: 1rem; color: inherit; text-decoration: none; } .ds-placa-logo { display: inline-flex; align-items: center; padding: 0.375rem 0.75rem; border-radius: 0.375rem; background: var(--color-esmalte, #f4f4f1); } .ds-logo { display: block; width: 118px; height: 28px; } .ds-marca-barra { width: 3px; height: 1.75rem; background: var(--color-esmalte, #f4f4f1); } .ds-rotulo { font-family: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif; font-size: 0.9375rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; line-height: 1.1; color: inherit; text-decoration: none; } .ds-banda-nav { margin-left: auto; display: flex; gap: 1.75rem; } .ds-banda-nav a:hover { text-decoration: underline; text-decoration-color: var(--color-naranja, #ff8929); text-decoration-thickness: 2px; text-underline-offset: 0.2em; } .ds-banda a:focus-visible { outline: 3px solid var(--color-esmalte, #f4f4f1); outline-offset: 3px; } .ds-placa-banda { display: inline-flex; align-items: center; min-height: 2.75rem; padding: 0 1rem; margin-left: 0.5rem; border: 2px solid var(--color-naranja, #ff8929); border-radius: 0.25rem; background: var(--color-naranja, #ff8929); color: var(--color-tinta, #1a1a1a); font-family: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif; font-size: 1rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; text-decoration: none; transition: background-color 160ms cubic-bezier(0.16,1,0.3,1), color 160ms cubic-bezier(0.16,1,0.3,1); } .ds-placa-banda:hover { background: var(--color-tinta, #1a1a1a); color: var(--color-naranja, #ff8929); }"
-    },
-    {
       "name": "Banner (pliego)",
       "kind": "custom",
       "refersTo": "banner",
@@ -551,14 +533,22 @@
       "description": "The scene's station header: acero numeral, label strip (state colour when set down, dashed acero while travelling), graphite meaning, and the stage counter with an orange current square.",
       "html": "<div class=\"ds-escena\"><p class=\"ds-escena-num\">4</p><div class=\"ds-escena-texto\"><p class=\"ds-franja-escena\">En reparación</p><p class=\"ds-escena-sig\">El taller está reparando su equipo.</p></div><div class=\"ds-escena-cont\"><p>Etapa 4 de 7</p><div class=\"ds-cuadros\"><span class=\"ds-c ds-c-pasada\"></span><span class=\"ds-c ds-c-pasada\"></span><span class=\"ds-c ds-c-pasada\"></span><span class=\"ds-c ds-c-actual\"></span><span class=\"ds-c\"></span><span class=\"ds-c\"></span><span class=\"ds-c\"></span></div></div></div>",
       "css": ".ds-escena { display: flex; align-items: flex-start; gap: 2.5rem; padding: 2.25rem 3rem 1.5rem; background: var(--color-esmalte, #f4f4f1); border-block: 6px solid var(--color-acero, #747478); } .ds-escena-num { margin: 0; font-family: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif; font-size: 6rem; font-weight: 700; line-height: 0.8; color: var(--color-acero, #747478); } .ds-escena-texto { flex: 1; } .ds-franja-escena { display: inline-block; margin: 0; padding: 0.5rem 0.75rem; border-radius: 0.375rem; background: var(--color-amarillo, #ffcd00); color: var(--color-tinta, #1a1a1a); font-family: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif; font-size: 1.75rem; font-weight: 800; letter-spacing: 0.06em; line-height: 1.25; text-transform: uppercase; } .ds-escena-sig { margin: 0.75rem 0 0; max-width: 46ch; font-family: Barlow, 'Arial Narrow', Arial, sans-serif; font-size: 1.125rem; color: var(--color-grafito, #5c5c5c); } .ds-escena-cont { display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem; } .ds-escena-cont p { margin: 0; font-family: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif; font-size: 0.8125rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-grafito, #5c5c5c); } .ds-cuadros { display: flex; gap: 0.375rem; } .ds-c { width: 12px; height: 12px; border-radius: 2px; border: 2px solid var(--color-acero, #747478); box-sizing: border-box; } .ds-c-pasada { background: var(--color-acero, #747478); } .ds-c-actual { border-color: var(--color-tinta, #1a1a1a); background: var(--color-naranja, #ff8929); }"
+    },
+    {
+      "name": "Access page (ingreso)",
+      "kind": "custom",
+      "refersTo": "acceso",
+      "description": "The login printed on the wall at dusk: a grafito label line, the Display heading, email and password lines with a Mostrar toggle, the primary plate and the reset link, over the dusk horizon and a durazno band with the account note.",
+      "html": "<div class=\"ds-acceso\"><div class=\"ds-acceso-col\"><p class=\"ds-acceso-rotulo\">Portal de clientes · Panel del taller</p><p class=\"ds-acceso-titulo\">Ingresar</p><label class=\"ds-acceso-campo\"><span class=\"ds-acceso-label\">Email</span><input class=\"ds-acceso-renglon\" type=\"email\" /></label><label class=\"ds-acceso-campo\"><span class=\"ds-acceso-label\">Contraseña <span class=\"ds-acceso-ver\">Mostrar</span></span><input class=\"ds-acceso-renglon\" type=\"password\" /></label><div class=\"ds-acceso-acciones\"><button class=\"ds-acceso-placa\">Ingresar</button><a class=\"ds-acceso-link\" href=\"#\">¿Olvidó su contraseña?</a></div></div><svg class=\"ds-acceso-horizonte\" viewBox=\"0 0 1440 70\" preserveAspectRatio=\"xMidYMax slice\" aria-hidden=\"true\"><circle cx=\"980\" cy=\"70\" r=\"44\" fill=\"var(--color-naranja, #ff8929)\" /><g fill=\"none\" stroke=\"var(--color-naranja, #ff8929)\" stroke-width=\"2\" stroke-linecap=\"round\"><path d=\"M0 70 H1440\" /><path d=\"M330 70 V8 M302 10 H358 M570 70 V8 M542 10 H598 M810 70 V8 M782 10 H838\" /><path d=\"M302 10 Q422 30 542 10 M358 10 Q478 30 598 10 M542 10 Q662 30 782 10 M598 10 Q718 30 838 10\" /></g></svg><div class=\"ds-acceso-banda\"><p><strong>¿No tiene cuenta?</strong> Las cuentas las crea el taller al registrar a su empresa.</p></div></div>",
+      "css": ".ds-acceso { background: var(--color-esmalte, #f4f4f1); color: var(--color-tinta, #1a1a1a); font-family: Barlow, 'Arial Narrow', Arial, sans-serif; } .ds-acceso-col { max-width: 26rem; margin: 0 auto; padding: 2.5rem 1.75rem 2rem; } .ds-acceso-rotulo { margin: 0; font-family: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif; font-size: 0.9375rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-grafito, #5c5c5c); } .ds-acceso-titulo { margin: 0.5rem 0 2rem; font-family: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif; font-size: 3rem; font-weight: 700; line-height: 0.92; } .ds-acceso-campo { display: block; margin-bottom: 1.75rem; } .ds-acceso-label { display: flex; justify-content: space-between; font-family: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif; font-size: 0.9375rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; } .ds-acceso-ver { font-size: 0.8125rem; text-decoration: underline; text-decoration-color: var(--color-naranja, #ff8929); text-decoration-thickness: 2px; text-underline-offset: 4px; } .ds-acceso-renglon { display: block; width: 100%; margin-top: 0.25rem; border: 0; border-bottom: 3px solid var(--color-acero, #747478); background: transparent; padding: 0.5rem 0 0.375rem; font: inherit; font-size: 1.125rem; color: inherit; appearance: none; } .ds-acceso-renglon:focus-visible { outline: none; border-bottom: 5px solid var(--color-tinta, #1a1a1a); padding-bottom: 0.25rem; background: var(--color-blanco, #ffffff); } .ds-acceso-acciones { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem 1.5rem; } .ds-acceso-placa { min-height: 3.5rem; padding: 0 1.75rem; border: 3px solid var(--color-naranja, #ff8929); border-radius: 0.25rem; background: var(--color-naranja, #ff8929); color: var(--color-tinta, #1a1a1a); font-family: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif; font-size: 1.125rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; cursor: pointer; } .ds-acceso-placa:hover { border-color: var(--color-tinta, #1a1a1a); background: var(--color-tinta, #1a1a1a); color: var(--color-naranja, #ff8929); } .ds-acceso-link { color: inherit; font-weight: 600; text-decoration: underline; text-decoration-color: var(--color-naranja, #ff8929); text-decoration-thickness: 2px; text-underline-offset: 0.2em; } .ds-acceso-horizonte { display: block; width: 100%; height: 70px; } .ds-acceso-banda { background: var(--color-durazno, #f7d9bf); padding: 1.5rem 1.75rem; font-size: 0.9375rem; } .ds-acceso-banda p { margin: 0; max-width: 52ch; }"
     }
   ],
   "narrative": {
     "northStar": "Señalización de taller",
-    "overview": "The interface is a workshop wall in Tecvol's colours. The page is the light wall (esmalte). The first viewport is a printed sheet (the pliego) pasted straight onto it: crop marks at the corners, a narrow rail down each side, the question in large black condensed type, and an orange line drawing of the customers' world (a cooperative's rural line with a windmill and a pole-mounted transformer, and the workshop shed with a transformer going in). At the end, the same line runs on to the horizon under a setting sun: the page starts by day and ends at dusk. Below the first viewport, content panels are pure white enamel plates fixed to the wall, each lifted by a short mount shadow. Tecvol's steel grey draws the structure (the plate rims, the section rules, the footer, the fill-in lines of the form); signal black is kept for what must read hardest: every headline, the text, the borders of the safety signs, the focus ring and the floor line. Tecvol orange is the hand you act with and the brand's own ink: every primary plate, the opening segment of each section rule, the line drawing and its sun, and the overhead crane in the workshop scene. Hierarchy comes from black condensed capitals, line weight, bands and the step from wall to plate.\n\nColour that carries meaning enters only to say what state a repair is in, using the safety-sign grammar the customer already reads in their plant (IRAM 10005 / ISO 7010). A white rectangle is a record (received, delivered). A yellow triangle means the workshop is working. A blue circle means the next step is the customer's: their approval is needed. A green square means ready. Red belongs to errors and nothing else. Orange is the brand and the action and never a state, so it never fills a sign.\n\nThe page is dense and direct, like a notice on a workshop wall, and it moves once at length: a scroll-driven walk along the workshop floor where an orange crane carries a grey transformer from bay to bay and each bay's sign lights up when the unit is set down. The world rejects the trade's stock landing page (substation photo, navy with yellow, a row of service cards) and rejects yellow-and-black hazard tape as ornament.",
+    "overview": "The interface is a workshop wall in Tecvol's colours. The page is the light wall (esmalte). The first viewport is a printed sheet (the pliego) pasted straight onto it: crop marks at the corners, a narrow rail down each side, the question in large black condensed type, and an orange line drawing of the customers' world (a cooperative's rural line with a windmill and a pole-mounted transformer, and the workshop shed with a transformer going in). At the end, the same line runs on to the horizon under a setting sun: the page starts by day and ends at dusk. The access pages (/ingresar, /portal, /panel) stand at that dusk: a clear form on the wall above the same horizon. Below the first viewport, content panels are pure white enamel plates fixed to the wall, each lifted by a short mount shadow. Tecvol's steel grey draws the structure (the plate rims, the section rules, the footer, the fill-in lines of the form); signal black is kept for what must read hardest: every headline, the text, the borders of the safety signs, the focus ring and the floor line. Tecvol orange is the hand you act with and the brand's own ink: every primary plate, the opening segment of each section rule, the line drawing and its sun, and the overhead crane in the workshop scene. Hierarchy comes from black condensed capitals, line weight, bands and the step from wall to plate.\n\nColour that carries meaning enters only to say what state a repair is in, using the safety-sign grammar the customer already reads in their plant (IRAM 10005 / ISO 7010). A white rectangle is a record (received, delivered). A yellow triangle means the workshop is working. A blue circle means the next step is the customer's: their approval is needed. A green square means ready. Red belongs to errors and nothing else. Orange is the brand and the action and never a state, so it never fills a sign.\n\nThe page is dense and direct, like a notice on a workshop wall, and it moves once at length: a scroll-driven walk along the workshop floor where an orange crane carries a grey transformer from bay to bay and each bay's sign lights up when the unit is set down. The world rejects the trade's stock landing page (substation photo, navy with yellow, a row of service cards) and rejects yellow-and-black hazard tape as ornament.",
     "keyCharacteristics": [
       "A light wall: a printed pliego with crop marks as the first viewport, pure white plates mounted below; steel-grey structure; signal-black headlines, text and sign borders.",
-      "An orange line drawing in the pliego, swapped for the customer's sign and data when a code is looked up, and its continuation at dusk across the footer.",
+      "An orange line drawing in the pliego, swapped for the customer's sign and data when a code is looked up, and its continuation at dusk across the footer and the access pages.",
       "Tecvol orange for brand and action only; four state colours bound to sign shapes; red only for errors.",
       "The official logo always sits on a light plate.",
       "Barlow Condensed capitals for bands, labels and actions; Barlow for reading; every headline in tinta.",
@@ -614,7 +604,7 @@
       },
       {
         "name": "The Mounted Plate Rule",
-        "body": "Only a white plate on the wall gets a shadow (content plates are screwed on, a screw at each corner), and only the two mount shadows. The pliego is printed on the wall: no rim, no shadow. Inside a plate, separate, group and emphasise with a heavier line or a band: no nested shadows, no raised cards within cards, no tonal gradients.",
+        "body": "Only a white plate on the wall gets a shadow (content plates are screwed on, a screw at each corner), and only the plate mount shadow. The pliego is printed on the wall: no rim, no shadow. Inside a plate, separate, group and emphasise with a heavier line or a band: no nested shadows, no raised cards within cards, no tonal gradients.",
         "section": "elevation"
       },
       {
@@ -660,10 +650,10 @@
       "**Don't** use yellow, blue, green or red for anything that is not a state or an error: no coloured headings, links, icons, backgrounds or selection.",
       "**Don't** use orange as a state, in a sign or in a label strip.",
       "**Don't** put the logo directly on steel, orange or a photo.",
-      "**Don't** add shadows beyond the two mount shadows, raise anything inside a plate, or use tonal gradients (the sign glint is the one exception).",
+      "**Don't** add shadows beyond the plate mount shadow, raise anything inside a plate, or use tonal gradients (the sign glint is the one exception).",
       "**Don't** set headlines in acero or in two tones.",
       "**Don't** set text in orange on esmalte or white; orange text belongs only on tinta.",
-      "**Don't** add illustrations beyond the pliego's drawing and its continuation in the footer, or turn either into a status display.",
+      "**Don't** add illustrations beyond the pliego's drawing and its continuation at dusk (the footer and the access pages), or turn either into a status display.",
       "**Don't** place a Señal as decoration, on a service, or on a feature list.",
       "**Don't** use yellow-and-black hazard tape as ornament.",
       "**Don't** fall back on the trade's stock landing: substation photo, navy with yellow, a row of service cards.",

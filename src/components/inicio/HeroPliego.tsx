@@ -64,7 +64,7 @@ export function HeroPliego({ codigoInicial }: { codigoInicial?: string }) {
       <div className="mx-auto flex min-h-svh max-w-[1500px] flex-col px-7 pb-12 pt-8 sm:px-12 xl:px-24">
         <header className="flex items-center gap-4">
           <Link href="/" className="flex min-w-0 items-center gap-4 no-underline">
-            <span className="placa-logo !bg-blanco">
+            <span className="placa-logo">
               <Image src="/marca/tecvol-logo.png" alt="Tecvol" width={1600} height={379} priority unoptimized className="h-7 w-auto lg:h-8" />
             </span>
             <span className="rotulo hidden truncate text-base font-semibold sm:block">Reparación de transformadores</span>

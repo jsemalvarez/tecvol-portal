@@ -1,4 +1,4 @@
-import type { ConsultaNueva, SeguimientoPublico } from "@/lib/dominio/tipos";
+import type { ConsultaNueva, SeguimientoPublico, Sesion } from "@/lib/dominio/tipos";
 import { firebaseConfigurado } from "./firebase/config";
 
 /**
@@ -12,6 +12,25 @@ export interface SeguimientoRepositorio {
 
 export interface ConsultasRepositorio {
   crear(consulta: ConsultaNueva): Promise<void>;
+}
+
+export interface AutenticacionRepositorio {
+  /** Inicia sesión con email y contraseña. Si falla, lanza `ErrorDeIngreso`. */
+  ingresar(email: string, clave: string): Promise<Sesion>;
+  salir(): Promise<void>;
+  /** Envía el enlace para elegir una contraseña nueva. No revela si el email tiene cuenta. */
+  restablecerClave(email: string): Promise<void>;
+  /** Avisa la sesión actual y cada cambio. Devuelve la función para dejar de escuchar. */
+  observarSesion(alCambiar: (sesion: Sesion | null) => void): () => void;
+}
+
+export type MotivoErrorDeIngreso = "credenciales" | "intentos" | "deshabilitada" | "conexion" | "desconocido";
+
+export class ErrorDeIngreso extends Error {
+  constructor(readonly motivo: MotivoErrorDeIngreso) {
+    super(`No se pudo ingresar: ${motivo}`);
+    this.name = "ErrorDeIngreso";
+  }
 }
 
 export interface Repositorios {
@@ -53,6 +72,26 @@ async function cargarRepositorios(): Promise<Repositorios> {
   if (modoDatos === "local") {
     const { SeguimientoLocal, ConsultasLocal } = await import("./local");
     return { seguimiento: new SeguimientoLocal(), consultas: new ConsultasLocal() };
+  }
+  throw new ServicioNoConfiguradoError();
+}
+
+let autenticacion: Promise<AutenticacionRepositorio> | null = null;
+
+/** La autenticación se carga aparte, para que las páginas públicas no descarguen Firebase Auth. */
+export function obtenerAutenticacion(): Promise<AutenticacionRepositorio> {
+  autenticacion ??= cargarAutenticacion();
+  return autenticacion;
+}
+
+async function cargarAutenticacion(): Promise<AutenticacionRepositorio> {
+  if (modoDatos === "firebase") {
+    const { AutenticacionFirebase } = await import("./firebase/autenticacion");
+    return new AutenticacionFirebase();
+  }
+  if (modoDatos === "local") {
+    const { AutenticacionLocal } = await import("./local/autenticacion");
+    return new AutenticacionLocal();
   }
   throw new ServicioNoConfiguradoError();
 }

@@ -46,7 +46,7 @@ export function Pie() {
       <div className="bg-durazno text-tinta">
         <div className="mx-auto grid max-w-[1680px] gap-x-12 gap-y-10 px-5 pb-10 pt-12 sm:px-8 lg:grid-cols-12 lg:pb-12 lg:pt-16">
           <div className="lg:col-span-5">
-            <span className="placa-logo !bg-blanco">
+            <span className="placa-logo">
               <Image src="/marca/tecvol-logo.png" alt="Tecvol, ingeniería electromecánica" width={1600} height={379} unoptimized className="h-11 w-auto" />
             </span>
             <ul className="rotulo mt-6 space-y-1 text-lg font-semibold leading-tight tracking-[0.08em] sm:text-xl">

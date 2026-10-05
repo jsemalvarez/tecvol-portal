@@ -1,5 +1,6 @@
 import { getApp, getApps, initializeApp, type FirebaseApp } from "firebase/app";
 import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
+import { getAuth, type Auth } from "firebase/auth";
 import { getFirestore, type Firestore } from "firebase/firestore";
 import { appCheckDepuracion, claveRecaptcha, configuracionFirebase } from "./config";
 
@@ -29,4 +30,11 @@ let db: Firestore | null = null;
 export function obtenerFirestore(): Firestore {
   db ??= getFirestore(iniciarApp());
   return db;
+}
+
+let auth: Auth | null = null;
+
+export function obtenerAuth(): Auth {
+  auth ??= getAuth(iniciarApp());
+  return auth;
 }

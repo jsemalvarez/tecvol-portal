@@ -24,3 +24,13 @@ export interface ConsultaNueva {
   equipo?: string;
   descripcion: string;
 }
+
+/** Quién ingresa: el cliente va al portal; el personal del taller, al panel. */
+export type Rol = "cliente" | "personal";
+
+/** Usuario con la sesión iniciada. */
+export interface Sesion {
+  uid: string;
+  email: string;
+  rol: Rol;
+}

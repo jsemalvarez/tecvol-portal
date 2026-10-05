@@ -13,8 +13,9 @@ npm run dev
 ```
 
 Sin variables de Firebase, en desarrollo la app usa **datos locales de prueba** (`src/lib/datos/local`).
-Los códigos de prueba aparecen en el pie de la página. En producción sin Firebase, la consulta muestra que el
-servicio no está habilitado: nunca se usan datos de prueba.
+Los códigos de prueba aparecen en el pie de la página y las cuentas de prueba (una de cliente y una del
+personal) en `/ingresar`; están en `src/lib/datos/local/autenticacion.ts`. En producción sin Firebase, la
+consulta y el ingreso muestran que el servicio no está habilitado: nunca se usan datos de prueba.
 
 ## Firebase
 
@@ -43,10 +44,21 @@ cambia el estado del equipo.
 El código de seguimiento se genera con `generarCodigo()` en `src/lib/dominio/codigo.ts`: 8 caracteres, sin
 0/O/1/I/L, mostrado como `XXXX-XXXX`.
 
+### Ingreso (Firebase Auth)
+
+`/ingresar` usa email y contraseña. En la consola de Firebase hay que activar el proveedor
+**Correo electrónico/contraseña** (Authentication → Método de acceso). No hay registro público: las cuentas
+las crea el taller (Authentication → Usuarios → Agregar usuario).
+
+Después de ingresar, el cliente va a `/portal` y el personal a `/panel` (las dos, provisorias hasta construir
+el portal y el panel). El enlace "¿Olvidó su contraseña?" envía el email de Firebase para elegir una nueva.
+
 ### Personal del taller
 
-Provisorio hasta construir el panel: las reglas consideran personal a quien tenga un documento en
-`personal/{uid}`.
+Provisorio hasta construir el panel: es personal quien tenga un documento en `personal/{uid}`, con el UID de
+su usuario de Authentication (el contenido del documento puede ser, por ejemplo, `{ nombre: "..." }`). Las
+reglas dejan que cada usuario lea solo su propio documento, para que la app sepa si va al panel; nadie puede
+listar ni escribir la colección desde la app.
 
 ### App Check (opcional)
 
