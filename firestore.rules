@@ -1,0 +1,53 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Provisorio hasta construir el panel: es personal de Tecvol quien tiene
+    // un documento en personal/{uid}.
+    function esPersonal() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/personal/$(request.auth.uid));
+    }
+
+    function textoHasta(valor, largo) {
+      return valor is string && valor.size() > 0 && valor.size() <= largo;
+    }
+
+    function opcionalHasta(d, campo, largo) {
+      return !(campo in d) || textoHasta(d[campo], largo);
+    }
+
+    function consultaValida(d) {
+      return d.keys().hasOnly(['empresa', 'nombre', 'email', 'telefono', 'localidad', 'equipo', 'descripcion', 'estado', 'creada'])
+        && d.keys().hasAll(['empresa', 'nombre', 'email', 'descripcion', 'estado', 'creada'])
+        && textoHasta(d.empresa, 120)
+        && textoHasta(d.nombre, 120)
+        && textoHasta(d.email, 160)
+        && d.email.matches('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$')
+        && textoHasta(d.descripcion, 2000)
+        && opcionalHasta(d, 'telefono', 40)
+        && opcionalHasta(d, 'localidad', 120)
+        && opcionalHasta(d, 'equipo', 200)
+        && d.estado == 'nueva'
+        && d.creada == request.time;
+    }
+
+    // Seguimiento público: se lee un código conocido, nunca la colección entera.
+    match /seguimiento/{codigo} {
+      allow get: if true;
+      allow list: if false;
+      allow create, update, delete: if esPersonal();
+    }
+
+    // Consultas de clientes potenciales: cualquiera crea, solo el personal lee.
+    match /consultas/{consulta} {
+      allow create: if consultaValida(request.resource.data);
+      allow read, update, delete: if esPersonal();
+    }
+
+    match /{documento=**} {
+      allow read, write: if false;
+    }
+  }
+}
