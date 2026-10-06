@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { PanelPlanilla } from "@/components/panel/VistaPlanilla";
+import { PanelPlanilla } from "@/components/panel/Planilla";
 
 export const metadata: Metadata = {
   title: "Panel · Tecvol",

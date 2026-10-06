@@ -9,7 +9,7 @@ import type { EquipoTaller } from "@/lib/dominio/tipos";
 import { BarraFiltros, useFiltros } from "./Filtros";
 import { PaginaPanel, type ApiPanel } from "./PaginaPanel";
 
-/** Planilla: todos los equipos en una tabla, del último que cambió al primero, con búsqueda y filtros. */
+/** Equipos del panel: todos en una tabla, del último que cambió al primero, con búsqueda y filtros. */
 export function PanelPlanilla() {
   return <PaginaPanel seccion="equipos">{(api) => <Planilla api={api} />}</PaginaPanel>;
 }
@@ -116,8 +116,8 @@ function Planilla({ api }: { api: ApiPanel }) {
 function Acciones({ api, equipo }: { api: ApiPanel; equipo: EquipoTaller }) {
   const nombre = nombreDe(equipo);
   return (
-    <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2 md:flex-nowrap">
-      <button type="button" onClick={() => api.abrirEstado(equipo)} className="placa-secundaria whitespace-nowrap" aria-label={`Cambiar el estado de ${nombre}`}>
+    <div className="flex flex-wrap items-center gap-x-5 gap-y-3 md:flex-nowrap md:justify-end md:gap-x-4">
+      <button type="button" onClick={() => api.abrirEstado(equipo)} className="placa-secundaria w-full justify-center whitespace-nowrap md:w-auto" aria-label={`Cambiar el estado de ${nombre}`}>
         Cambiar estado
       </button>
       <button

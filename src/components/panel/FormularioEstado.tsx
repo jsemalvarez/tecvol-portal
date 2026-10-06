@@ -28,13 +28,10 @@ export function FormularioEstado({
   equipo,
   acciones,
   onGuardado,
-  enFila = false,
 }: {
   equipo: EquipoTaller;
   acciones: AccionesPanel;
   onGuardado: (anterior: EstadoAnterior, estado: EstadoReparacion) => void;
-  /** Las opciones en más columnas, para un panel ancho. */
-  enFila?: boolean;
 }) {
   const id = useId();
   const hoy = fechaParaCampo(new Date());
@@ -65,7 +62,7 @@ export function FormularioEstado({
     <form onSubmit={guardar} noValidate className="flex flex-col gap-5">
       <fieldset>
         <legend className="rotulo text-[0.9375rem]">Estado</legend>
-        <div className={`mt-3 grid gap-2 ${enFila ? "grid-cols-2 sm:grid-cols-3" : "sm:grid-cols-2"}`}>
+        <div className="mt-3 grid gap-2 sm:grid-cols-2">
           {ESTADOS.map((estado) => {
             const definicion = DEFINICIONES[estado];
             const actual = estado === equipo.estado;

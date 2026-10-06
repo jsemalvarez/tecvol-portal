@@ -10,10 +10,10 @@ export type FiltroEstado = "en-taller" | "todos" | EstadoReparacion;
 const sinAcentos = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
 
 /** Búsqueda por código, referencia, equipo, serie o empresa, más los filtros de empresa y estado. */
-export function useFiltros(equipos: EquipoTaller[], empresas: Empresa[], inicial: FiltroEstado = "en-taller") {
+export function useFiltros(equipos: EquipoTaller[], empresas: Empresa[]) {
   const [texto, setTexto] = useState("");
   const [empresa, setEmpresa] = useState("");
-  const [estado, setEstado] = useState<FiltroEstado>(inicial);
+  const [estado, setEstado] = useState<FiltroEstado>("en-taller");
 
   const filtrados = useMemo(() => {
     const nombres = new Map(empresas.map((e) => [e.id, e.nombre]));
@@ -38,21 +38,15 @@ export function BarraFiltros({
   filtros,
   empresas,
   total,
-  conEstado = true,
-  apilada = false,
 }: {
   filtros: Filtros;
   empresas: Empresa[];
   total: number;
-  /** Sin el filtro de estado, para un diseño que ya separa los equipos por estado. */
-  conEstado?: boolean;
-  /** Un campo debajo del otro, para una columna angosta. */
-  apilada?: boolean;
 }) {
   const id = useId();
   return (
     <div role="search" aria-label="Buscar equipos">
-      <div className={`grid gap-x-6 gap-y-4 ${apilada ? "" : conEstado ? "md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)]" : "md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]"}`}>
+      <div className="grid gap-x-6 gap-y-4 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)]">
         <div>
           <label htmlFor={`${id}-texto`} className="rotulo block text-[0.8125rem]">
             Buscar
@@ -67,41 +61,37 @@ export function BarraFiltros({
             className="renglon mt-0.5 text-base"
           />
         </div>
-        <div className={apilada && conEstado ? "grid grid-cols-2 gap-x-6" : "contents"}>
-          <div>
-            <label htmlFor={`${id}-empresa`} className="rotulo block text-[0.8125rem]">
-              Empresa
-            </label>
-            <select id={`${id}-empresa`} value={filtros.empresa} onChange={(e) => filtros.setEmpresa(e.target.value)} className="renglon mt-0.5 text-base">
-              <option value="">Todas</option>
-              {empresas.map((e) => (
-                <option key={e.id} value={e.id}>
-                  {e.nombre}
-                </option>
-              ))}
-            </select>
-          </div>
-          {conEstado && (
-            <div>
-              <label htmlFor={`${id}-estado`} className="rotulo block text-[0.8125rem]">
-                Estado
-              </label>
-              <select
-                id={`${id}-estado`}
-                value={filtros.estado}
-                onChange={(e) => filtros.setEstado(e.target.value as FiltroEstado)}
-                className="renglon mt-0.5 text-base"
-              >
-                <option value="en-taller">En el taller</option>
-                <option value="todos">Todos, con los entregados</option>
-                {ESTADOS.map((estado) => (
-                  <option key={estado} value={estado}>
-                    {DEFINICIONES[estado].nombre}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
+        <div>
+          <label htmlFor={`${id}-empresa`} className="rotulo block text-[0.8125rem]">
+            Empresa
+          </label>
+          <select id={`${id}-empresa`} value={filtros.empresa} onChange={(e) => filtros.setEmpresa(e.target.value)} className="renglon mt-0.5 text-base">
+            <option value="">Todas</option>
+            {empresas.map((e) => (
+              <option key={e.id} value={e.id}>
+                {e.nombre}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label htmlFor={`${id}-estado`} className="rotulo block text-[0.8125rem]">
+            Estado
+          </label>
+          <select
+            id={`${id}-estado`}
+            value={filtros.estado}
+            onChange={(e) => filtros.setEstado(e.target.value as FiltroEstado)}
+            className="renglon mt-0.5 text-base"
+          >
+            <option value="en-taller">En el taller</option>
+            <option value="todos">Todos, con los entregados</option>
+            {ESTADOS.map((estado) => (
+              <option key={estado} value={estado}>
+                {DEFINICIONES[estado].nombre}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
       <p aria-live="polite" className="mt-3 text-[0.9375rem] text-grafito">

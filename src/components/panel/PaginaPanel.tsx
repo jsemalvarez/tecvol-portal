@@ -17,7 +17,7 @@ import { FormularioEstado } from "./FormularioEstado";
 import { FormularioCuenta, FormularioEmpresa } from "./FormulariosEmpresa";
 import { usePanel, type AccionesPanel, type EstadoAnterior } from "./usePanel";
 
-/** Lo que cada diseño del panel puede usar: los datos, las acciones y las ventanas. */
+/** Lo que cada sección del panel puede usar: los datos, las acciones y las ventanas. */
 export interface ApiPanel {
   taller: Taller;
   acciones: AccionesPanel;
@@ -26,10 +26,6 @@ export interface ApiPanel {
   abrirEditar: (equipo: EquipoTaller) => void;
   abrirEtiqueta: (equipo: EquipoTaller) => void;
   abrirCuenta: (empresa: Empresa) => void;
-  /** Cambio rápido con la fecha de hoy, con aviso para deshacerlo. */
-  pasarA: (equipo: EquipoTaller, estado: EstadoReparacion) => Promise<void>;
-  /** Aviso de un cambio de estado ya guardado, con la opción de deshacerlo. */
-  avisarCambio: (anterior: EstadoAnterior, equipo: EquipoTaller, estado: EstadoReparacion) => void;
 }
 
 type Ventana =
@@ -50,7 +46,7 @@ const SECCIONES = [
 
 /**
  * Página del panel del taller: la sesión del personal, las secciones, los estados de carga, las ventanas
- * para cargar datos y los avisos. Cada diseño recibe la API y muestra los equipos a su modo.
+ * para cargar datos y los avisos. Cada sección recibe la API y muestra sus datos.
  */
 export function PaginaPanel({ seccion, children }: { seccion: "equipos" | "empresas"; children: (api: ApiPanel) => ReactNode }) {
   const { estado, acciones, reintentar, salir } = usePanel();
@@ -82,15 +78,6 @@ export function PaginaPanel({ seccion, children }: { seccion: "equipos" | "empre
     abrirEditar: (equipo) => setVentana({ tipo: "editar", codigo: equipo.codigo }),
     abrirEtiqueta: (equipo) => setVentana({ tipo: "etiqueta", codigo: equipo.codigo }),
     abrirCuenta: (empresa) => setVentana({ tipo: "cuenta", empresa }),
-    async pasarA(equipo, nuevo) {
-      try {
-        const anterior = await acciones.cambiarEstado(equipo, nuevo, new Date());
-        avisarCambio(anterior, equipo, nuevo);
-      } catch {
-        avisar(`No se pudo pasar ${nombreDe(equipo)} a ${DEFINICIONES[nuevo].nombre}. Intente de nuevo.`);
-      }
-    },
-    avisarCambio,
   };
 
   const actual = SECCIONES.find((s) => s.id === seccion)!;

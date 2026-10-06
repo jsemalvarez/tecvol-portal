@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { PanelEmpresas } from "@/components/panel/VistaEmpresas";
+import { PanelEmpresas } from "@/components/panel/Empresas";
 
 export const metadata: Metadata = {
   title: "Empresas y cuentas · Panel · Tecvol",
