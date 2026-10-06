@@ -89,7 +89,7 @@ export function Pie() {
           <div className="mx-auto flex max-w-[1680px] flex-wrap justify-between gap-x-8 gap-y-2 px-5 py-5 text-[0.9375rem] sm:px-8">
             <p>© {ANIO} Tecvol · Ingeniería electromecánica</p>
             {modoDatos === "local" && (
-              <p>Modo local, sin Firebase. Códigos de prueba: {CODIGOS_DE_PRUEBA.map(formatearCodigo).join(" · ")}</p>
+              <p>Datos de prueba. Códigos para probar el seguimiento: {CODIGOS_DE_PRUEBA.map(formatearCodigo).join(" · ")}</p>
             )}
           </div>
         </div>

@@ -31,6 +31,39 @@ export interface PortalCliente {
   equipos: EquipoCliente[];
 }
 
+/** Empresa cliente del taller (`empresas/{id}`). */
+export interface Empresa {
+  id: string;
+  nombre: string;
+}
+
+/** Cuenta de cliente asociada a una empresa (`clientes/{uid}`). */
+export interface CuentaCliente {
+  uid: string;
+  email: string;
+  empresa: string;
+}
+
+/** Datos de un equipo que carga el personal: de qué empresa es y cómo se identifica. */
+export interface DatosEquipo {
+  empresa: string;
+  equipo: string;
+  referencia?: string;
+  serie?: string;
+}
+
+/** Un equipo como lo ve el personal: el seguimiento, los datos privados y la empresa dueña. */
+export interface EquipoTaller extends EquipoCliente {
+  empresa: string;
+}
+
+/** Todo lo que maneja el panel del taller. */
+export interface Taller {
+  empresas: Empresa[];
+  equipos: EquipoTaller[];
+  cuentas: CuentaCliente[];
+}
+
 /** Consulta de un cliente potencial desde la página pública. */
 export interface ConsultaNueva {
   empresa: string;

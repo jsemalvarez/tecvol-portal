@@ -18,6 +18,24 @@ service cloud.firestore {
       return !(campo in d) || textoHasta(d[campo], largo);
     }
 
+    // Empresa de la cuenta de cliente que hace la consulta.
+    function empresaDelCliente() {
+      return get(/databases/$(database)/documents/clientes/$(request.auth.uid)).data.empresa;
+    }
+
+    function esClienteDe(empresa) {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/clientes/$(request.auth.uid))
+        && empresaDelCliente() == empresa;
+    }
+
+    // Lo que escribe el panel: un estado de la lista y la descripción del equipo.
+    function seguimientoValido(d) {
+      return d.estado in ['ingresado', 'diagnostico', 'presupuesto', 'reparacion', 'ensayos', 'listo', 'entregado']
+        && textoHasta(d.equipo, 200)
+        && d.etapas is map;
+    }
+
     function consultaValida(d) {
       return d.keys().hasOnly(['empresa', 'nombre', 'email', 'telefono', 'localidad', 'equipo', 'descripcion', 'estado', 'creada'])
         && d.keys().hasAll(['empresa', 'nombre', 'email', 'descripcion', 'estado', 'creada'])
@@ -33,11 +51,12 @@ service cloud.firestore {
         && d.creada == request.time;
     }
 
-    // Seguimiento público: se lee un código conocido, nunca la colección entera.
+    // Seguimiento público: cualquiera lee un código conocido; solo el personal recorre la colección.
     match /seguimiento/{codigo} {
       allow get: if true;
-      allow list: if false;
-      allow create, update, delete: if esPersonal();
+      allow list: if esPersonal();
+      allow create, update: if esPersonal() && seguimientoValido(request.resource.data);
+      allow delete: if esPersonal();
     }
 
     // Consultas de clientes potenciales: cualquiera crea, solo el personal lee.
@@ -59,16 +78,16 @@ service cloud.firestore {
       allow read, write: if esPersonal();
     }
 
-    function empresaDelCliente() {
-      return get(/databases/$(database)/documents/clientes/$(request.auth.uid)).data.empresa;
+    // Empresas clientes: el cliente lee solo la suya (para ver su nombre); las maneja el personal.
+    match /empresas/{empresa} {
+      allow get: if esClienteDe(empresa);
+      allow read, write: if esPersonal();
     }
 
     // Datos privados de cada orden (empresa, referencia del cliente, serie). Un cliente lee solo
     // las órdenes de su empresa; la consulta del portal filtra por empresa para que esto se cumpla.
     match /ordenes/{codigo} {
-      allow read: if request.auth != null
-        && exists(/databases/$(database)/documents/clientes/$(request.auth.uid))
-        && resource.data.empresa == empresaDelCliente();
+      allow read: if esClienteDe(resource.data.empresa);
       allow read, write: if esPersonal();
     }
 

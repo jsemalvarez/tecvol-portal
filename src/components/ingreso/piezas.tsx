@@ -76,7 +76,7 @@ export function AvisoCuentasPrueba({ className = "" }: { className?: string }) {
   if (modoDatos !== "local") return null;
   return (
     <div className={`rounded-[0.25rem] border-2 border-dashed border-acero px-4 py-3 text-[0.9375rem] ${className}`}>
-      <p className="rotulo text-[0.8125rem]">Modo local, sin Firebase · Cuentas de prueba</p>
+      <p className="rotulo text-[0.8125rem]">Datos de prueba · Cuentas para ingresar</p>
       <ul className="mt-1.5 space-y-0.5">
         {CUENTAS_DE_PRUEBA.map((c) => (
           <li key={c.email}>

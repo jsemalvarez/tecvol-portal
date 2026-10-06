@@ -1,4 +1,15 @@
-import type { ConsultaNueva, PortalCliente, SeguimientoPublico, Sesion } from "@/lib/dominio/tipos";
+import type { EstadoReparacion } from "@/lib/dominio/estados";
+import type {
+  ConsultaNueva,
+  CuentaCliente,
+  DatosEquipo,
+  Empresa,
+  EquipoTaller,
+  PortalCliente,
+  SeguimientoPublico,
+  Sesion,
+  Taller,
+} from "@/lib/dominio/tipos";
 import { firebaseConfigurado } from "./firebase/config";
 
 /**
@@ -29,6 +40,28 @@ export interface PortalRepositorio {
   obtenerPortal(uid: string): Promise<PortalCliente | null>;
 }
 
+export interface PanelRepositorio {
+  /** Empresas, equipos y cuentas de clientes. Solo para el personal. */
+  obtenerTaller(): Promise<Taller>;
+  /** Guarda el estado de un equipo con las fechas de sus etapas (ver `etapasConEstado`). */
+  guardarEstado(codigo: string, estado: EstadoReparacion, etapas: Partial<Record<EstadoReparacion, Date>>): Promise<void>;
+  /** Registra un equipo nuevo con un código de seguimiento nuevo, en estado "ingresado". */
+  registrarEquipo(datos: DatosEquipo, ingreso: Date): Promise<EquipoTaller>;
+  editarEquipo(codigo: string, datos: DatosEquipo): Promise<void>;
+  crearEmpresa(nombre: string): Promise<Empresa>;
+  /** Crea la cuenta, la asocia a la empresa y envía al cliente el email para elegir su contraseña. */
+  crearCuenta(email: string, empresa: string): Promise<CuentaCliente>;
+}
+
+export type MotivoErrorDePanel = "email-en-uso" | "email-invalido" | "altas-deshabilitadas" | "permiso" | "conexion" | "desconocido";
+
+export class ErrorDePanel extends Error {
+  constructor(readonly motivo: MotivoErrorDePanel) {
+    super(`No se pudo guardar: ${motivo}`);
+    this.name = "ErrorDePanel";
+  }
+}
+
 export type MotivoErrorDeIngreso = "credenciales" | "intentos" | "deshabilitada" | "conexion" | "desconocido";
 
 export class ErrorDeIngreso extends Error {
@@ -45,12 +78,20 @@ export interface Repositorios {
 
 export type ModoDatos = "firebase" | "local" | "sin-configurar";
 
-/** Sin Firebase, en desarrollo se usan datos locales de prueba; en producción, nunca. */
-export const modoDatos: ModoDatos = firebaseConfigurado
-  ? "firebase"
-  : process.env.NODE_ENV === "production"
-    ? "sin-configurar"
-    : "local";
+/** Para publicar una demo con datos de prueba, aunque sea un build de producción. */
+const datosDePrueba = process.env.NEXT_PUBLIC_DATOS_DE_PRUEBA === "true";
+
+/**
+ * Sin Firebase, en desarrollo se usan datos locales de prueba. En producción solo si se piden
+ * con `NEXT_PUBLIC_DATOS_DE_PRUEBA`; si no, la app queda sin configurar.
+ */
+export const modoDatos: ModoDatos = datosDePrueba
+  ? "local"
+  : firebaseConfigurado
+    ? "firebase"
+    : process.env.NODE_ENV === "production"
+      ? "sin-configurar"
+      : "local";
 
 export class ServicioNoConfiguradoError extends Error {
   constructor() {
@@ -107,6 +148,26 @@ let portal: Promise<PortalRepositorio> | null = null;
 export function obtenerPortal(): Promise<PortalRepositorio> {
   portal ??= cargarPortal();
   return portal;
+}
+
+let panel: Promise<PanelRepositorio> | null = null;
+
+/** Los datos del panel, solo para quien ingresó como personal del taller. */
+export function obtenerPanel(): Promise<PanelRepositorio> {
+  panel ??= cargarPanel();
+  return panel;
+}
+
+async function cargarPanel(): Promise<PanelRepositorio> {
+  if (modoDatos === "firebase") {
+    const { PanelFirestore } = await import("./firebase/panel");
+    return new PanelFirestore();
+  }
+  if (modoDatos === "local") {
+    const { PanelLocal } = await import("./local/panel");
+    return new PanelLocal();
+  }
+  throw new ServicioNoConfiguradoError();
 }
 
 async function cargarPortal(): Promise<PortalRepositorio> {

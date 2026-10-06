@@ -12,10 +12,13 @@ npm install
 npm run dev
 ```
 
-Sin variables de Firebase, en desarrollo la app usa **datos locales de prueba** (`src/lib/datos/local`).
-Los códigos de prueba aparecen en el pie de la página y las cuentas de prueba (una de cliente y una del
-personal) en `/ingresar`; están en `src/lib/datos/local/autenticacion.ts`. En producción sin Firebase, la
-consulta y el ingreso muestran que el servicio no está habilitado: nunca se usan datos de prueba.
+Sin variables de Firebase, en desarrollo la app usa **datos locales de prueba** (`src/lib/datos/local`): dos
+empresas ficticias con sus equipos, y una cuenta de cliente y una del personal (en `/ingresar`; están en
+`src/lib/datos/local/autenticacion.ts`). Los códigos para probar la consulta aparecen en el pie del inicio.
+Lo que se cambia en el panel se guarda en el navegador, así la consulta
+y el portal muestran los mismos cambios; el panel tiene un enlace para volver a los datos de prueba. En
+producción sin Firebase, la consulta y el ingreso muestran que el servicio no está habilitado, salvo que
+`NEXT_PUBLIC_DATOS_DE_PRUEBA=true` pida los datos de prueba para publicar una demo.
 
 ## Firebase
 
@@ -47,46 +50,54 @@ El código de seguimiento se genera con `generarCodigo()` en `src/lib/dominio/co
 ### Ingreso (Firebase Auth)
 
 `/ingresar` usa email y contraseña. En la consola de Firebase hay que activar el proveedor
-**Correo electrónico/contraseña** (Authentication → Método de acceso). No hay registro público: las cuentas
-las crea el taller (Authentication → Usuarios → Agregar usuario).
+**Correo electrónico/contraseña** (Authentication → Método de acceso). La app no ofrece registro público: las
+cuentas de clientes las crea el personal desde el panel (ver más abajo).
 
-Después de ingresar, el cliente va a `/portal` y el personal a `/panel` (provisorio hasta construir el panel).
-El enlace "¿Olvidó su contraseña?" envía el email de Firebase para elegir una nueva.
-
-### Portal de clientes
-
-El portal es de consulta: el cliente ve los equipos de su empresa, el estado de cada uno, la fecha de cada etapa
-y los entregados. No aprueba presupuestos ni manda mensajes desde la app; eso se arregla con el taller. Hasta
-que exista el panel, el personal carga los datos a mano en la consola de Firestore:
-
-1. **Cuenta del cliente:** crear el usuario en Authentication y, con su UID, el documento `clientes/{uid}`:
-
-   | Campo | Tipo | Contenido |
-   |---|---|---|
-   | `empresa` | string | Identificador de la empresa, el mismo en todas sus cuentas y órdenes (p. ej. `coop-norte`) |
-   | `nombre` | string | Nombre de la empresa, como se muestra en el portal |
-
-2. **Cada equipo:** además de `seguimiento/{codigo}` (estado y etapas), el documento privado
-   `ordenes/{codigo}`, con el mismo código como ID:
-
-   | Campo | Tipo | Contenido |
-   |---|---|---|
-   | `empresa` | string | El identificador de la empresa dueña del equipo |
-   | `referencia` | string, opcional | Cómo identifica el cliente al equipo, p. ej. `Subestación Barrio Norte` |
-   | `serie` | string, opcional | Número de serie de la placa |
-
-3. **Cada cambio de estado:** solo en `seguimiento/{codigo}`: `estado`, la fecha en `etapas` y `actualizado`.
-   El portal y la consulta pública leen el mismo documento.
-
-Las reglas dejan que cada cliente lea solo su `clientes/{uid}` y las órdenes de su empresa. Una cuenta sin
-`clientes/{uid}` entra al portal y ve el aviso de que todavía no está asociada a una empresa.
+Después de ingresar, el cliente va a `/portal` y el personal a `/panel`. El enlace "¿Olvidó su contraseña?"
+envía el email de Firebase para elegir una nueva.
 
 ### Personal del taller
 
-Provisorio hasta construir el panel: es personal quien tenga un documento en `personal/{uid}`, con el UID de
-su usuario de Authentication (el contenido del documento puede ser, por ejemplo, `{ nombre: "..." }`). Las
-reglas dejan que cada usuario lea solo su propio documento, para que la app sepa si va al panel; nadie puede
-listar ni escribir la colección desde la app.
+Es personal quien tenga un documento en `personal/{uid}`, con el UID de su usuario de Authentication (el
+contenido puede ser, por ejemplo, `{ nombre: "..." }`). Se crea a mano en la consola: el usuario en
+Authentication → Usuarios → Agregar usuario, y el documento en Firestore. Las reglas dejan que cada usuario lea
+solo su propio documento, para que la app sepa si va al panel; nadie puede listar ni escribir la colección
+desde la app.
+
+### Panel del taller
+
+En `/panel` el personal:
+
+- **Asigna el estado** de cada equipo, con la fecha del cambio (hoy, si no indica otra). Puede saltear etapas
+  (quedan sin fecha) o volver atrás para corregir (se borran las fechas de las etapas posteriores). Un cambio
+  se puede deshacer desde el aviso que aparece abajo.
+- **Registra equipos**: la empresa dueña, la descripción, la referencia del cliente y la serie. La app genera
+  el código de seguimiento, crea `seguimiento/{codigo}` y `ordenes/{codigo}` y muestra una **etiqueta para
+  imprimir** con el código y un QR que abre `/seguimiento/{codigo}`.
+- **Edita los datos** de un equipo.
+- En `/panel/empresas`, **crea empresas y cuentas de clientes**. La cuenta se crea con una contraseña que
+  nadie conoce y el cliente recibe el email de Firebase para elegir la suya.
+
+Para que el alta de cuentas funcione, Firebase tiene que permitir crear cuentas desde la app: en Authentication
+→ Configuración → Acciones del usuario, dejar marcada **Habilitar la creación (registro)**. Es gratis. La app
+no muestra registro público, pero esa opción también permitiría crear una cuenta a quien use la API
+directamente: esa cuenta no tendría empresa ni sería personal, así que no vería datos.
+
+### Colecciones del portal y del panel
+
+| Colección | Quién lee | Contenido |
+|---|---|---|
+| `empresas/{id}` | El personal; cada cliente, la suya | `nombre`: como lo ve el cliente en su portal |
+| `clientes/{uid}` | El personal; cada cliente, la suya | `empresa` (el ID de `empresas`) y `email` |
+| `ordenes/{codigo}` | El personal; cada cliente, las de su empresa | `empresa`, `referencia` y `serie` (opcionales) |
+
+El estado y las etapas viven solo en `seguimiento/{codigo}`: el panel lo escribe y el portal y la consulta
+pública lo leen. Solo el personal escribe estas colecciones y recorre `seguimiento` entera; las reglas
+validan que el estado sea uno de la lista.
+
+El portal es de consulta: el cliente ve los equipos de su empresa, el estado de cada uno, la fecha de cada
+etapa y los entregados. No aprueba presupuestos ni manda mensajes desde la app; eso se arregla con el taller.
+Una cuenta sin `clientes/{uid}` entra al portal y ve el aviso de que todavía no está asociada a una empresa.
 
 ### App Check (opcional)
 

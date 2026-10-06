@@ -2,7 +2,7 @@ import type { Rol, Sesion } from "@/lib/dominio/tipos";
 import { ErrorDeIngreso, type AutenticacionRepositorio } from "../repositorios";
 
 /**
- * Ingreso de prueba para desarrollar sin Firebase. Nunca se usa en producción (ver `modoDatos`).
+ * Ingreso de prueba para desarrollar sin Firebase. En producción, solo en una demo (ver `modoDatos`).
  * Las cuentas son ficticias y la sesión se guarda en este navegador.
  */
 export const CUENTAS_DE_PRUEBA: { email: string; clave: string; rol: Rol }[] = [

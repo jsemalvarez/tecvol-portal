@@ -8,7 +8,7 @@ const texto = (valor: unknown) => (typeof valor === "string" && valor.trim() ? v
 
 /**
  * Portal de una cuenta de cliente:
- * 1. `clientes/{uid}` dice a qué empresa pertenece la cuenta.
+ * 1. `clientes/{uid}` dice a qué empresa pertenece la cuenta, y `empresas/{id}` su nombre.
  * 2. `ordenes` (privada) lista los códigos de esa empresa; las reglas solo dejan leer las propias.
  * 3. El estado y las etapas salen de `seguimiento/{codigo}`, el mismo documento de la consulta pública,
  *    así el taller carga cada cambio en un solo lugar.
@@ -20,7 +20,10 @@ export class PortalFirestore implements PortalRepositorio {
     const empresa = cliente.exists() ? texto(cliente.data().empresa) : undefined;
     if (!empresa) return null;
 
-    const ordenes = await getDocs(query(collection(db, "ordenes"), where("empresa", "==", empresa)));
+    const [datosEmpresa, ordenes] = await Promise.all([
+      getDoc(doc(db, "empresas", empresa)),
+      getDocs(query(collection(db, "ordenes"), where("empresa", "==", empresa))),
+    ]);
     const seguimiento = new SeguimientoFirestore();
     const equipos = await Promise.all(
       ordenes.docs.map(async (orden): Promise<EquipoCliente | null> => {
@@ -32,7 +35,7 @@ export class PortalFirestore implements PortalRepositorio {
     );
 
     return {
-      empresa: texto(cliente.data()?.nombre) ?? "",
+      empresa: (datosEmpresa.exists() && texto(datosEmpresa.data().nombre)) || "",
       equipos: equipos.filter((e): e is EquipoCliente => e !== null),
     };
   }

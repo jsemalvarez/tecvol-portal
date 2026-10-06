@@ -5,6 +5,8 @@ next-env.d.ts
 *.tsbuildinfo
 .env*.local
 .vercel
+firebase-debug.log*
+*.stackdump
 .impeccable/config.local.json
 .impeccable/review/
 

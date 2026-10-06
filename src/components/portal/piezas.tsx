@@ -109,8 +109,8 @@ export function AvisoDatosPrueba() {
   if (modoDatos !== "local") return null;
   return (
     <p className="rounded-[0.25rem] border-2 border-dashed border-acero px-4 py-3 text-[0.9375rem]">
-      <span className="rotulo block text-[0.8125rem]">Modo local, sin Firebase</span>
-      La empresa y los equipos son de prueba.
+      <span className="rotulo block text-[0.8125rem]">Datos de prueba</span>
+      La empresa y los equipos son de ejemplo.
     </p>
   );
 }

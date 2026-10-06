@@ -1,0 +1,6 @@
+# Además de lo que Vercel ya ignora (.git, .next, node_modules, .env*.local…).
+.claude/
+.agent/
+.gemini/
+.impeccable/
+firebase-debug.log*

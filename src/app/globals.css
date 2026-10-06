@@ -225,7 +225,7 @@
     border-bottom-color: var(--color-tinta);
     border-bottom-width: 5px;
     padding-bottom: 0.25rem;
-    background: var(--color-blanco);
+    background-color: var(--color-blanco);
   }
 
   .renglon[aria-invalid="true"] {
@@ -235,6 +235,16 @@
   .renglon::placeholder {
     color: var(--color-tinta);
     opacity: 1;
+  }
+
+  /* Desplegable con forma de renglón: la flecha va dibujada al final de la línea. */
+  select.renglon {
+    padding-right: 1.75rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%231a1a1a%27 stroke-width=%272.75%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Cpath d=%27M6 9l6 6 6-6%27/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.125rem center;
+    background-size: 1.125rem;
+    cursor: pointer;
   }
 
   /* Placa secundaria: contorno gris Tecvol y texto negro; al pasar, se rellena de negro. */
@@ -709,5 +719,31 @@
 
   .marco:has(> .marco-cabecera) .marco-tornillo:is([data-esquina="si"], [data-esquina="sd"]) {
     color: var(--color-blanco);
+  }
+}
+
+/* Al imprimir desde el panel sale solo la etiqueta del equipo, arriba a la izquierda de la hoja. */
+@media print {
+  @page {
+    margin: 10mm;
+  }
+
+  body:has(.impresion) * {
+    visibility: hidden;
+  }
+
+  body:has(.impresion) .impresion,
+  body:has(.impresion) .impresion * {
+    visibility: visible;
+  }
+
+  .impresion {
+    position: fixed;
+    top: 0;
+    left: 0;
+  }
+
+  dialog::backdrop {
+    background: none;
   }
 }
