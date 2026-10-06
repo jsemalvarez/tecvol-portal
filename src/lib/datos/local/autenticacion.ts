@@ -43,7 +43,8 @@ function avisar(sesion: Sesion | null) {
 export class AutenticacionLocal implements AutenticacionRepositorio {
   async ingresar(email: string, clave: string): Promise<Sesion> {
     await esperar(500);
-    const cuenta = CUENTAS_DE_PRUEBA.find((c) => c.email === email.trim().toLowerCase() && c.clave === clave);
+    // Sin espacios en los extremos: al copiar la contraseña del recuadro de prueba se suele arrastrar uno.
+    const cuenta = CUENTAS_DE_PRUEBA.find((c) => c.email === email.trim().toLowerCase() && c.clave === clave.trim());
     if (!cuenta) throw new ErrorDeIngreso("credenciales");
     const sesion: Sesion = { uid: `local-${cuenta.rol}`, email: cuenta.email, rol: cuenta.rol };
     avisar(sesion);

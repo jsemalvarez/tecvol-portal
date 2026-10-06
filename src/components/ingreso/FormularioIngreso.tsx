@@ -11,6 +11,7 @@ import {
   type MotivoErrorDeIngreso,
 } from "@/lib/datos/repositorios";
 import type { Rol, Sesion } from "@/lib/dominio/tipos";
+import { EVENTO_CUENTA_PRUEBA, type CuentaParaUsar } from "./UsarCuentaPrueba";
 
 type Modo = "ingreso" | "restablecer" | "enviado";
 
@@ -59,6 +60,7 @@ export function FormularioIngreso() {
   const [enviando, setEnviando] = useState(false);
   const campoEmail = useRef<HTMLInputElement>(null);
   const aviso = useRef<HTMLDivElement>(null);
+  const botonIngresar = useRef<HTMLButtonElement>(null);
   const primerRender = useRef(true);
 
   useEffect(() => {
@@ -73,6 +75,21 @@ export function FormularioIngreso() {
       activo = false;
       dejarDeEscuchar();
     };
+  }, []);
+
+  // El recuadro de datos de prueba completa el formulario; el foco queda en "Ingresar".
+  useEffect(() => {
+    function usar(evento: Event) {
+      const { email: nuevoEmail, clave: nuevaClave } = (evento as CustomEvent<CuentaParaUsar>).detail;
+      setModo("ingreso");
+      setEmail(nuevoEmail);
+      setClave(nuevaClave);
+      setErrores({});
+      setErrorGeneral(null);
+      requestAnimationFrame(() => botonIngresar.current?.focus());
+    }
+    window.addEventListener(EVENTO_CUENTA_PRUEBA, usar);
+    return () => window.removeEventListener(EVENTO_CUENTA_PRUEBA, usar);
   }, []);
 
   // Al cambiar de modo, el foco va al primer campo o al aviso, para quien navega con teclado o lector.
@@ -252,7 +269,7 @@ export function FormularioIngreso() {
       )}
 
       <div className="flex flex-wrap items-center gap-x-6 gap-y-4">
-        <button type="submit" className="placa" disabled={enviando}>
+        <button ref={botonIngresar} type="submit" className="placa" disabled={enviando}>
           {enviando ? (restableciendo ? "Enviando…" : "Ingresando…") : restableciendo ? "Enviar enlace" : "Ingresar"}
           {!enviando && <Flecha />}
         </button>

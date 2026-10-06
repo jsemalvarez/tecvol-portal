@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { IlustracionAtardecer } from "@/components/inicio/IlustracionAtardecer";
 import { modoDatos } from "@/lib/datos/repositorios";
 import { CUENTAS_DE_PRUEBA } from "@/lib/datos/local/autenticacion";
+import { UsarCuentaPrueba } from "./UsarCuentaPrueba";
 
 /** Cabecera de las páginas de acceso: la placa del logo lleva al inicio. */
 function CabeceraIngreso({ derecha }: { derecha?: ReactNode }) {
@@ -77,12 +78,18 @@ export function AvisoCuentasPrueba({ className = "" }: { className?: string }) {
   return (
     <div className={`rounded-[0.25rem] border-2 border-dashed border-acero px-4 py-3 text-[0.9375rem] ${className}`}>
       <p className="rotulo text-[0.8125rem]">Datos de prueba · Cuentas para ingresar</p>
-      <ul className="mt-1.5 space-y-0.5">
-        {CUENTAS_DE_PRUEBA.map((c) => (
-          <li key={c.email}>
-            <span className="font-semibold">{c.rol === "personal" ? "Personal" : "Cliente"}:</span> {c.email} · {c.clave}
-          </li>
-        ))}
+      <ul className="mt-1.5 space-y-1.5">
+        {CUENTAS_DE_PRUEBA.map((c) => {
+          const nombre = c.rol === "personal" ? "Personal" : "Cliente";
+          return (
+            <li key={c.email} className="flex flex-wrap items-baseline gap-x-4 gap-y-0.5">
+              <span>
+                <span className="font-semibold">{nombre}:</span> {c.email} · {c.clave}
+              </span>
+              <UsarCuentaPrueba cuenta={{ email: c.email, clave: c.clave }} nombre={nombre} />
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
