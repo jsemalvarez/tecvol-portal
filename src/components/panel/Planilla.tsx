@@ -29,7 +29,9 @@ function Planilla({ api }: { api: ApiPanel }) {
           <span className="rotulo text-base">Equipos</span>
           <span className="rotulo text-base">{equipos.length}</span>
         </div>
-        {equipos.length === 0 ? (
+        {api.taller.equipos.length === 0 ? (
+          <p className="marco-cuerpo">Todavía no hay equipos. Registre el primero con "Registrar equipo".</p>
+        ) : equipos.length === 0 ? (
           <p className="marco-cuerpo">Ningún equipo coincide con la búsqueda.</p>
         ) : (
           <>
