@@ -27,7 +27,9 @@ producción sin Firebase, la consulta y el ingreso muestran que el servicio no e
 1. Copiar `.env.example` a `.env.local` y completar la configuración web del proyecto.
 2. Publicar las reglas de Firestore (`firestore.rules`), con la consola o con la CLI:
    `firebase deploy --only firestore:rules`.
-3. Cargar en Vercel las mismas variables `NEXT_PUBLIC_*`.
+3. Cargar en Vercel las mismas variables `NEXT_PUBLIC_*`. Hoy están solo en **Production**; en **Preview**
+   queda `NEXT_PUBLIC_DATOS_DE_PRUEBA=true`, así los deploys de prueba muestran la demo. Como Next.js fija
+   estas variables en el build, después de cambiarlas hay que volver a desplegar.
 
 ### Colecciones que usa la página pública
 

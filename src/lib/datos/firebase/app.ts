@@ -35,6 +35,10 @@ export function obtenerFirestore(): Firestore {
 let auth: Auth | null = null;
 
 export function obtenerAuth(): Auth {
-  auth ??= getAuth(iniciarApp());
+  if (!auth) {
+    auth = getAuth(iniciarApp());
+    // Los emails de Firebase (elegir contraseña) salen en el idioma de la instancia.
+    auth.languageCode = "es";
+  }
   return auth;
 }

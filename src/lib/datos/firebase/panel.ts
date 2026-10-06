@@ -66,6 +66,7 @@ function obtenerAuthAltas(): Auth {
   if (!authAltas) {
     const app = getApps().find((a) => a.name === "altas") ?? initializeApp(configuracionFirebase, "altas");
     authAltas = initializeAuth(app, { persistence: inMemoryPersistence });
+    authAltas.languageCode = "es";
   }
   return authAltas;
 }
