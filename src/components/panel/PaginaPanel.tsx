@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Alerta } from "@/components/iconos";
 import { EsqueletoAcceso } from "@/components/ingreso/piezas";
 import { nombreDe } from "@/components/portal/piezas";
-import { reiniciarDatos } from "@/lib/datos/local/datos";
+import { CLAVE_CUENTAS_NUEVAS, reiniciarDatos } from "@/lib/datos/local/datos";
 import { modoDatos } from "@/lib/datos/repositorios";
 import { formatearCodigo } from "@/lib/dominio/codigo";
 import { DEFINICIONES, type EstadoReparacion } from "@/lib/dominio/estados";
@@ -293,7 +293,7 @@ export function PaginaPanel({ seccion, children }: { seccion: "equipos" | "empre
                 onCreada={(cuenta) => {
                   avisar(
                     modoDatos === "local"
-                      ? `Se registró la cuenta de ${cuenta.email} (con datos de prueba no se envía el email).`
+                      ? `Se registró la cuenta de ${cuenta.email}. Con datos de prueba entra con la contraseña ${CLAVE_CUENTAS_NUEVAS}.`
                       : `Se creó la cuenta de ${cuenta.email}. Le llegó un email para elegir su contraseña.`,
                   );
                   cerrar();

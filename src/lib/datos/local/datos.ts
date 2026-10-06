@@ -156,6 +156,12 @@ const ORDENES: Record<string, { empresa: string; referencia?: string; serie?: st
 
 const CUENTAS: CuentaCliente[] = [{ uid: "local-cliente", email: "cliente@prueba.tecvol.test", empresa: "coop-prueba" }];
 
+/**
+ * Contraseña de las cuentas que se crean en el panel con datos de prueba: no hay email para elegir una,
+ * así que todas entran con esta. La muestran el panel y el recuadro de prueba de /ingresar.
+ */
+export const CLAVE_CUENTAS_NUEVAS = "cuenta-prueba";
+
 /** Los cuatro primeros códigos, para probar la consulta pública desde el pie del inicio. */
 export const CODIGOS_DE_PRUEBA = SEGUIMIENTOS.slice(0, 4).map((s) => s.codigo);
 

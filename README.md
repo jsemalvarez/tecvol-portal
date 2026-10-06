@@ -16,7 +16,9 @@ Sin variables de Firebase, en desarrollo la app usa **datos locales de prueba** 
 empresas ficticias con sus equipos, y una cuenta de cliente y una del personal (en `/ingresar`; están en
 `src/lib/datos/local/autenticacion.ts`). Los códigos para probar la consulta aparecen en el pie del inicio.
 Lo que se cambia en el panel se guarda en el navegador, así la consulta
-y el portal muestran los mismos cambios; el panel tiene un enlace para volver a los datos de prueba. En
+y el portal muestran los mismos cambios; el panel tiene un enlace para volver a los datos de prueba. Las
+cuentas de cliente que se crean en el panel no reciben email: entran con la contraseña común de
+`CLAVE_CUENTAS_NUEVAS` (`src/lib/datos/local/datos.ts`), que el panel y `/ingresar` muestran. En
 producción sin Firebase, la consulta y el ingreso muestran que el servicio no está habilitado, salvo que
 `NEXT_PUBLIC_DATOS_DE_PRUEBA=true` pida los datos de prueba para publicar una demo.
 

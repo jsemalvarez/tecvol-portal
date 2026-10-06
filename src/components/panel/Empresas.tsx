@@ -1,11 +1,19 @@
 "use client";
 
 import { TornillosMarco } from "@/components/inicio/TornillosMarco";
+import { CUENTAS_DE_PRUEBA } from "@/lib/datos/local/autenticacion";
+import { CLAVE_CUENTAS_NUEVAS } from "@/lib/datos/local/datos";
+import { modoDatos } from "@/lib/datos/repositorios";
 import { PaginaPanel, type ApiPanel } from "./PaginaPanel";
 
 /** Empresas y cuentas: cada empresa con sus equipos y las cuentas que entran a su portal. */
 export function PanelEmpresas() {
   return <PaginaPanel seccion="empresas">{(api) => <Empresas api={api} />}</PaginaPanel>;
+}
+
+/** Con datos de prueba, la contraseña con la que entra cada cuenta: la fija del recuadro o la común. */
+function clavePrueba(email: string) {
+  return CUENTAS_DE_PRUEBA.find((c) => c.email === email)?.clave ?? CLAVE_CUENTAS_NUEVAS;
 }
 
 function Empresas({ api }: { api: ApiPanel }) {
@@ -51,6 +59,7 @@ function Empresas({ api }: { api: ApiPanel }) {
                       {suyas.map((cuenta) => (
                         <li key={cuenta.uid} className="border-b border-acero py-2.5 text-[0.9375rem]">
                           {cuenta.email}
+                          {modoDatos === "local" && <span className="text-grafito"> · contraseña de prueba: {clavePrueba(cuenta.email)}</span>}
                         </li>
                       ))}
                     </ul>

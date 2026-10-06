@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { IlustracionAtardecer } from "@/components/inicio/IlustracionAtardecer";
 import { modoDatos } from "@/lib/datos/repositorios";
 import { CUENTAS_DE_PRUEBA } from "@/lib/datos/local/autenticacion";
+import { CLAVE_CUENTAS_NUEVAS } from "@/lib/datos/local/datos";
 import { UsarCuentaPrueba } from "./UsarCuentaPrueba";
 
 /** Cabecera de las páginas de acceso: la placa del logo lleva al inicio. */
@@ -91,6 +92,9 @@ export function AvisoCuentasPrueba({ className = "" }: { className?: string }) {
           );
         })}
       </ul>
+      <p className="mt-2 text-grafito">
+        Las cuentas que cree en el panel entran con la contraseña <span className="font-semibold text-tinta">{CLAVE_CUENTAS_NUEVAS}</span>.
+      </p>
     </div>
   );
 }

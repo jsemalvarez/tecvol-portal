@@ -1,5 +1,6 @@
 import type { Rol, Sesion } from "@/lib/dominio/tipos";
 import { ErrorDeIngreso, type AutenticacionRepositorio } from "../repositorios";
+import { CLAVE_CUENTAS_NUEVAS, leerDatos } from "./datos";
 
 /**
  * Ingreso de prueba para desarrollar sin Firebase. En producción, solo en una demo (ver `modoDatos`).
@@ -44,9 +45,19 @@ export class AutenticacionLocal implements AutenticacionRepositorio {
   async ingresar(email: string, clave: string): Promise<Sesion> {
     await esperar(500);
     // Sin espacios en los extremos: al copiar la contraseña del recuadro de prueba se suele arrastrar uno.
-    const cuenta = CUENTAS_DE_PRUEBA.find((c) => c.email === email.trim().toLowerCase() && c.clave === clave.trim());
-    if (!cuenta) throw new ErrorDeIngreso("credenciales");
-    const sesion: Sesion = { uid: `local-${cuenta.rol}`, email: cuenta.email, rol: cuenta.rol };
+    const correo = email.trim().toLowerCase();
+    const contrasena = clave.trim();
+    const fija = CUENTAS_DE_PRUEBA.find((c) => c.email === correo && c.clave === contrasena);
+    if (fija) return this.iniciar({ uid: `local-${fija.rol}`, email: fija.email, rol: fija.rol });
+
+    // Las cuentas de cliente creadas en el panel de este navegador entran con la contraseña común.
+    const creada = leerDatos().cuentas.find((c) => c.email === correo);
+    if (creada && contrasena === CLAVE_CUENTAS_NUEVAS) return this.iniciar({ uid: creada.uid, email: creada.email, rol: "cliente" });
+
+    throw new ErrorDeIngreso("credenciales");
+  }
+
+  private iniciar(sesion: Sesion): Sesion {
     avisar(sesion);
     return sesion;
   }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState, type FormEvent } from "react";
+import { CLAVE_CUENTAS_NUEVAS } from "@/lib/datos/local/datos";
 import { modoDatos } from "@/lib/datos/repositorios";
 import type { CuentaCliente, Empresa } from "@/lib/dominio/tipos";
 import { ErrorFormulario, MensajeCampo, mensajeDeError } from "./Dialogo";
@@ -123,7 +124,10 @@ export function FormularioCuenta({
           {guardando ? "Creando la cuenta…" : "Crear cuenta y enviar email"}
         </button>
         {modoDatos === "local" && (
-          <p className="max-w-[40ch] text-[0.9375rem] text-grafito">Con datos de prueba la cuenta se registra, pero no se envía el email.</p>
+          <p className="max-w-[44ch] text-[0.9375rem] text-grafito">
+            Con datos de prueba no se envía el email: la cuenta entra con la contraseña{" "}
+            <strong className="font-semibold text-tinta">{CLAVE_CUENTAS_NUEVAS}</strong>.
+          </p>
         )}
       </div>
     </form>
