@@ -84,13 +84,18 @@ export function BarraFiltros({
             onChange={(e) => filtros.setEstado(e.target.value as FiltroEstado)}
             className="renglon mt-0.5 text-base"
           >
-            <option value="en-taller">En el taller</option>
-            <option value="todos">Todos, con los entregados</option>
-            {ESTADOS.map((estado) => (
-              <option key={estado} value={estado}>
-                {DEFINICIONES[estado].nombre}
-              </option>
-            ))}
+            {/* Dos tipos de opción: cuánto de la lista ver, o un estado puntual. */}
+            <optgroup label="Vista">
+              <option value="en-taller">En el taller</option>
+              <option value="todos">Todos, también los entregados</option>
+            </optgroup>
+            <optgroup label="Estado">
+              {ESTADOS.map((estado) => (
+                <option key={estado} value={estado}>
+                  {DEFINICIONES[estado].nombre}
+                </option>
+              ))}
+            </optgroup>
           </select>
         </div>
       </div>
