@@ -2,10 +2,10 @@
 
 import Image from "next/image";
 import qrcode from "qrcode-generator";
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import { formatearCodigo } from "@/lib/dominio/codigo";
 import { formatearFecha } from "@/lib/dominio/fechas";
-import type { EquipoTaller } from "@/lib/dominio/tipos";
+import type { EquipoCliente } from "@/lib/dominio/tipos";
 
 /** QR en SVG, módulo por módulo, con su margen blanco de cuatro módulos. */
 export function CodigoQR({ valor, className = "" }: { valor: string; className?: string }) {
@@ -34,8 +34,9 @@ export function CodigoQR({ valor, className = "" }: { valor: string; className?:
 /**
  * Etiqueta del equipo para imprimir y pegar en él o en la orden de ingreso: el código, los datos
  * para reconocerlo y un QR que abre la consulta pública. Al imprimir, solo sale la etiqueta.
+ * La usan el panel y el portal. Con `children`, esas acciones van primero e imprimir pasa a secundaria.
  */
-export function Etiqueta({ equipo, empresa }: { equipo: EquipoTaller; empresa: string }) {
+export function Etiqueta({ equipo, empresa, children }: { equipo: EquipoCliente; empresa: string; children?: ReactNode }) {
   const origen = typeof window === "undefined" ? "" : window.location.origin;
   const enlace = `${origen}/seguimiento/${equipo.codigo}`;
   const ingreso = equipo.etapas.ingresado;
@@ -62,9 +63,12 @@ export function Etiqueta({ equipo, empresa }: { equipo: EquipoTaller; empresa: s
           Escanee el QR o escriba el código en {origen.replace(/^https?:\/\//, "")} para ver el estado.
         </p>
       </div>
-      <button type="button" onClick={() => window.print()} className="placa">
-        Imprimir etiqueta
-      </button>
+      <div className="flex flex-wrap items-center gap-3">
+        {children}
+        <button type="button" onClick={() => window.print()} className={children ? "placa-secundaria" : "placa"}>
+          Imprimir etiqueta
+        </button>
+      </div>
     </div>
   );
 }

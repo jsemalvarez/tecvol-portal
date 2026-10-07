@@ -100,7 +100,9 @@ pública lo leen. Solo el personal escribe estas colecciones y recorre `seguimie
 validan que el estado sea uno de la lista.
 
 El portal es de consulta: el cliente ve los equipos de su empresa, el estado de cada uno, la fecha de cada
-etapa y los entregados. No aprueba presupuestos ni manda mensajes desde la app; eso se arregla con el taller.
+etapa y los entregados. Con "Compartir seguimiento" le pasa un equipo a otra persona (un operario, por
+ejemplo): la misma etiqueta con QR del panel y el enlace a `/seguimiento/{codigo}`, que en el celular se
+manda con el menú de compartir del teléfono. No aprueba presupuestos ni manda mensajes desde la app; eso se arregla con el taller.
 Una cuenta sin `clientes/{uid}` entra al portal y ve el aviso de que todavía no está asociada a una empresa.
 
 ### App Check (opcional)

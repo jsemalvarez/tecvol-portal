@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { TornillosMarco } from "@/components/inicio/TornillosMarco";
+import { Dialogo } from "@/components/panel/Dialogo";
 import { Senal } from "@/components/senal/Senal";
 import { PICTOGRAMA_DE_FORMA } from "@/components/senal/pictogramas";
 import { formatearCodigo } from "@/lib/dominio/codigo";
 import { DEFINICIONES, FORMAS } from "@/lib/dominio/estados";
 import type { EquipoCliente, PortalCliente } from "@/lib/dominio/tipos";
+import { Compartir } from "./Compartir";
 import { PaginaPortal } from "./PaginaPortal";
 import { agrupar, LineaEtapas, nombreDe, TextoEstado } from "./piezas";
 
@@ -20,8 +22,8 @@ function Registro({ portal }: { portal: PortalCliente }) {
   return (
     <div className="mt-10 grid gap-x-12 gap-y-12 lg:grid-cols-12">
       <div className="flex flex-col gap-10 lg:col-span-8">
-        {enTaller.length > 0 && <Tabla id="en-taller" titulo="En el taller" equipos={enTaller} />}
-        {entregados.length > 0 && <Tabla id="entregados" titulo="Entregados" equipos={entregados} />}
+        {enTaller.length > 0 && <Tabla id="en-taller" titulo="En el taller" equipos={enTaller} empresa={portal.empresa} />}
+        {entregados.length > 0 && <Tabla id="entregados" titulo="Entregados" equipos={entregados} empresa={portal.empresa} />}
       </div>
       <aside aria-labelledby="titulo-claves" className="lg:col-span-4">
         <div className="lg:sticky lg:top-8">
@@ -45,8 +47,9 @@ function Registro({ portal }: { portal: PortalCliente }) {
   );
 }
 
-function Tabla({ id, titulo, equipos }: { id: string; titulo: string; equipos: EquipoCliente[] }) {
+function Tabla({ id, titulo, equipos, empresa }: { id: string; titulo: string; equipos: EquipoCliente[]; empresa: string }) {
   const [abierto, setAbierto] = useState<string | null>(null);
+  const [compartido, setCompartido] = useState<EquipoCliente | null>(null);
   return (
     <section aria-labelledby={`titulo-${id}`} className="marco">
       <TornillosMarco />
@@ -103,11 +106,17 @@ function Tabla({ id, titulo, equipos }: { id: string; titulo: string; equipos: E
                 <div className="mt-5">
                   <LineaEtapas equipo={equipo} />
                 </div>
+                <button type="button" onClick={() => setCompartido(equipo)} className="placa-secundaria mt-6">
+                  Compartir seguimiento
+                </button>
               </div>
             </li>
           );
         })}
       </ul>
+      <Dialogo abierto={!!compartido} titulo="Compartir seguimiento" onCerrar={() => setCompartido(null)} ancho="max-w-[34rem]">
+        {compartido && <Compartir equipo={compartido} empresa={empresa} />}
+      </Dialogo>
     </section>
   );
 }
