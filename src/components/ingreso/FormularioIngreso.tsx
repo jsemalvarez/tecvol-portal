@@ -186,7 +186,7 @@ export function FormularioIngreso() {
       <div ref={aviso} tabIndex={-1} role="status" className="flex flex-col items-start gap-5 outline-none">
         <p className="max-w-[44ch] text-lg">
           Si <strong className="font-semibold">{email.trim()}</strong> tiene una cuenta, le llegará un email con un enlace para
-          elegir una contraseña nueva.
+          elegir una contraseña nueva. Si no lo ve en unos minutos, revise la carpeta de spam.
         </p>
         <button type="button" onClick={() => cambiarModo("ingreso")} className="placa-secundaria">
           Volver al ingreso
