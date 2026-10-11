@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Alerta } from "@/components/iconos";
 import { nombreDe } from "@/components/portal/piezas";
+import { ErrorDePanel } from "@/lib/datos/repositorios";
 import { formatearCodigo, normalizarCodigo } from "@/lib/dominio/codigo";
 import type { InformeGuardado } from "@/lib/dominio/informe";
 import { PaginaPanel, type ApiPanel } from "../PaginaPanel";
@@ -33,7 +34,7 @@ export function PanelInforme() {
 
 function ContenidoInforme({ api, codigo }: { api: ApiPanel; codigo: string }) {
   const equipo = api.taller.equipos.find((e) => e.codigo === codigo);
-  const [carga, setCarga] = useState<{ informe: InformeGuardado | null } | "error" | null>(null);
+  const [carga, setCarga] = useState<{ informe: InformeGuardado | null } | "error" | "permiso" | null>(null);
   const [intento, setIntento] = useState(0);
   const { obtenerInforme } = api.acciones;
 
@@ -42,7 +43,7 @@ function ContenidoInforme({ api, codigo }: { api: ApiPanel; codigo: string }) {
     let activo = true;
     obtenerInforme(equipo.codigo)
       .then((informe) => activo && setCarga({ informe }))
-      .catch(() => activo && setCarga("error"));
+      .catch((e) => activo && setCarga(e instanceof ErrorDePanel && e.motivo === "permiso" ? "permiso" : "error"));
     return () => {
       activo = false;
     };
@@ -73,11 +74,13 @@ function ContenidoInforme({ api, codigo }: { api: ApiPanel; codigo: string }) {
         <p role="status" className="mt-10 text-lg">
           Cargando el informe…
         </p>
-      ) : carga === "error" ? (
+      ) : carga === "error" || carga === "permiso" ? (
         <div className="mt-8 flex flex-col items-start gap-5">
           <p role="alert" className="flex max-w-[52ch] items-start gap-2 text-lg font-medium text-rojo">
             <Alerta className="mt-1 size-5 shrink-0" />
-            No se pudo cargar el informe. Revise su conexión e intente de nuevo.
+            {carga === "permiso"
+              ? "Su cuenta no tiene permiso para ver los informes. Avise a quien administra el sistema."
+              : "No se pudo cargar el informe. Revise su conexión e intente de nuevo."}
           </p>
           <button
             type="button"
