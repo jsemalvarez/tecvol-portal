@@ -134,6 +134,13 @@ function Acciones({ api, equipo }: { api: ApiPanel; equipo: EquipoTaller }) {
       >
         Editar
       </Link>
+      <Link
+        href={`/panel/informe?codigo=${equipo.codigo}`}
+        className="text-[0.9375rem] font-semibold underline decoration-naranja decoration-2 underline-offset-4"
+        aria-label={`Informe de diagnóstico de ${nombre}`}
+      >
+        Informe
+      </Link>
       <button
         type="button"
         onClick={() => api.abrirEtiqueta(equipo)}

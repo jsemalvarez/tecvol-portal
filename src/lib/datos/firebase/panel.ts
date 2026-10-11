@@ -15,6 +15,7 @@ import {
 } from "firebase/firestore";
 import { generarCodigo } from "@/lib/dominio/codigo";
 import type { EstadoReparacion } from "@/lib/dominio/estados";
+import { informeParaGuardar, leerInforme, type Informe, type InformeGuardado } from "@/lib/dominio/informe";
 import { esUso, leerPlaca } from "@/lib/dominio/placa";
 import type { CuentaCliente, DatosEquipo, Empresa, EquipoTaller, Taller } from "@/lib/dominio/tipos";
 import { ErrorDePanel, type MotivoErrorDePanel, type PanelRepositorio } from "../repositorios";
@@ -168,6 +169,24 @@ export class PanelFirestore implements PanelRepositorio {
       });
       await lote.commit();
     });
+  }
+
+  async obtenerInforme(codigo: string): Promise<InformeGuardado | null> {
+    const informe = await guardar(() => getDoc(doc(obtenerFirestore(), "informes", codigo)));
+    if (!informe.exists()) return null;
+    const datos = informe.data();
+    return {
+      ...leerInforme(datos),
+      actualizado: datos.actualizado instanceof Timestamp ? datos.actualizado.toDate() : null,
+      por: texto(datos.por),
+    };
+  }
+
+  async guardarInforme(codigo: string, informe: Informe, por: string): Promise<void> {
+    // Sin `merge`: el informe se reemplaza entero, así lo que se borró en el formulario no queda guardado.
+    await guardar(() =>
+      setDoc(doc(obtenerFirestore(), "informes", codigo), { ...informeParaGuardar(informe), por, actualizado: serverTimestamp() }),
+    );
   }
 
   async crearEmpresa(nombre: string): Promise<Empresa> {

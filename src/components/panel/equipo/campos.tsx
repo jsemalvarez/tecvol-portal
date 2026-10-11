@@ -6,6 +6,9 @@ import { MensajeCampo } from "../Dialogo";
 /** Lugar a la derecha del renglón para la unidad, según su largo, así el número no queda debajo. */
 const RESERVA_UNIDAD: Record<number, string> = { 1: "pr-6", 2: "pr-9" };
 
+/** Barlow no tiene letras griegas: la Ω de MΩ se dibuja con Arial, que sí la tiene, en vez de un reemplazo deformado. */
+const conSimbolos = (unidad: string) => /[^\u0000-\u024f]/.test(unidad);
+
 function Obligatorio() {
   return <span className="font-semibold normal-case tracking-normal text-grafito"> (obligatorio)</span>;
 }
@@ -72,7 +75,7 @@ export function CampoTexto({
           className={`renglon ${unidad ? (RESERVA_UNIDAD[unidad.length] ?? "pr-12") : ""}`}
         />
         {unidad && (
-          <span aria-hidden="true" className="pointer-events-none absolute bottom-2.5 right-0 font-cartel text-base font-bold text-grafito">
+          <span aria-hidden="true" className={`pointer-events-none absolute bottom-2.5 right-0 text-base font-bold text-grafito ${conSimbolos(unidad) ? "[font-family:Arial,sans-serif] text-[0.9375rem]" : "font-cartel"}`}>
             {unidad}
           </span>
         )}
@@ -139,6 +142,50 @@ export function Opciones<T extends string>({
       </div>
       <MensajeCampo id={`${id}-error`} texto={error} />
     </fieldset>
+  );
+}
+
+/**
+ * Opciones compactas para una fila de la planilla (OK / Regular / Mal): sin leyenda propia, porque la
+ * fila ya dice de qué se trata; `etiqueta` la nombra para lectores de pantalla.
+ */
+export function Pastillas<T extends string>({
+  nombre,
+  etiqueta,
+  opciones,
+  valor,
+  onCambio,
+}: {
+  nombre: string;
+  etiqueta: string;
+  opciones: { valor: T; etiqueta: string }[];
+  valor: T | "";
+  onCambio: (valor: T) => void;
+}) {
+  return (
+    <div role="radiogroup" aria-label={etiqueta} className="flex flex-wrap gap-1">
+      {opciones.map((opcion) => {
+        const elegida = opcion.valor === valor;
+        return (
+          <label
+            key={opcion.valor}
+            className={`flex min-h-10 cursor-pointer items-center gap-2 rounded-[0.25rem] border-2 px-2.5 py-1 text-[0.9375rem] transition-colors ${
+              elegida ? "border-tinta bg-blanco font-semibold" : "border-transparent bg-esmalte hover:border-acero"
+            }`}
+          >
+            <input
+              type="radio"
+              name={nombre}
+              value={opcion.valor}
+              checked={elegida}
+              onChange={() => onCambio(opcion.valor)}
+              className="size-3.5 shrink-0 accent-[var(--color-tinta)]"
+            />
+            {opcion.etiqueta}
+          </label>
+        );
+      })}
+    </div>
   );
 }
 

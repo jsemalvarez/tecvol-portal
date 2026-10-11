@@ -20,6 +20,8 @@ import { usePanel, type AccionesPanel, type EstadoAnterior } from "./usePanel";
 export interface ApiPanel {
   taller: Taller;
   acciones: AccionesPanel;
+  /** Email de quien tiene la sesión abierta. */
+  email: string;
   empresaDe: (equipo: EquipoTaller) => string;
   abrirEstado: (equipo: EquipoTaller) => void;
   abrirEtiqueta: (equipo: EquipoTaller) => void;
@@ -71,10 +73,13 @@ function tomarAviso(): string | null {
 export function PaginaPanel({
   seccion,
   titulo,
+  nota,
   children,
 }: {
   seccion: "equipos" | "empresas";
   titulo?: string;
+  /** Qué ve el cliente de lo que se carga en esta página, si no es lo de siempre. Va en la banda de abajo. */
+  nota?: ReactNode;
   children: (api: ApiPanel) => ReactNode;
 }) {
   const { estado, acciones, reintentar, salir } = usePanel();
@@ -107,6 +112,7 @@ export function PaginaPanel({
   const api: ApiPanel | null = taller && {
     taller,
     acciones,
+    email: sesion?.email ?? "",
     empresaDe: (equipo) => nombreEmpresa(equipo.empresa),
     abrirEstado: (equipo) => setVentana({ tipo: "estado", codigo: equipo.codigo }),
     abrirEtiqueta: (equipo) => setVentana({ tipo: "etiqueta", codigo: equipo.codigo }),
@@ -157,8 +163,12 @@ export function PaginaPanel({
       banda={
         <>
           <p className="max-w-[60ch] text-[0.9375rem]">
-            <strong className="font-semibold">Lo que se carga acá lo ve el cliente</strong> en su portal, y cualquiera con el
-            código en la consulta pública: el estado, las fechas y la descripción del equipo.
+            {nota ?? (
+              <>
+                <strong className="font-semibold">Lo que se carga acá lo ve el cliente</strong> en su portal, y cualquiera con el
+                código en la consulta pública: el estado, las fechas y la descripción del equipo.
+              </>
+            )}
           </p>
           {modoDatos === "local" && (
             <div className="rounded-[0.25rem] border-2 border-dashed border-acero px-4 py-3 text-[0.9375rem]">

@@ -24,6 +24,7 @@ import type { DatosEquipo, EquipoCliente, EquipoTaller, Taller } from "@/lib/dom
 import { ErrorFormulario, MensajeCampo, mensajeDeError } from "../Dialogo";
 import type { AccionesPanel } from "../usePanel";
 import { CampoTexto, Grupo, Opciones, Sugerencias } from "./campos";
+import { useAvisoAlSalir } from "./useAvisoAlSalir";
 import { NUEVA_EMPRESA, placaDe, revisar, valoresDe, type Campo, type Errores, type Valores } from "./valores";
 
 /** Sugerencias de base; se suman las que ya cargó el taller en otros equipos. */
@@ -45,32 +46,6 @@ type CampoSugerido = keyof typeof SUGERENCIAS;
 function descripcionPublica(placa: Placa, equipo?: EquipoTaller) {
   if (equipo?.equipo && !placa.potencia) return equipo.equipo;
   return describirEquipo(placa) ?? "Transformador";
-}
-
-/** Avisa antes de salir de la página (enlaces, recarga o cierre) si hay datos sin guardar. */
-function useAvisoAlSalir(activo: boolean) {
-  useEffect(() => {
-    if (!activo) return;
-    const antesDeDescargar = (evento: BeforeUnloadEvent) => {
-      evento.preventDefault();
-      evento.returnValue = "";
-    };
-    // En captura, antes de que el enlace de Next navegue: si la persona se queda, el clic no sigue.
-    const alHacerClic = (evento: MouseEvent) => {
-      const enlace = (evento.target as Element | null)?.closest?.("a[href]");
-      if (!enlace || enlace.getAttribute("target") === "_blank") return;
-      if (!window.confirm("Hay datos sin guardar. ¿Salir igual y perderlos?")) {
-        evento.preventDefault();
-        evento.stopPropagation();
-      }
-    };
-    window.addEventListener("beforeunload", antesDeDescargar);
-    document.addEventListener("click", alHacerClic, true);
-    return () => {
-      window.removeEventListener("beforeunload", antesDeDescargar);
-      document.removeEventListener("click", alHacerClic, true);
-    };
-  }, [activo]);
 }
 
 /** "el cliente y las fases": lo que falta para poder registrar, en una frase. */
@@ -321,7 +296,7 @@ export function FormularioEquipo({
             <h2 className="rotulo text-base">Placa de características</h2>
           </div>
 
-          <Grupo titulo="Identificación" primero ayuda="Copie la chapa tal como figura. Lo que no esté o no se lea, déjelo en blanco.">
+          <Grupo titulo="Identificación" primero ayuda="Datos de placa">
             <div className="grid gap-x-8 gap-y-7 sm:grid-cols-6">
               <CampoTexto {...comun("fabricante")} etiqueta="Fabricante" lista={lista("fabricante")} className="sm:col-span-4" />
               <CampoTexto {...comun("anio")} etiqueta="Año de fabricación" numerico maxLength={4} className="sm:col-span-2" ancho="max-w-[8rem]" />

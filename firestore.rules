@@ -91,6 +91,12 @@ service cloud.firestore {
       allow read, write: if esPersonal();
     }
 
+    // Informe de diagnóstico de cada equipo (inspección, aislamiento, relación de transformación):
+    // solo el personal. El cliente no lo lee, ni siquiera el de su empresa.
+    match /informes/{codigo} {
+      allow read, write: if esPersonal();
+    }
+
     match /{documento=**} {
       allow read, write: if false;
     }

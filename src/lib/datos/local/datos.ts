@@ -1,4 +1,5 @@
 import type { EstadoReparacion } from "@/lib/dominio/estados";
+import type { InformeGuardado } from "@/lib/dominio/informe";
 import type { CuentaCliente, DatosEquipo, Empresa, EquipoTaller, SeguimientoPublico } from "@/lib/dominio/tipos";
 
 /**
@@ -203,6 +204,8 @@ export interface DatosLocales {
   empresas: Empresa[];
   equipos: EquipoTaller[];
   cuentas: CuentaCliente[];
+  /** Informes de diagnóstico por código. Falta en los datos guardados antes de que existieran. */
+  informes?: Record<string, InformeGuardado>;
 }
 
 function semilla(): DatosLocales {

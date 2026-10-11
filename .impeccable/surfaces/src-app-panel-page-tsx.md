@@ -2,7 +2,7 @@
 version: 1
 slug: "src-app-panel-page-tsx"
 primary_target: "src/app/panel/page.tsx"
-related_targets: ["src/app/panel/empresas/page.tsx", "src/app/panel/registrar/page.tsx", "src/app/panel/editar/page.tsx"]
+related_targets: ["src/app/panel/empresas/page.tsx", "src/app/panel/registrar/page.tsx", "src/app/panel/editar/page.tsx", "src/app/panel/informe/page.tsx"]
 ---
 
 # Panel del taller
@@ -33,6 +33,11 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 - Elegido por el usuario: página propia (no ventana), una sola hoja en el orden de la chapa (no pasos) y pruebas del cliente en producción.
 - Obligatorios: cliente, fecha de recepción y fases (fases solo al registrar). La descripción pública se arma con fases, potencia y tensiones; los equipos viejos conservan la suya hasta que se cargue la potencia.
 - Pendiente con Tecvol: si el N.º de orden lo numera el sistema, qué datos de la planilla siguen (ip %, peso inchite, refrigerante) y si un equipo que vuelve se reconoce por su N.º de fabricación.
+
+## Informe de diagnóstico (11/10/2026)
+- Página aparte, elegida por el usuario: la inspección visual, el aislamiento y la relación de transformación de la planilla los carga Maxi después de desarmar; Martín los usa para cotizar. Ítems definidos en `src/lib/dominio/informe.ts`.
+- Solo para el personal, también a nivel de datos: colección `informes/{codigo}` con regla propia en `firestore.rules` (hay que publicarla). Se guarda entero, a medias si hace falta, con quién y cuándo.
+- Pendiente con Tecvol: unidad y tensión de ensayo del aislamiento, qué se anota en la relación y con qué tolerancia, si el conmutador lleva acción, y si el cliente ve el informe.
 
 ## Decisiones abiertas
 - Las reglas y el alta de cuentas están probados solo con datos de prueba; falta probarlos contra el proyecto de Firebase.

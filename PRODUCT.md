@@ -43,6 +43,7 @@ En vez de dar el estado del equipo por teléfono, Tecvol le muestra al cliente e
 
 - **Flujo de reparación.** Estados fijos, en este orden: Ingresado → Diagnóstico → Presupuesto → Reparación → Ensayos finales → Listo → Entregado.
 - **Presupuesto.** El taller lo carga como texto y el cliente lo aprueba online desde el portal.
+- **Informe de diagnóstico.** Después de desarmar el equipo, el jefe del taller anota la inspección visual (cada parte OK, Regular o Mal y si hay que reparar o cambiar), la resistencia de aislamiento y la relación de transformación, como en su planilla de papel. Quien cotiza usa ese informe. Por ahora es solo para el taller; el cliente no lo ve.
 - **Novedades.** Actualizaciones en texto que el taller carga sobre un equipo. Aparecen en la línea de tiempo del cliente.
 - **Ingreso.** El transformador se registra con los datos de su chapa (placa de características), en el mismo orden en que figuran en ella. Hoy el taller usa una planilla de papel por transformador, con el N.º de orden de trabajo escrito a mano; el sistema guarda ese número.
 - **Contextos de uso.** Clientes desde el celular, en planta o en campo, con una sola pregunta y poco tiempo. El personal trabaja en la PC del taller, varias veces al día.

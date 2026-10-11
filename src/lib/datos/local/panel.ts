@@ -1,5 +1,6 @@
 import { generarCodigo } from "@/lib/dominio/codigo";
 import type { EstadoReparacion } from "@/lib/dominio/estados";
+import { informeParaGuardar, type Informe, type InformeGuardado } from "@/lib/dominio/informe";
 import { conTodosLosCampos, type CuentaCliente, type DatosEquipo, type Empresa, type EquipoTaller, type Taller } from "@/lib/dominio/tipos";
 import { ErrorDePanel, type PanelRepositorio } from "../repositorios";
 import { esperar, guardarDatos, leerDatos } from "./datos";
@@ -37,6 +38,18 @@ export class PanelLocal implements PanelRepositorio {
     await esperar(350);
     const datos = leerDatos();
     datos.equipos = datos.equipos.map((e) => (e.codigo === codigo ? { ...e, ...conTodosLosCampos(nuevos), actualizado: new Date() } : e));
+    guardarDatos(datos);
+  }
+
+  async obtenerInforme(codigo: string): Promise<InformeGuardado | null> {
+    await esperar(300);
+    return leerDatos().informes?.[codigo] ?? null;
+  }
+
+  async guardarInforme(codigo: string, informe: Informe, por: string): Promise<void> {
+    await esperar(350);
+    const datos = leerDatos();
+    datos.informes = { ...datos.informes, [codigo]: { ...informeParaGuardar(informe), por, actualizado: new Date() } };
     guardarDatos(datos);
   }
 

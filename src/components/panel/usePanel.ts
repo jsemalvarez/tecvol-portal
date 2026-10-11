@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useSesionDe } from "@/components/ingreso/useSesionDe";
 import { obtenerPanel } from "@/lib/datos/repositorios";
 import { etapasConEstado, type EstadoReparacion } from "@/lib/dominio/estados";
+import type { Informe, InformeGuardado } from "@/lib/dominio/informe";
 import { conTodosLosCampos, type CuentaCliente, type DatosEquipo, type Empresa, type EquipoTaller, type Sesion, type Taller } from "@/lib/dominio/tipos";
 
 export type EstadoPanel =
@@ -20,6 +21,9 @@ export interface AccionesPanel {
   restaurar(anterior: EstadoAnterior): Promise<void>;
   registrar(datos: DatosEquipo, ingreso: Date): Promise<EquipoTaller>;
   editar(codigo: string, datos: DatosEquipo): Promise<void>;
+  obtenerInforme(codigo: string): Promise<InformeGuardado | null>;
+  /** Guarda el informe a nombre de quien tiene la sesión abierta. */
+  guardarInforme(codigo: string, informe: Informe): Promise<void>;
   crearEmpresa(nombre: string): Promise<Empresa>;
   crearCuenta(email: string, empresa: string): Promise<CuentaCliente>;
 }
@@ -84,6 +88,12 @@ export function usePanel() {
     async editar(codigo, datos) {
       await (await obtenerPanel()).editarEquipo(codigo, datos);
       reemplazarEquipo(codigo, { ...conTodosLosCampos(datos), actualizado: new Date() });
+    },
+    async obtenerInforme(codigo) {
+      return (await obtenerPanel()).obtenerInforme(codigo);
+    },
+    async guardarInforme(codigo, informe) {
+      await (await obtenerPanel()).guardarInforme(codigo, informe, sesion?.email ?? "");
     },
     async crearEmpresa(nombre) {
       const empresa = await (await obtenerPanel()).crearEmpresa(nombre);

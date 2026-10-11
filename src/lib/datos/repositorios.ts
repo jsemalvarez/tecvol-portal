@@ -1,4 +1,5 @@
 import type { EstadoReparacion } from "@/lib/dominio/estados";
+import type { Informe, InformeGuardado } from "@/lib/dominio/informe";
 import type {
   ConsultaNueva,
   CuentaCliente,
@@ -48,6 +49,10 @@ export interface PanelRepositorio {
   /** Registra un equipo nuevo con un código de seguimiento nuevo, en estado "ingresado". */
   registrarEquipo(datos: DatosEquipo, ingreso: Date): Promise<EquipoTaller>;
   editarEquipo(codigo: string, datos: DatosEquipo): Promise<void>;
+  /** Informe de diagnóstico de un equipo; `null` si todavía no tiene. */
+  obtenerInforme(codigo: string): Promise<InformeGuardado | null>;
+  /** Reemplaza el informe entero y anota quién lo guardó. */
+  guardarInforme(codigo: string, informe: Informe, por: string): Promise<void>;
   crearEmpresa(nombre: string): Promise<Empresa>;
   /** Crea la cuenta, la asocia a la empresa y envía al cliente el email para elegir su contraseña. */
   crearCuenta(email: string, empresa: string): Promise<CuentaCliente>;
