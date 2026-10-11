@@ -1,0 +1,14 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "overused-font",
+        "value": "arial",
+        "createdAt": "2026-10-11T17:34:51.115Z",
+        "reason": "Claude: Arial is only the glyph fallback for the Ω in MΩ, which Barlow lacks (src/components/panel/equipo/campos.tsx); DESIGN.md already lists Arial in the type stack"
+      }
+    ]
+  }
+}
