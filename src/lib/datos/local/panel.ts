@@ -1,6 +1,6 @@
 import { generarCodigo } from "@/lib/dominio/codigo";
 import type { EstadoReparacion } from "@/lib/dominio/estados";
-import type { CuentaCliente, DatosEquipo, Empresa, EquipoTaller, Taller } from "@/lib/dominio/tipos";
+import { conTodosLosCampos, type CuentaCliente, type DatosEquipo, type Empresa, type EquipoTaller, type Taller } from "@/lib/dominio/tipos";
 import { ErrorDePanel, type PanelRepositorio } from "../repositorios";
 import { esperar, guardarDatos, leerDatos } from "./datos";
 
@@ -36,9 +36,7 @@ export class PanelLocal implements PanelRepositorio {
   async editarEquipo(codigo: string, nuevos: DatosEquipo): Promise<void> {
     await esperar(350);
     const datos = leerDatos();
-    datos.equipos = datos.equipos.map((e) =>
-      e.codigo === codigo ? { ...e, ...nuevos, referencia: nuevos.referencia, serie: nuevos.serie, actualizado: new Date() } : e,
-    );
+    datos.equipos = datos.equipos.map((e) => (e.codigo === codigo ? { ...e, ...conTodosLosCampos(nuevos), actualizado: new Date() } : e));
     guardarDatos(datos);
   }
 

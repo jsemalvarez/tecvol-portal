@@ -1,4 +1,5 @@
 import type { EstadoReparacion } from "./estados";
+import type { Placa, Uso } from "./placa";
 
 /**
  * Documento público `seguimiento/{codigo}`: solo lo que puede ver cualquiera
@@ -21,7 +22,7 @@ export interface SeguimientoPublico {
 export interface EquipoCliente extends SeguimientoPublico {
   /** Cómo identifica el cliente a este equipo, p. ej. "Subestación Barrio Norte". */
   referencia?: string;
-  /** Número de serie de la placa de características. */
+  /** N.º de fabricación de la chapa (en algunas, N.º de serie). */
   serie?: string;
 }
 
@@ -44,17 +45,43 @@ export interface CuentaCliente {
   empresa: string;
 }
 
-/** Datos de un equipo que carga el personal: de qué empresa es y cómo se identifica. */
+/**
+ * Datos de un equipo que carga el personal: de qué empresa es, cómo se identifica y su chapa.
+ * `equipo` es la descripción pública, que se arma con la chapa (ver `describirEquipo`).
+ */
 export interface DatosEquipo {
   empresa: string;
   equipo: string;
   referencia?: string;
   serie?: string;
+  /** N.º de la orden de trabajo en papel, escrito a mano por el taller. */
+  numeroOrden?: string;
+  uso?: Uso;
+  placa?: Placa;
 }
 
-/** Un equipo como lo ve el personal: el seguimiento, los datos privados y la empresa dueña. */
+/**
+ * Los datos de un equipo con todos sus campos opcionales presentes, aunque estén vacíos: al mezclarlos
+ * con los anteriores, lo que se vació en el formulario borra lo que había.
+ */
+export function conTodosLosCampos(datos: DatosEquipo): DatosEquipo {
+  return {
+    empresa: datos.empresa,
+    equipo: datos.equipo,
+    referencia: datos.referencia,
+    serie: datos.serie,
+    numeroOrden: datos.numeroOrden,
+    uso: datos.uso,
+    placa: datos.placa,
+  };
+}
+
+/** Un equipo como lo ve el personal: el seguimiento, los datos privados, la empresa dueña y la chapa. */
 export interface EquipoTaller extends EquipoCliente {
   empresa: string;
+  numeroOrden?: string;
+  uso?: Uso;
+  placa?: Placa;
 }
 
 /** Todo lo que maneja el panel del taller. */

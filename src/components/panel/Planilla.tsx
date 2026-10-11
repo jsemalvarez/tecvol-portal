@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { TornillosMarco } from "@/components/inicio/TornillosMarco";
 import { nombreDe, TextoEstado } from "@/components/portal/piezas";
 import { Senal } from "@/components/senal/Senal";
@@ -74,7 +75,10 @@ function Planilla({ api }: { api: ApiPanel }) {
                         {equipo.referencia && <span className="block text-[0.9375rem] leading-snug">{equipo.equipo}</span>}
                       </td>
                       <td className="px-4 py-3.5 align-middle text-[0.9375rem]">{api.empresaDe(equipo) || <span className="text-grafito">Sin empresa</span>}</td>
-                      <td className="whitespace-nowrap px-4 py-3.5 align-middle text-[0.9375rem] tracking-[0.04em]">{formatearCodigo(equipo.codigo)}</td>
+                      <td className="whitespace-nowrap px-4 py-3.5 align-middle text-[0.9375rem]">
+                        <span className="block tracking-[0.04em]">{formatearCodigo(equipo.codigo)}</span>
+                        {equipo.numeroOrden && <span className="block text-grafito">Orden {equipo.numeroOrden}</span>}
+                      </td>
                       <td className="py-3.5 pl-4 pr-[var(--marco-px)] align-middle">
                         <Acciones api={api} equipo={equipo} />
                       </td>
@@ -98,6 +102,7 @@ function Planilla({ api }: { api: ApiPanel }) {
                         </p>
                         <p className="text-[0.9375rem] leading-snug">
                           {api.empresaDe(equipo) || "Sin empresa"} · <span className="tracking-[0.04em]">{formatearCodigo(equipo.codigo)}</span>
+                          {equipo.numeroOrden && <> · Orden {equipo.numeroOrden}</>}
                         </p>
                       </div>
                     </div>
@@ -122,14 +127,13 @@ function Acciones({ api, equipo }: { api: ApiPanel; equipo: EquipoTaller }) {
       <button type="button" onClick={() => api.abrirEstado(equipo)} className="placa-secundaria w-full justify-center whitespace-nowrap md:w-auto" aria-label={`Cambiar el estado de ${nombre}`}>
         Cambiar estado
       </button>
-      <button
-        type="button"
-        onClick={() => api.abrirEditar(equipo)}
-        className="cursor-pointer text-[0.9375rem] font-semibold underline decoration-naranja decoration-2 underline-offset-4"
+      <Link
+        href={`/panel/editar?codigo=${equipo.codigo}`}
+        className="text-[0.9375rem] font-semibold underline decoration-naranja decoration-2 underline-offset-4"
         aria-label={`Editar los datos de ${nombre}`}
       >
         Editar
-      </button>
+      </Link>
       <button
         type="button"
         onClick={() => api.abrirEtiqueta(equipo)}

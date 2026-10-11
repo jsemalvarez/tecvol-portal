@@ -9,7 +9,10 @@ export type FiltroEstado = "en-taller" | "todos" | EstadoReparacion;
 
 const sinAcentos = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
 
-/** Búsqueda por código, referencia, equipo, serie o empresa, más los filtros de empresa y estado. */
+/**
+ * Búsqueda por código, referencia, equipo, N.º de fabricación, N.º de orden, fabricante o empresa, más los
+ * filtros de empresa y estado.
+ */
 export function useFiltros(equipos: EquipoTaller[], empresas: Empresa[]) {
   const [texto, setTexto] = useState("");
   const [empresa, setEmpresa] = useState("");
@@ -25,7 +28,9 @@ export function useFiltros(equipos: EquipoTaller[], empresas: Empresa[]) {
       if (esEstado(estado) && e.estado !== estado) return false;
       if (!buscado) return true;
       if (codigo.length >= 2 && e.codigo.includes(codigo)) return true;
-      return sinAcentos([e.referencia, e.equipo, e.serie, nombres.get(e.empresa)].filter(Boolean).join(" ")).includes(buscado);
+      return sinAcentos(
+        [e.referencia, e.equipo, e.serie, e.numeroOrden, e.placa?.fabricante, nombres.get(e.empresa)].filter(Boolean).join(" "),
+      ).includes(buscado);
     });
   }, [equipos, empresas, texto, empresa, estado]);
 

@@ -92,7 +92,7 @@ function Tabla({ id, titulo, equipos, empresa }: { id: string; titulo: string; e
                 <dl className="mt-3 flex flex-wrap gap-x-8 gap-y-1 text-[0.9375rem]">
                   {equipo.serie && (
                     <div className="flex gap-2">
-                      <dt className="rotulo pt-0.5 text-[0.8125rem]">Serie</dt>
+                      <dt className="rotulo pt-0.5 text-[0.8125rem]">N.º de fabricación</dt>
                       <dd>{equipo.serie}</dd>
                     </div>
                   )}

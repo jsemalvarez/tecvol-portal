@@ -44,7 +44,7 @@ En vez de dar el estado del equipo por teléfono, Tecvol le muestra al cliente e
 - **Flujo de reparación.** Estados fijos, en este orden: Ingresado → Diagnóstico → Presupuesto → Reparación → Ensayos finales → Listo → Entregado.
 - **Presupuesto.** El taller lo carga como texto y el cliente lo aprueba online desde el portal.
 - **Novedades.** Actualizaciones en texto que el taller carga sobre un equipo. Aparecen en la línea de tiempo del cliente.
-- **Ingreso.** El transformador se registra con sus datos de placa.
+- **Ingreso.** El transformador se registra con los datos de su chapa (placa de características), en el mismo orden en que figuran en ella. Hoy el taller usa una planilla de papel por transformador, con el N.º de orden de trabajo escrito a mano; el sistema guarda ese número.
 - **Contextos de uso.** Clientes desde el celular, en planta o en campo, con una sola pregunta y poco tiempo. El personal trabaja en la PC del taller, varias veces al día.
 - **Servicios de Tecvol sobre transformadores:** reparación / rebobinado, mantenimiento y ensayos. Tecvol no fabrica, vende ni alquila equipos.
 
@@ -64,7 +64,7 @@ En vez de dar el estado del equipo por teléfono, Tecvol le muestra al cliente e
 **Previsto pero no disponible todavía:** subida de archivos, fotos y PDFs (protocolos de ensayo, fotos del equipo, presupuestos en PDF). La interfaz reserva su lugar y lo marca como "próximamente".
 
 **Decisiones abiertas:**
-- Campos exactos de los datos de placa.
+- Si el N.º de orden lo numera el sistema o se sigue escribiendo a mano. Los datos de la chapa se tomaron de una chapa real y de la planilla de ejemplo del taller, que todavía va a cambiar.
 - Si técnicos y administración tienen permisos distintos en el panel interno.
 - Si una empresa cliente puede tener más de un usuario.
 - Cómo se comunica una fecha estimada de entrega (el cliente pregunta "cuándo lo tengo", pero el dato no está definido).
@@ -83,9 +83,9 @@ En vez de dar el estado del equipo por teléfono, Tecvol le muestra al cliente e
 
 ## Evidence on Hand
 
-Disponible: solo el logo oficial (`public/marca/tecvol-logo.png`).
+Disponible: el logo oficial (`public/marca/tecvol-logo.png`) y, fuera del repositorio (`referencias/taller/`, ignorada por git), la planilla de entrada de ejemplo del taller, la foto de una chapa real y las transcripciones de los audios del jefe del taller.
 
-El área es nueva. No hay fotos del taller o de equipos, modelos de protocolo de ensayo, presupuesto u orden de trabajo, clientes con nombre, testimonios ni métricas.
+El área es nueva. No hay fotos del taller o de equipos, modelos de protocolo de ensayo, presupuesto, clientes con nombre, testimonios ni métricas.
 
 Pendientes, sin inventar:
 - **Datos de contacto** del taller (teléfono, email, dirección).

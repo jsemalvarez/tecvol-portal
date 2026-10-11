@@ -16,3 +16,6 @@ firebase-debug.log*
 .claude/
 .impeccable/hook.cache.json
 .impeccable/questions/
+
+# Material del taller (planillas, audios): datos internos del cliente
+referencias/

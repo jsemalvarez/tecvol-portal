@@ -2,7 +2,7 @@
 version: 1
 slug: "src-app-panel-page-tsx"
 primary_target: "src/app/panel/page.tsx"
-related_targets: ["src/app/panel/empresas/page.tsx"]
+related_targets: ["src/app/panel/empresas/page.tsx", "src/app/panel/registrar/page.tsx", "src/app/panel/editar/page.tsx"]
 ---
 
 # Panel del taller
@@ -15,7 +15,7 @@ Modo: **Herramienta** de trabajo diario para el personal de Tecvol.
 - Tecvol todavía no definió un cronograma propio: se usan los siete estados del sistema y el personal puede saltear etapas o volver atrás para corregir.
 
 ## Acciones y prueba
-- Primaria: "Cambiar estado" (fecha de hoy por defecto, nunca futura; deshacer desde el aviso). Secundarias: "Registrar equipo" (genera el código, crea `seguimiento` y `ordenes`, muestra la etiqueta), "Editar", "Etiqueta"; en Empresas y cuentas, "Nueva empresa" y "Agregar cuenta" (crea la cuenta en Firebase Auth con una segunda instancia en memoria y envía el email para elegir la contraseña).
+- Primaria: "Cambiar estado" (fecha de hoy por defecto, nunca futura; deshacer desde el aviso). Secundarias: "Registrar equipo" (página propia con la recepción y la placa de características en el orden de la chapa; genera el código, crea `seguimiento` y `ordenes`, muestra la etiqueta), "Editar" (la misma página con los datos guardados), "Etiqueta"; en Empresas y cuentas, "Nueva empresa" y "Agregar cuenta" (crea la cuenta en Firebase Auth con una segunda instancia en memoria y envía el email para elegir la contraseña).
 - Lo que se carga lo ve el cliente en su portal y cualquiera con el código en la consulta pública; la banda de abajo lo recuerda.
 - Con datos de prueba (desarrollo o `NEXT_PUBLIC_DATOS_DE_PRUEBA`), los cambios se guardan en el navegador y hay un enlace para volver a los datos de prueba.
 
@@ -27,6 +27,12 @@ FIRST VIEWPORT: cabecera (logo, email, "Salir"); pestañas "Equipos · Empresas 
 SIGNATURE: la etiqueta del equipo con el QR a la consulta pública, que se imprime sola, sin el resto de la página.
 FORM: elegido el 05/10/2026 entre tres diseños de la lista de equipos (Planilla; Etapas: una columna por etapa con "Pasar a…"; Mesa: lista y equipo elegido al lado). El usuario eligió Planilla; los otros dos y su comparador se descartaron.
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+
+## Ficha del equipo (11/10/2026)
+- El taller (Maxi, jefe del taller) viene del papel: su planilla de entrada y una chapa real están en `referencias/taller/` (fuera de git). La planilla es un ejemplo y va a cambiar; los campos se definen en `src/lib/dominio/placa.ts` y `src/components/panel/equipo/valores.ts`.
+- Elegido por el usuario: página propia (no ventana), una sola hoja en el orden de la chapa (no pasos) y pruebas del cliente en producción.
+- Obligatorios: cliente, fecha de recepción y fases (fases solo al registrar). La descripción pública se arma con fases, potencia y tensiones; los equipos viejos conservan la suya hasta que se cargue la potencia.
+- Pendiente con Tecvol: si el N.º de orden lo numera el sistema, qué datos de la planilla siguen (ip %, peso inchite, refrigerante) y si un equipo que vuelve se reconoce por su N.º de fabricación.
 
 ## Decisiones abiertas
 - Las reglas y el alta de cuentas están probados solo con datos de prueba; falta probarlos contra el proyecto de Firebase.

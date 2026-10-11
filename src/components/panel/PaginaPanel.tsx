@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { Alerta } from "@/components/iconos";
+import { Alerta, Flecha } from "@/components/iconos";
 import { EsqueletoAcceso } from "@/components/ingreso/piezas";
 import { nombreDe } from "@/components/portal/piezas";
 import { CLAVE_CUENTAS_NUEVAS, reiniciarDatos } from "@/lib/datos/local/datos";
@@ -12,7 +12,6 @@ import { DEFINICIONES, type EstadoReparacion } from "@/lib/dominio/estados";
 import type { Empresa, EquipoTaller, Taller } from "@/lib/dominio/tipos";
 import { Dialogo } from "./Dialogo";
 import { Etiqueta } from "./Etiqueta";
-import { FormularioEquipo } from "./FormularioEquipo";
 import { FormularioEstado } from "./FormularioEstado";
 import { FormularioCuenta, FormularioEmpresa } from "./FormulariosEmpresa";
 import { usePanel, type AccionesPanel, type EstadoAnterior } from "./usePanel";
@@ -23,14 +22,13 @@ export interface ApiPanel {
   acciones: AccionesPanel;
   empresaDe: (equipo: EquipoTaller) => string;
   abrirEstado: (equipo: EquipoTaller) => void;
-  abrirEditar: (equipo: EquipoTaller) => void;
   abrirEtiqueta: (equipo: EquipoTaller) => void;
   abrirCuenta: (empresa: Empresa) => void;
 }
 
 type Ventana =
-  | { tipo: "estado" | "editar" | "etiqueta" | "registrado"; codigo: string }
-  | { tipo: "registrar" | "empresa" }
+  | { tipo: "estado" | "etiqueta"; codigo: string }
+  | { tipo: "empresa" }
   | { tipo: "cuenta"; empresa: Empresa };
 
 interface Aviso {
@@ -44,11 +42,41 @@ const SECCIONES = [
   { id: "empresas", href: "/panel/empresas", nombre: "Empresas y cuentas", titulo: "Empresas y cuentas" },
 ] as const;
 
+const CLAVE_AVISO = "tecvol-aviso-panel";
+
+/** Deja un aviso para la próxima página del panel, por ejemplo al volver a la lista después de guardar. */
+export function dejarAviso(texto: string) {
+  try {
+    window.sessionStorage.setItem(CLAVE_AVISO, texto);
+  } catch {
+    // Sin almacenamiento, el aviso no llega: los datos igual quedaron guardados.
+  }
+}
+
+function tomarAviso(): string | null {
+  try {
+    const texto = window.sessionStorage.getItem(CLAVE_AVISO);
+    window.sessionStorage.removeItem(CLAVE_AVISO);
+    return texto;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Página del panel del taller: la sesión del personal, las secciones, los estados de carga, las ventanas
- * para cargar datos y los avisos. Cada sección recibe la API y muestra sus datos.
+ * para cargar datos y los avisos. Cada sección recibe la API y muestra sus datos. Con `titulo`, es una
+ * página dentro de la sección (registrar o editar un equipo): lleva ese título y el enlace para volver.
  */
-export function PaginaPanel({ seccion, children }: { seccion: "equipos" | "empresas"; children: (api: ApiPanel) => ReactNode }) {
+export function PaginaPanel({
+  seccion,
+  titulo,
+  children,
+}: {
+  seccion: "equipos" | "empresas";
+  titulo?: string;
+  children: (api: ApiPanel) => ReactNode;
+}) {
   const { estado, acciones, reintentar, salir } = usePanel();
   const [ventana, setVentana] = useState<Ventana | null>(null);
   const [aviso, setAviso] = useState<Aviso | null>(null);
@@ -62,6 +90,12 @@ export function PaginaPanel({ seccion, children }: { seccion: "equipos" | "empre
   }, [aviso]);
 
   const avisar = useCallback((texto: string, deshacer?: () => Promise<void>) => setAviso({ id: Date.now(), texto, deshacer }), []);
+
+  useEffect(() => {
+    const pendiente = tomarAviso();
+    if (pendiente) avisar(pendiente);
+  }, [avisar]);
+
   const cerrar = useCallback(() => setVentana(null), []);
   const equipoDe = (codigo: string) => taller?.equipos.find((e) => e.codigo === codigo) ?? null;
   const nombreEmpresa = (id: string) => taller?.empresas.find((e) => e.id === id)?.nombre ?? "";
@@ -75,7 +109,6 @@ export function PaginaPanel({ seccion, children }: { seccion: "equipos" | "empre
     acciones,
     empresaDe: (equipo) => nombreEmpresa(equipo.empresa),
     abrirEstado: (equipo) => setVentana({ tipo: "estado", codigo: equipo.codigo }),
-    abrirEditar: (equipo) => setVentana({ tipo: "editar", codigo: equipo.codigo }),
     abrirEtiqueta: (equipo) => setVentana({ tipo: "etiqueta", codigo: equipo.codigo }),
     abrirCuenta: (empresa) => setVentana({ tipo: "cuenta", empresa }),
   };
@@ -156,7 +189,7 @@ export function PaginaPanel({ seccion, children }: { seccion: "equipos" | "empre
             <Link
               key={s.id}
               href={s.href}
-              aria-current={s.id === seccion ? "page" : undefined}
+              aria-current={s.id === seccion ? (titulo ? "true" : "page") : undefined}
               className={`rotulo border-b-[3px] pb-1 text-[0.9375rem] no-underline ${
                 s.id === seccion ? "border-naranja" : "border-transparent text-grafito hover:border-acero"
               }`}
@@ -167,18 +200,30 @@ export function PaginaPanel({ seccion, children }: { seccion: "equipos" | "empre
         </nav>
         <div className="mt-8 flex flex-wrap items-end justify-between gap-x-8 gap-y-5">
           <div>
-            <p className="rotulo text-[0.9375rem] text-grafito">Panel del taller</p>
+            {titulo ? (
+              <Link href={actual.href} className="rotulo inline-flex items-center gap-2 text-[0.9375rem] text-grafito no-underline hover:text-tinta">
+                <Flecha className="size-4 rotate-180" />
+                Volver a {actual.nombre.toLowerCase()}
+              </Link>
+            ) : (
+              <p className="rotulo text-[0.9375rem] text-grafito">Panel del taller</p>
+            )}
             <h1 id="titulo-panel" className="mt-2 font-cartel text-[3rem] font-bold leading-[0.92] sm:text-[4rem]">
-              {actual.titulo}
+              {titulo ?? actual.titulo}
             </h1>
           </div>
-          {taller && (
-            <button type="button" onClick={() => setVentana({ tipo: seccion === "equipos" ? "registrar" : "empresa" })} className="placa">
-              {seccion === "equipos" ? "Registrar equipo" : "Nueva empresa"}
+          {taller && !titulo && seccion === "equipos" && (
+            <Link href="/panel/registrar" className="placa">
+              Registrar equipo
+            </Link>
+          )}
+          {taller && !titulo && seccion === "empresas" && (
+            <button type="button" onClick={() => setVentana({ tipo: "empresa" })} className="placa">
+              Nueva empresa
             </button>
           )}
         </div>
-        {taller && seccion === "equipos" && (
+        {taller && !titulo && seccion === "equipos" && (
           <p className="mt-4 text-lg">
             {enTaller.length} en el taller
             {esperanCliente.length > 0 && (
@@ -193,7 +238,7 @@ export function PaginaPanel({ seccion, children }: { seccion: "equipos" | "empre
             {taller.equipos.length - enTaller.length} entregados
           </p>
         )}
-        {taller && seccion === "empresas" && (
+        {taller && !titulo && seccion === "empresas" && (
           <p className="mt-4 text-lg">
             {taller.empresas.length} {taller.empresas.length === 1 ? "empresa" : "empresas"} · {taller.cuentas.length}{" "}
             {taller.cuentas.length === 1 ? "cuenta" : "cuentas"} de clientes
@@ -226,50 +271,13 @@ export function PaginaPanel({ seccion, children }: { seccion: "equipos" | "empre
           </Dialogo>
 
           <Dialogo
-            abierto={ventana?.tipo === "editar" && !!enVentana}
-            titulo={enVentana ? `Datos del equipo · ${formatearCodigo(enVentana.codigo)}` : "Datos del equipo"}
-            onCerrar={cerrar}
-          >
-            {enVentana && ventana?.tipo === "editar" && (
-              <FormularioEquipo
-                taller={taller}
-                acciones={acciones}
-                equipo={enVentana}
-                onGuardado={() => {
-                  avisar(`Se guardaron los datos de ${nombreDe(enVentana)}.`);
-                  cerrar();
-                }}
-              />
-            )}
-          </Dialogo>
-
-          <Dialogo abierto={ventana?.tipo === "registrar"} titulo="Registrar equipo" onCerrar={cerrar}>
-            {ventana?.tipo === "registrar" && (
-              <FormularioEquipo
-                taller={taller}
-                acciones={acciones}
-                onRegistrado={(equipo) => setVentana({ tipo: "registrado", codigo: equipo.codigo })}
-              />
-            )}
-          </Dialogo>
-
-          <Dialogo
-            abierto={(ventana?.tipo === "registrado" || ventana?.tipo === "etiqueta") && !!enVentana}
-            titulo={ventana?.tipo === "registrado" ? "Equipo registrado" : "Etiqueta del equipo"}
+            abierto={ventana?.tipo === "etiqueta" && !!enVentana}
+            titulo="Etiqueta del equipo"
             onCerrar={cerrar}
             ancho="max-w-[34rem]"
           >
-            {enVentana && (ventana?.tipo === "registrado" || ventana?.tipo === "etiqueta") && (
-              <>
-                {ventana.tipo === "registrado" && (
-                  <p role="status" className="mb-5 max-w-[48ch]">
-                    Quedó registrado como <strong className="font-semibold">Ingresado</strong> con el código{" "}
-                    <strong className="font-semibold tracking-[0.04em]">{formatearCodigo(enVentana.codigo)}</strong>. Imprima la
-                    etiqueta para el equipo o la orden de ingreso.
-                  </p>
-                )}
-                <Etiqueta equipo={enVentana} empresa={nombreEmpresa(enVentana.empresa)} />
-              </>
+            {enVentana && ventana?.tipo === "etiqueta" && (
+              <Etiqueta equipo={enVentana} empresa={nombreEmpresa(enVentana.empresa)} orden={enVentana.numeroOrden} />
             )}
           </Dialogo>
 

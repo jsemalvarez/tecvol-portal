@@ -36,7 +36,18 @@ export function CodigoQR({ valor, className = "" }: { valor: string; className?:
  * para reconocerlo y un QR que abre la consulta pública. Al imprimir, solo sale la etiqueta.
  * La usan el panel y el portal. Con `children`, esas acciones van primero e imprimir pasa a secundaria.
  */
-export function Etiqueta({ equipo, empresa, children }: { equipo: EquipoCliente; empresa: string; children?: ReactNode }) {
+export function Etiqueta({
+  equipo,
+  empresa,
+  orden,
+  children,
+}: {
+  equipo: EquipoCliente;
+  empresa: string;
+  /** N.º de la orden de trabajo en papel, solo en el panel. */
+  orden?: string;
+  children?: ReactNode;
+}) {
   const origen = typeof window === "undefined" ? "" : window.location.origin;
   const enlace = `${origen}/seguimiento/${equipo.codigo}`;
   const ingreso = equipo.etapas.ingresado;
@@ -57,6 +68,7 @@ export function Etiqueta({ equipo, empresa, children }: { equipo: EquipoCliente;
             <p className="text-[0.8125rem] leading-snug">{equipo.equipo}</p>
             {empresa && <p className="text-[0.8125rem] leading-snug">{empresa}</p>}
             {ingreso && <p className="text-[0.8125rem] leading-snug">Ingresó el {formatearFecha(ingreso)}</p>}
+            {orden && <p className="text-[0.8125rem] leading-snug">Orden de trabajo N.º {orden}</p>}
           </div>
         </div>
         <p className="mt-3 border-t border-tinta pt-2 text-[0.8125rem] leading-snug">

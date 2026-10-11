@@ -15,6 +15,7 @@ import {
 } from "firebase/firestore";
 import { generarCodigo } from "@/lib/dominio/codigo";
 import type { EstadoReparacion } from "@/lib/dominio/estados";
+import { esUso, leerPlaca } from "@/lib/dominio/placa";
 import type { CuentaCliente, DatosEquipo, Empresa, EquipoTaller, Taller } from "@/lib/dominio/tipos";
 import { ErrorDePanel, type MotivoErrorDePanel, type PanelRepositorio } from "../repositorios";
 import { obtenerFirestore } from "./app";
@@ -100,6 +101,9 @@ export class PanelFirestore implements PanelRepositorio {
         empresa: texto(orden.empresa) ?? "",
         referencia: texto(orden.referencia),
         serie: texto(orden.serie),
+        numeroOrden: texto(orden.numeroOrden),
+        uso: esUso(orden.uso) ? orden.uso : undefined,
+        placa: leerPlaca(orden.placa),
       });
     }
 
@@ -138,6 +142,9 @@ export class PanelFirestore implements PanelRepositorio {
         empresa: datos.empresa,
         ...(datos.referencia ? { referencia: datos.referencia } : {}),
         ...(datos.serie ? { serie: datos.serie } : {}),
+        ...(datos.numeroOrden ? { numeroOrden: datos.numeroOrden } : {}),
+        ...(datos.uso ? { uso: datos.uso } : {}),
+        ...(datos.placa ? { placa: datos.placa } : {}),
         creada: serverTimestamp(),
       });
       await lote.commit();
@@ -150,11 +157,15 @@ export class PanelFirestore implements PanelRepositorio {
     await guardar(async () => {
       const lote = writeBatch(db);
       lote.update(doc(db, "seguimiento", codigo), { equipo: datos.equipo, actualizado: serverTimestamp() });
-      lote.set(
-        doc(db, "ordenes", codigo),
-        { empresa: datos.empresa, referencia: datos.referencia ?? deleteField(), serie: datos.serie ?? deleteField() },
-        { merge: true },
-      );
+      // `update` reemplaza la placa entera: un `set` con `merge` mezclaría la anterior y no borraría lo que se vació.
+      lote.update(doc(db, "ordenes", codigo), {
+        empresa: datos.empresa,
+        referencia: datos.referencia ?? deleteField(),
+        serie: datos.serie ?? deleteField(),
+        numeroOrden: datos.numeroOrden ?? deleteField(),
+        uso: datos.uso ?? deleteField(),
+        placa: datos.placa ?? deleteField(),
+      });
       await lote.commit();
     });
   }

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useSesionDe } from "@/components/ingreso/useSesionDe";
 import { obtenerPanel } from "@/lib/datos/repositorios";
 import { etapasConEstado, type EstadoReparacion } from "@/lib/dominio/estados";
-import type { CuentaCliente, DatosEquipo, Empresa, EquipoTaller, Sesion, Taller } from "@/lib/dominio/tipos";
+import { conTodosLosCampos, type CuentaCliente, type DatosEquipo, type Empresa, type EquipoTaller, type Sesion, type Taller } from "@/lib/dominio/tipos";
 
 export type EstadoPanel =
   | { fase: "verificando" }
@@ -83,7 +83,7 @@ export function usePanel() {
     },
     async editar(codigo, datos) {
       await (await obtenerPanel()).editarEquipo(codigo, datos);
-      reemplazarEquipo(codigo, { ...datos, referencia: datos.referencia, serie: datos.serie, actualizado: new Date() });
+      reemplazarEquipo(codigo, { ...conTodosLosCampos(datos), actualizado: new Date() });
     },
     async crearEmpresa(nombre) {
       const empresa = await (await obtenerPanel()).crearEmpresa(nombre);

@@ -1,5 +1,5 @@
 import type { EstadoReparacion } from "@/lib/dominio/estados";
-import type { CuentaCliente, Empresa, EquipoTaller, SeguimientoPublico } from "@/lib/dominio/tipos";
+import type { CuentaCliente, DatosEquipo, Empresa, EquipoTaller, SeguimientoPublico } from "@/lib/dominio/tipos";
 
 /**
  * Datos de prueba para desarrollar sin Firebase. En producción, solo en una demo (ver `modoDatos`).
@@ -139,9 +139,37 @@ const EMPRESAS: Empresa[] = [
   { id: "industria-prueba", nombre: "Industrias de Prueba S. A." },
 ];
 
-/** Datos privados de cada orden: la empresa dueña, la referencia del cliente y la serie de la placa. */
-const ORDENES: Record<string, { empresa: string; referencia?: string; serie?: string }> = {
-  K7RM4XPA: { empresa: "coop-prueba", referencia: "Subestación Barrio Norte", serie: "PRUEBA-3150-21" },
+/**
+ * Datos privados de cada orden: la empresa dueña, la referencia del cliente, el N.º de fabricación y,
+ * en algunos, la chapa. Los que no tienen chapa son como los equipos cargados antes de que existiera.
+ */
+const ORDENES: Record<string, Omit<DatosEquipo, "equipo">> = {
+  K7RM4XPA: {
+    empresa: "coop-prueba",
+    referencia: "Subestación Barrio Norte",
+    serie: "PRUEBA-3150-21",
+    numeroOrden: "PRUEBA-101",
+    uso: "distribucion",
+    placa: {
+      fabricante: "Fábrica de Prueba S. A.",
+      tipo: "TP-315",
+      anio: 2014,
+      norma: "IRAM 2250",
+      fases: "trifasico",
+      potencia: 315,
+      frecuencia: 50,
+      servicio: "Continuo",
+      enfriamiento: "ONAN",
+      tensionCortocircuito: 4,
+      grupoConexion: "Dyn11",
+      tensionPrimaria: 13200,
+      tensionSecundaria: 400,
+      conmutador: [13860, 13530, 13200, 12870, 12540],
+      aceite: 310,
+      masa: 1240,
+      materialBobinados: "Cobre",
+    },
+  },
   B3NQ8HTW: { empresa: "coop-prueba", referencia: "Planta de bombeo 2", serie: "PRUEBA-5000-17" },
   Z9FD2KCY: { empresa: "coop-prueba", referencia: "Línea rural, km 12" },
   H4GE6VRA: { empresa: "coop-prueba", referencia: "Plaza central", serie: "PRUEBA-1600-09" },
@@ -149,7 +177,13 @@ const ORDENES: Record<string, { empresa: string; referencia?: string; serie?: st
   R8VJ3NDS: { empresa: "coop-prueba", referencia: "Barrio Las Rosas", serie: "PRUEBA-1000-12" },
   P6XH9EBK: { empresa: "coop-prueba", referencia: "Parque industrial, lote 4", serie: "PRUEBA-2500-19" },
   W2SG5MZU: { empresa: "coop-prueba", referencia: "Línea rural, km 31" },
-  T3KA8PRW: { empresa: "industria-prueba", referencia: "Nave de prensas", serie: "PRUEBA-6300-22" },
+  T3KA8PRW: {
+    empresa: "industria-prueba",
+    referencia: "Nave de prensas",
+    serie: "PRUEBA-6300-22",
+    numeroOrden: "PRUEBA-112",
+    placa: { fabricante: "Fábrica de Prueba S. A.", fases: "trifasico", potencia: 630, tensionPrimaria: 13200, tensionSecundaria: 400 },
+  },
   Y6BD2HMS: { empresa: "industria-prueba", referencia: "Compresores" },
   N9QE4VXC: { empresa: "industria-prueba", referencia: "Oficinas", serie: "PRUEBA-3150-08" },
 };
