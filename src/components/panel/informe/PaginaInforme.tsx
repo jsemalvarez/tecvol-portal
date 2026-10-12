@@ -94,7 +94,14 @@ function ContenidoInforme({ api, codigo }: { api: ApiPanel; codigo: string }) {
           </button>
         </div>
       ) : (
-        <FormularioInforme key={equipo.codigo} equipo={equipo} acciones={api.acciones} email={api.email} guardado={carga.informe} />
+        <FormularioInforme
+          key={equipo.codigo}
+          equipo={equipo}
+          empresa={api.empresaDe(equipo)}
+          acciones={api.acciones}
+          email={api.email}
+          guardado={carga.informe}
+        />
       )}
     </>
   );

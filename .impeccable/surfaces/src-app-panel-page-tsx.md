@@ -38,6 +38,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 - Página aparte, elegida por el usuario: la inspección visual, el aislamiento y la relación de transformación de la planilla los carga Maxi después de desarmar; Martín los usa para cotizar. Ítems definidos en `src/lib/dominio/informe.ts`.
 - Solo para el personal, también a nivel de datos: colección `informes/{codigo}` con regla propia en `firestore.rules` (hay que publicarla). Se guarda entero, a medias si hace falta, con quién y cuándo.
 - Pendiente con Tecvol: unidad y tensión de ensayo del aislamiento, qué se anota en la relación y con qué tolerancia, si el conmutador lleva acción, y si el cliente ve el informe.
+- PDF del informe (12/10/2026): botón "Descargar PDF" al lado de "Guardar informe" (si hay cambios, "Guardar y descargar PDF": el PDF sale siempre de lo guardado). Lo arma `src/components/panel/informe/pdf.ts` con jsPDF, cargado solo al pedirlo: grilla de la planilla de papel en una hoja A4, Helvetica estándar (la Ω sale de la fuente Symbol), con la chapa, la tensión de cada punto del conmutador y renglones para las firmas.
 
 ## Decisiones abiertas
 - Las reglas y el alta de cuentas están probados solo con datos de prueba; falta probarlos contra el proyecto de Firebase.

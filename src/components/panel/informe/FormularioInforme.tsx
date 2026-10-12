@@ -38,11 +38,14 @@ const enlace =
  */
 export function FormularioInforme({
   equipo,
+  empresa,
   acciones,
   email,
   guardado,
 }: {
   equipo: EquipoTaller;
+  /** Nombre de la empresa cliente, para el PDF. */
+  empresa: string;
   acciones: AccionesPanel;
   /** Quién tiene la sesión abierta: queda como autor al guardar. */
   email: string;
@@ -55,6 +58,7 @@ export function FormularioInforme({
   const [errores, setErrores] = useState<ErroresInforme>({});
   const [error, setError] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
+  const [descargando, setDescargando] = useState(false);
   const [recienGuardado, setRecienGuardado] = useState(false);
   const [intento, setIntento] = useState(0);
   const [conComentario, setConComentario] = useState<Set<IdItem>>(new Set());
@@ -102,26 +106,50 @@ export function FormularioInforme({
     }));
   }
 
-  async function guardar(evento: FormEvent) {
-    evento.preventDefault();
+  /** Revisa y guarda lo escrito. Devuelve lo guardado, o `null` si hubo errores. */
+  async function guardarValores() {
     const { informe, errores: encontrados } = leerValoresInforme(valores);
     setErrores(encontrados);
     setError(null);
     setRecienGuardado(false);
     if (Object.keys(encontrados).length) {
       setIntento((n) => n + 1);
-      return;
+      return null;
     }
     setGuardando(true);
     try {
       await acciones.guardarInforme(equipo.codigo, informe);
+      const nuevo = { actualizado: new Date(), por: email };
       setBase(valores);
-      setUltimo({ actualizado: new Date(), por: email });
+      setUltimo(nuevo);
       setRecienGuardado(true);
+      return { informe, ultimo: nuevo };
     } catch (e) {
       setError(mensajeDeError(e));
+      return null;
     } finally {
       setGuardando(false);
+    }
+  }
+
+  async function guardar(evento: FormEvent) {
+    evento.preventDefault();
+    await guardarValores();
+  }
+
+  /** El PDF sale de lo guardado: si hay cambios, primero se guardan. */
+  async function descargar() {
+    const listo = sucio ? await guardarValores() : { informe: leerValoresInforme(valores).informe, ultimo };
+    if (!listo) return;
+    setError(null);
+    setDescargando(true);
+    try {
+      const { descargarPdfInforme } = await import("./pdf");
+      await descargarPdfInforme({ equipo, empresa, informe: listo.informe, guardado: listo.ultimo });
+    } catch {
+      setError("No se pudo armar el PDF. Revise su conexión e intente de nuevo.");
+    } finally {
+      setDescargando(false);
     }
   }
 
@@ -356,9 +384,14 @@ export function FormularioInforme({
 
         <div className="mt-6 flex flex-col items-start gap-4 border-t border-acero pt-6">
           <ErrorFormulario texto={error} />
-          <button type="submit" className="placa" disabled={guardando}>
-            {guardando ? "Guardando…" : "Guardar informe"}
-          </button>
+          <div className="flex flex-wrap items-center gap-3">
+            <button type="submit" className="placa" disabled={guardando || descargando}>
+              {guardando ? "Guardando…" : "Guardar informe"}
+            </button>
+            <button type="button" onClick={descargar} className="placa-secundaria" disabled={guardando || descargando}>
+              {descargando ? "Armando el PDF…" : sucio ? "Guardar y descargar PDF" : "Descargar PDF"}
+            </button>
+          </div>
           <p role="status" className="text-[0.9375rem] leading-snug">
             {recienGuardado ? (
               <strong className="font-semibold">Se guardó el informe.</strong>
