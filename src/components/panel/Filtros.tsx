@@ -5,7 +5,8 @@ import { normalizarCodigo } from "@/lib/dominio/codigo";
 import { DEFINICIONES, ESTADOS, esEstado, type EstadoReparacion } from "@/lib/dominio/estados";
 import type { Empresa, EquipoTaller } from "@/lib/dominio/tipos";
 
-export type FiltroEstado = "en-taller" | "todos" | EstadoReparacion;
+/** `baja`: solo los equipos dados de baja. Las demás vistas no los muestran. */
+export type FiltroEstado = "en-taller" | "todos" | "baja" | EstadoReparacion;
 
 const sinAcentos = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
 
@@ -23,6 +24,7 @@ export function useFiltros(equipos: EquipoTaller[], empresas: Empresa[]) {
     const buscado = sinAcentos(texto.trim());
     const codigo = normalizarCodigo(texto);
     return equipos.filter((e) => {
+      if ((estado === "baja") !== !!e.baja) return false;
       if (empresa && e.empresa !== empresa) return false;
       if (estado === "en-taller" && e.estado === "entregado") return false;
       if (esEstado(estado) && e.estado !== estado) return false;
@@ -43,10 +45,14 @@ export function BarraFiltros({
   filtros,
   empresas,
   total,
+  conBajas = false,
 }: {
   filtros: Filtros;
   empresas: Empresa[];
+  /** Cuántos equipos hay sin contar los dados de baja. */
   total: number;
+  /** Ofrece la vista de los dados de baja, para reactivarlos. */
+  conBajas?: boolean;
 }) {
   const id = useId();
   return (
@@ -93,6 +99,7 @@ export function BarraFiltros({
             <optgroup label="Vista">
               <option value="en-taller">En el taller</option>
               <option value="todos">Todos, también los entregados</option>
+              {conBajas && <option value="baja">Dados de baja</option>}
             </optgroup>
             <optgroup label="Estado">
               {ESTADOS.map((estado) => (
@@ -105,9 +112,11 @@ export function BarraFiltros({
         </div>
       </div>
       <p aria-live="polite" className="mt-3 text-[0.9375rem] text-grafito">
-        {filtros.filtrados.length === total
-          ? `${total} ${total === 1 ? "equipo" : "equipos"}`
-          : `${filtros.filtrados.length} de ${total} equipos`}
+        {filtros.estado === "baja"
+          ? `${filtros.filtrados.length} ${filtros.filtrados.length === 1 ? "dado" : "dados"} de baja`
+          : filtros.filtrados.length === total
+            ? `${total} ${total === 1 ? "equipo" : "equipos"}`
+            : `${filtros.filtrados.length} de ${total} equipos`}
       </p>
     </div>
   );

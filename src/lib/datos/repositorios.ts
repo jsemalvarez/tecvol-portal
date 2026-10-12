@@ -3,10 +3,13 @@ import type { Informe, InformeGuardado } from "@/lib/dominio/informe";
 import type {
   ConsultaNueva,
   CuentaCliente,
+  CuentaPersonal,
   DatosEquipo,
   Empresa,
   EquipoTaller,
   PortalCliente,
+  Registro,
+  RolPersonal,
   SeguimientoPublico,
   Sesion,
   Taller,
@@ -42,8 +45,11 @@ export interface PortalRepositorio {
 }
 
 export interface PanelRepositorio {
-  /** Empresas, equipos y cuentas de clientes. Solo para el personal. */
-  obtenerTaller(): Promise<Taller>;
+  /**
+   * Empresas y equipos, también los dados de baja. Solo para el personal. Las cuentas de clientes y del
+   * personal vienen solo si el rol puede administrarlas; si no, las listas quedan vacías.
+   */
+  obtenerTaller(rol: RolPersonal): Promise<Taller>;
   /** Guarda el estado de un equipo con las fechas de sus etapas (ver `etapasConEstado`). */
   guardarEstado(codigo: string, estado: EstadoReparacion, etapas: Partial<Record<EstadoReparacion, Date>>): Promise<void>;
   /** Registra un equipo nuevo con un código de seguimiento nuevo, en estado "ingresado". */
@@ -54,8 +60,19 @@ export interface PanelRepositorio {
   /** Reemplaza el informe entero y anota quién lo guardó. */
   guardarInforme(codigo: string, informe: Informe, por: string): Promise<void>;
   crearEmpresa(nombre: string): Promise<Empresa>;
+  editarEmpresa(id: string, nombre: string): Promise<void>;
   /** Crea la cuenta, la asocia a la empresa y envía al cliente el email para elegir su contraseña. */
   crearCuenta(email: string, empresa: string): Promise<CuentaCliente>;
+  /** Pasa la cuenta de un cliente a otra empresa. El email no se cambia desde la app. */
+  editarCuenta(uid: string, empresa: string): Promise<void>;
+  /** Como `crearCuenta`, pero la cuenta entra al panel con el rol elegido. */
+  crearPersonal(email: string, rol: RolPersonal): Promise<CuentaPersonal>;
+  editarPersonal(uid: string, rol: RolPersonal): Promise<void>;
+  /**
+   * Baja lógica: nada se borra. El registro queda guardado con la fecha de baja y deja de verse o de dar
+   * acceso; con `baja` en `false` se reactiva.
+   */
+  cambiarBaja(registro: Registro, id: string, baja: boolean): Promise<void>;
 }
 
 export type MotivoErrorDePanel = "email-en-uso" | "email-invalido" | "altas-deshabilitadas" | "permiso" | "conexion" | "desconocido";

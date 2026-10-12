@@ -66,7 +66,7 @@ export function Dialogo({
 }
 
 const MENSAJES: Record<MotivoErrorDePanel, string> = {
-  "email-en-uso": "Ya hay una cuenta con ese email.",
+  "email-en-uso": "Ya hay una cuenta con ese email. Si la dieron de baja, reactívela desde su lista.",
   "email-invalido": "Revise el email: debe tener la forma nombre@empresa.com.ar.",
   "altas-deshabilitadas": "Firebase no permite crear cuentas desde la app. Habilítelo en la consola (vea el README).",
   permiso: "Su cuenta no tiene permiso para hacer este cambio.",

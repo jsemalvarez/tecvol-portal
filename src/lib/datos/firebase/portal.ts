@@ -17,7 +17,7 @@ export class PortalFirestore implements PortalRepositorio {
   async obtenerPortal(uid: string): Promise<PortalCliente | null> {
     const db = obtenerFirestore();
     const cliente = await getDoc(doc(db, "clientes", uid));
-    const empresa = cliente.exists() ? texto(cliente.data().empresa) : undefined;
+    const empresa = cliente.exists() && !cliente.data().baja ? texto(cliente.data().empresa) : undefined;
     if (!empresa) return null;
 
     const [datosEmpresa, ordenes] = await Promise.all([
@@ -26,7 +26,8 @@ export class PortalFirestore implements PortalRepositorio {
     ]);
     const seguimiento = new SeguimientoFirestore();
     const equipos = await Promise.all(
-      ordenes.docs.map(async (orden): Promise<EquipoCliente | null> => {
+      // Los equipos dados de baja no se muestran (ni se pide su seguimiento: las reglas no lo dejan leer).
+      ordenes.docs.filter((orden) => !orden.data().baja).map(async (orden): Promise<EquipoCliente | null> => {
         const publico = await seguimiento.obtenerPorCodigo(orden.id);
         if (!publico) return null;
         const datos = orden.data();

@@ -9,19 +9,31 @@ import type { AccionesPanel } from "./usePanel";
 
 const EMAIL_VALIDO = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
-export function FormularioEmpresa({ acciones, onCreada }: { acciones: AccionesPanel; onCreada: (empresa: Empresa) => void }) {
+/** Crea una empresa o, con `empresa`, le cambia el nombre. */
+export function FormularioEmpresa({
+  empresa,
+  acciones,
+  onGuardada,
+}: {
+  empresa?: Empresa;
+  acciones: AccionesPanel;
+  onGuardada: (empresa: Empresa) => void;
+}) {
   const id = useId();
-  const [nombre, setNombre] = useState("");
+  const [nombre, setNombre] = useState(empresa?.nombre ?? "");
   const [falta, setFalta] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
 
   async function guardar(evento: FormEvent) {
     evento.preventDefault();
-    if (!nombre.trim()) return setFalta(true);
+    const valor = nombre.trim();
+    if (!valor) return setFalta(true);
     setGuardando(true);
     try {
-      onCreada(await acciones.crearEmpresa(nombre.trim()));
+      if (!empresa) return onGuardada(await acciones.crearEmpresa(valor));
+      await acciones.editarEmpresa(empresa.id, valor);
+      onGuardada({ ...empresa, nombre: valor });
     } catch (e) {
       setError(mensajeDeError(e));
       setGuardando(false);
@@ -51,7 +63,64 @@ export function FormularioEmpresa({ acciones, onCreada }: { acciones: AccionesPa
         <MensajeCampo id={`${id}-nombre-error`} texto={falta ? "Escriba el nombre de la empresa." : undefined} />
       </div>
       <button type="submit" className="placa self-start" disabled={guardando}>
-        {guardando ? "Guardando…" : "Crear empresa"}
+        {guardando ? "Guardando…" : empresa ? "Guardar el nombre" : "Crear empresa"}
+      </button>
+    </form>
+  );
+}
+
+/** Pasa una cuenta de cliente a otra empresa: desde ese momento ve los equipos de la nueva. */
+export function FormularioEditarCuenta({
+  cuenta,
+  empresas,
+  acciones,
+  onGuardada,
+}: {
+  cuenta: CuentaCliente;
+  /** Las empresas activas, entre las que se elige. */
+  empresas: Empresa[];
+  acciones: AccionesPanel;
+  onGuardada: (cuenta: CuentaCliente) => void;
+}) {
+  const id = useId();
+  const [empresa, setEmpresa] = useState(cuenta.empresa);
+  const [error, setError] = useState<string | null>(null);
+  const [guardando, setGuardando] = useState(false);
+
+  async function guardar(evento: FormEvent) {
+    evento.preventDefault();
+    if (empresa === cuenta.empresa) return onGuardada(cuenta);
+    setGuardando(true);
+    try {
+      await acciones.editarCuenta(cuenta.uid, empresa);
+      onGuardada({ ...cuenta, empresa });
+    } catch (e) {
+      setError(mensajeDeError(e));
+      setGuardando(false);
+    }
+  }
+
+  return (
+    <form onSubmit={guardar} noValidate className="flex flex-col gap-6">
+      <p className="max-w-[56ch]">
+        La cuenta de <strong className="font-semibold">{cuenta.email}</strong> va a ver solo los equipos de la empresa que elija. El
+        email no se puede cambiar: para otra persona, dé de baja esta cuenta y cree una nueva.
+      </p>
+      <ErrorFormulario texto={error} />
+      <div>
+        <label htmlFor={`${id}-empresa`} className="rotulo block text-[0.9375rem]">
+          Empresa
+        </label>
+        <select id={`${id}-empresa`} value={empresa} onChange={(e) => setEmpresa(e.target.value)} className="renglon mt-1">
+          {empresas.map((e) => (
+            <option key={e.id} value={e.id}>
+              {e.nombre}
+            </option>
+          ))}
+        </select>
+      </div>
+      <button type="submit" className="placa self-start" disabled={guardando}>
+        {guardando ? "Guardando…" : "Guardar"}
       </button>
     </form>
   );

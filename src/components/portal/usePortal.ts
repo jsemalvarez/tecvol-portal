@@ -14,7 +14,7 @@ export type EstadoPortal =
 
 /** Sesión del cliente y datos del portal: su empresa y sus equipos. */
 export function usePortal() {
-  const { sesion, salir } = useSesionDe("cliente");
+  const { sesion, salir } = useSesionDe("portal");
   const [carga, setCarga] = useState<
     { uid: string; fase: "sin-empresa" | "error" } | { uid: string; fase: "listo"; portal: PortalCliente } | null
   >(null);

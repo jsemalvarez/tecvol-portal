@@ -7,6 +7,7 @@ import {
   type User,
 } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
+import { esRolPersonal } from "@/lib/dominio/roles";
 import type { Rol, Sesion } from "@/lib/dominio/tipos";
 import { ErrorDeIngreso, type AutenticacionRepositorio, type MotivoErrorDeIngreso } from "../repositorios";
 import { obtenerAuth, obtenerFirestore } from "./app";
@@ -33,12 +34,21 @@ function motivo(error: unknown): MotivoErrorDeIngreso {
 }
 
 /**
- * El rol sale de `personal/{uid}`: si el documento existe, es personal del taller. Las reglas
- * permiten que cada usuario lea solo su propio documento.
+ * El rol sale de `personal/{uid}`: si el documento existe, es personal del taller con el rol que dice;
+ * si no, es cliente. Las reglas permiten que cada usuario lea solo sus propios documentos. Una cuenta
+ * dada de baja (o del personal sin un rol válido) no entra: lanza `ErrorDeIngreso("deshabilitada")`.
  */
 async function rolDe(usuario: User): Promise<Rol> {
-  const snap = await getDoc(doc(obtenerFirestore(), "personal", usuario.uid));
-  return snap.exists() ? "personal" : "cliente";
+  const db = obtenerFirestore();
+  const personal = await getDoc(doc(db, "personal", usuario.uid));
+  if (personal.exists()) {
+    const { rol, baja } = personal.data();
+    if (baja || !esRolPersonal(rol)) throw new ErrorDeIngreso("deshabilitada");
+    return rol;
+  }
+  const cliente = await getDoc(doc(db, "clientes", usuario.uid));
+  if (cliente.exists() && cliente.data().baja) throw new ErrorDeIngreso("deshabilitada");
+  return "cliente";
 }
 
 async function sesionDe(usuario: User): Promise<Sesion> {
@@ -51,7 +61,9 @@ export class AutenticacionFirebase implements AutenticacionRepositorio {
       const { user } = await signInWithEmailAndPassword(obtenerAuth(), email, clave);
       return await sesionDe(user);
     } catch (error) {
-      throw new ErrorDeIngreso(motivo(error));
+      if (!(error instanceof ErrorDeIngreso)) throw new ErrorDeIngreso(motivo(error));
+      await signOut(obtenerAuth());
+      throw error;
     }
   }
 
@@ -75,7 +87,11 @@ export class AutenticacionFirebase implements AutenticacionRepositorio {
         alCambiar(null);
         return;
       }
-      sesionDe(usuario).then(alCambiar, () => alCambiar(null));
+      sesionDe(usuario).then(alCambiar, (error) => {
+        // Una cuenta dada de baja con la sesión abierta queda afuera la próxima vez que se verifica.
+        if (error instanceof ErrorDeIngreso) signOut(obtenerAuth()).catch(() => {});
+        alCambiar(null);
+      });
     });
   }
 }

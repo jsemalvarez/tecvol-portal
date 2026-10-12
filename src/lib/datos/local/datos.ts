@@ -1,6 +1,6 @@
 import type { EstadoReparacion } from "@/lib/dominio/estados";
 import type { InformeGuardado } from "@/lib/dominio/informe";
-import type { CuentaCliente, DatosEquipo, Empresa, EquipoTaller, SeguimientoPublico } from "@/lib/dominio/tipos";
+import type { CuentaCliente, CuentaPersonal, DatosEquipo, Empresa, EquipoTaller, SeguimientoPublico } from "@/lib/dominio/tipos";
 
 /**
  * Datos de prueba para desarrollar sin Firebase. En producción, solo en una demo (ver `modoDatos`).
@@ -189,7 +189,13 @@ const ORDENES: Record<string, Omit<DatosEquipo, "equipo">> = {
   N9QE4VXC: { empresa: "industria-prueba", referencia: "Oficinas", serie: "PRUEBA-3150-08" },
 };
 
-const CUENTAS: CuentaCliente[] = [{ uid: "local-cliente", email: "cliente@prueba.tecvol.test", empresa: "coop-prueba" }];
+export const CUENTAS: CuentaCliente[] = [{ uid: "local-cliente", email: "cliente@prueba.tecvol.test", empresa: "coop-prueba" }];
+
+/** Una cuenta del personal por rol. El panel las lista y el administrador puede cambiarles el rol o darlas de baja. */
+export const PERSONAL: CuentaPersonal[] = [
+  { uid: "local-administrador", email: "administrador@prueba.tecvol.test", rol: "administrador" },
+  { uid: "local-jefe-taller", email: "jefe@prueba.tecvol.test", rol: "jefe-taller" },
+];
 
 /**
  * Contraseña de las cuentas que se crean en el panel con datos de prueba: no hay email para elegir una,
@@ -204,6 +210,8 @@ export interface DatosLocales {
   empresas: Empresa[];
   equipos: EquipoTaller[];
   cuentas: CuentaCliente[];
+  /** Cuentas del personal. Los datos guardados antes de que hubiera roles no la tienen: `leerDatos` la completa. */
+  personal: CuentaPersonal[];
   /** Informes de diagnóstico por código. Falta en los datos guardados antes de que existieran. */
   informes?: Record<string, InformeGuardado>;
 }
@@ -213,6 +221,7 @@ function semilla(): DatosLocales {
     empresas: EMPRESAS.map((e) => ({ ...e })),
     equipos: SEGUIMIENTOS.map((s) => ({ ...s, etapas: { ...s.etapas }, ...ORDENES[s.codigo] })),
     cuentas: CUENTAS.map((c) => ({ ...c })),
+    personal: PERSONAL.map((p) => ({ ...p })),
   };
 }
 
@@ -224,7 +233,11 @@ export function leerDatos(): DatosLocales {
   if (typeof window === "undefined") return semilla();
   try {
     const valor = window.localStorage.getItem(CLAVE_ALMACEN);
-    if (valor) return JSON.parse(valor, (_, v) => (typeof v === "string" && ES_FECHA.test(v) ? new Date(v) : v)) as DatosLocales;
+    if (valor) {
+      const datos = JSON.parse(valor, (_, v) => (typeof v === "string" && ES_FECHA.test(v) ? new Date(v) : v)) as Partial<DatosLocales> &
+        Omit<DatosLocales, "personal">;
+      return { ...datos, personal: datos.personal ?? PERSONAL.map((p) => ({ ...p })) };
+    }
   } catch {
     // Datos dañados o sin almacenamiento: se vuelve a empezar con los de prueba.
   }

@@ -1,14 +1,16 @@
+import { esRol } from "@/lib/dominio/roles";
 import type { Rol, Sesion } from "@/lib/dominio/tipos";
 import { ErrorDeIngreso, type AutenticacionRepositorio } from "../repositorios";
-import { CLAVE_CUENTAS_NUEVAS, leerDatos } from "./datos";
+import { CLAVE_CUENTAS_NUEVAS, CUENTAS, leerDatos, PERSONAL } from "./datos";
 
 /**
  * Ingreso de prueba para desarrollar sin Firebase. En producción, solo en una demo (ver `modoDatos`).
- * Las cuentas son ficticias y la sesión se guarda en este navegador.
+ * Las cuentas son ficticias (una por rol) y la sesión se guarda en este navegador.
  */
 export const CUENTAS_DE_PRUEBA: { email: string; clave: string; rol: Rol }[] = [
-  { email: "cliente@prueba.tecvol.test", clave: "cliente-prueba", rol: "cliente" },
-  { email: "personal@prueba.tecvol.test", clave: "personal-prueba", rol: "personal" },
+  { email: PERSONAL[0].email, clave: "administrador-prueba", rol: "administrador" },
+  { email: PERSONAL[1].email, clave: "jefe-prueba", rol: "jefe-taller" },
+  { email: CUENTAS[0].email, clave: "cliente-prueba", rol: "cliente" },
 ];
 
 const CLAVE_ALMACEN = "tecvol-sesion-local";
@@ -17,7 +19,9 @@ const esperar = (ms: number) => new Promise((resolver) => setTimeout(resolver, m
 function leer(): Sesion | null {
   try {
     const valor = window.localStorage.getItem(CLAVE_ALMACEN);
-    return valor ? (JSON.parse(valor) as Sesion) : null;
+    const sesion = valor ? (JSON.parse(valor) as Sesion) : null;
+    // Una sesión guardada antes de que hubiera roles ("personal") ya no vale: hay que volver a ingresar.
+    return sesion && esRol(sesion.rol) ? sesion : null;
   } catch {
     return null;
   }
@@ -47,13 +51,22 @@ export class AutenticacionLocal implements AutenticacionRepositorio {
     // Sin espacios en los extremos: al copiar la contraseña del recuadro de prueba se suele arrastrar uno.
     const correo = email.trim().toLowerCase();
     const contrasena = clave.trim();
-    const fija = CUENTAS_DE_PRUEBA.find((c) => c.email === correo && c.clave === contrasena);
-    if (fija) return this.iniciar({ uid: `local-${fija.rol}`, email: fija.email, rol: fija.rol });
+    // Las cuentas de prueba entran con su contraseña; las creadas en el panel de este navegador, con la común.
+    const fija = CUENTAS_DE_PRUEBA.find((c) => c.email === correo);
+    if (contrasena !== (fija ? fija.clave : CLAVE_CUENTAS_NUEVAS)) throw new ErrorDeIngreso("credenciales");
 
-    // Las cuentas de cliente creadas en el panel de este navegador entran con la contraseña común.
-    const creada = leerDatos().cuentas.find((c) => c.email === correo);
-    if (creada && contrasena === CLAVE_CUENTAS_NUEVAS) return this.iniciar({ uid: creada.uid, email: creada.email, rol: "cliente" });
-
+    // El rol y la baja salen de los datos de este navegador, como en Firestore: el panel puede cambiarlos.
+    const datos = leerDatos();
+    const personal = datos.personal.find((p) => p.email === correo);
+    if (personal) {
+      if (personal.baja) throw new ErrorDeIngreso("deshabilitada");
+      return this.iniciar({ uid: personal.uid, email: personal.email, rol: personal.rol });
+    }
+    const cliente = datos.cuentas.find((c) => c.email === correo);
+    if (cliente) {
+      if (cliente.baja) throw new ErrorDeIngreso("deshabilitada");
+      return this.iniciar({ uid: cliente.uid, email: cliente.email, rol: "cliente" });
+    }
     throw new ErrorDeIngreso("credenciales");
   }
 

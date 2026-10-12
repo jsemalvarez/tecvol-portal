@@ -1,5 +1,11 @@
 import type { EstadoReparacion } from "./estados";
 import type { Placa, Uso } from "./placa";
+import type { Rol, RolPersonal } from "./roles";
+
+export type { Rol, RolPersonal } from "./roles";
+
+/** Lo que se puede dar de baja en el panel. La baja es lógica: queda guardado con la fecha y se puede reactivar. */
+export type Registro = "equipo" | "empresa" | "cuenta" | "personal";
 
 /**
  * Documento público `seguimiento/{codigo}`: solo lo que puede ver cualquiera
@@ -36,6 +42,8 @@ export interface PortalCliente {
 export interface Empresa {
   id: string;
   nombre: string;
+  /** Fecha de baja: ya no aparece para registrar equipos. Antes hay que dar de baja sus cuentas. */
+  baja?: Date;
 }
 
 /** Cuenta de cliente asociada a una empresa (`clientes/{uid}`). */
@@ -43,6 +51,17 @@ export interface CuentaCliente {
   uid: string;
   email: string;
   empresa: string;
+  /** Fecha de baja: la cuenta ya no puede ingresar. */
+  baja?: Date;
+}
+
+/** Cuenta del personal de Tecvol (`personal/{uid}`): entra al panel con los permisos de su rol. */
+export interface CuentaPersonal {
+  uid: string;
+  email: string;
+  rol: RolPersonal;
+  /** Fecha de baja: la cuenta ya no puede ingresar. */
+  baja?: Date;
 }
 
 /**
@@ -82,14 +101,33 @@ export interface EquipoTaller extends EquipoCliente {
   numeroOrden?: string;
   uso?: Uso;
   placa?: Placa;
+  /** Fecha de baja: el cliente deja de verlo y su código deja de funcionar en la consulta pública. */
+  baja?: Date;
 }
 
-/** Todo lo que maneja el panel del taller. */
+/** Todo lo que maneja el panel del taller. Las cuentas solo las lee quien puede administrarlas. */
 export interface Taller {
   empresas: Empresa[];
   equipos: EquipoTaller[];
   cuentas: CuentaCliente[];
+  personal: CuentaPersonal[];
 }
+
+/** El taller con un registro dado de baja en `baja`, o reactivado si `baja` es `undefined`. */
+export function conBaja<T extends Taller>(taller: T, registro: Registro, id: string, baja: Date | undefined): T {
+  switch (registro) {
+    case "equipo":
+      return { ...taller, equipos: taller.equipos.map((e) => (e.codigo === id ? { ...e, baja } : e)) };
+    case "empresa":
+      return { ...taller, empresas: taller.empresas.map((e) => (e.id === id ? { ...e, baja } : e)) };
+    case "cuenta":
+      return { ...taller, cuentas: taller.cuentas.map((c) => (c.uid === id ? { ...c, baja } : c)) };
+    case "personal":
+      return { ...taller, personal: taller.personal.map((p) => (p.uid === id ? { ...p, baja } : p)) };
+  }
+}
+
+export const activos = <T extends { baja?: Date }>(registros: T[]) => registros.filter((r) => !r.baja);
 
 /** Consulta de un cliente potencial desde la página pública. */
 export interface ConsultaNueva {
@@ -101,9 +139,6 @@ export interface ConsultaNueva {
   equipo?: string;
   descripcion: string;
 }
-
-/** Quién ingresa: el cliente va al portal; el personal del taller, al panel. */
-export type Rol = "cliente" | "personal";
 
 /** Usuario con la sesión iniciada. */
 export interface Sesion {

@@ -8,7 +8,8 @@ export class SeguimientoLocal implements SeguimientoRepositorio {
   async obtenerPorCodigo(codigo: string): Promise<SeguimientoPublico | null> {
     await esperar(450);
     const equipo = leerDatos().equipos.find((e) => e.codigo === codigo);
-    if (!equipo) return null;
+    // Un equipo dado de baja se trata como un código que no existe, como en Firestore.
+    if (!equipo || equipo.baja) return null;
     // Solo los datos públicos, como en Firestore.
     return { codigo, estado: equipo.estado, equipo: equipo.equipo, etapas: equipo.etapas, actualizado: equipo.actualizado };
   }

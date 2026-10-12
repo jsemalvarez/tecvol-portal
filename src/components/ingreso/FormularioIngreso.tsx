@@ -10,6 +10,7 @@ import {
   ServicioNoConfiguradoError,
   type MotivoErrorDeIngreso,
 } from "@/lib/datos/repositorios";
+import { esPersonal } from "@/lib/dominio/roles";
 import type { Rol, Sesion } from "@/lib/dominio/tipos";
 import { EVENTO_CUENTA_PRUEBA, type CuentaParaUsar } from "./UsarCuentaPrueba";
 
@@ -26,7 +27,7 @@ const MENSAJES: Record<MotivoErrorDeIngreso, string> = {
 const EMAIL_VALIDO = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
 export function destinoDe(rol: Rol) {
-  return rol === "personal" ? "/panel" : "/portal";
+  return esPersonal(rol) ? "/panel" : "/portal";
 }
 
 function mensajeDe(error: unknown) {
@@ -170,7 +171,7 @@ export function FormularioIngreso() {
         </p>
         <div className="flex flex-wrap items-center gap-4">
           <Link href={destinoDe(sesion.rol)} className="placa">
-            {sesion.rol === "personal" ? "Ir al panel" : "Ir al portal"}
+            {esPersonal(sesion.rol) ? "Ir al panel" : "Ir al portal"}
             <Flecha />
           </Link>
           <button type="button" onClick={salir} className="placa-secundaria">

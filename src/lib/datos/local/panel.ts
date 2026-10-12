@@ -1,19 +1,33 @@
 import { generarCodigo } from "@/lib/dominio/codigo";
 import type { EstadoReparacion } from "@/lib/dominio/estados";
 import { informeParaGuardar, type Informe, type InformeGuardado } from "@/lib/dominio/informe";
-import { conTodosLosCampos, type CuentaCliente, type DatosEquipo, type Empresa, type EquipoTaller, type Taller } from "@/lib/dominio/tipos";
+import { puede } from "@/lib/dominio/roles";
+import {
+  conBaja,
+  conTodosLosCampos,
+  type CuentaCliente,
+  type CuentaPersonal,
+  type DatosEquipo,
+  type Empresa,
+  type EquipoTaller,
+  type Registro,
+  type RolPersonal,
+  type Taller,
+} from "@/lib/dominio/tipos";
 import { ErrorDePanel, type PanelRepositorio } from "../repositorios";
 import { esperar, guardarDatos, leerDatos } from "./datos";
 
 /**
  * Panel de prueba para desarrollar sin Firebase. En producción, solo en una demo (ver `modoDatos`).
- * Los cambios quedan en este navegador; las cuentas nuevas se registran pero no reciben email ni
- * pueden ingresar (en modo local solo ingresan las cuentas de prueba).
+ * Los cambios quedan en este navegador; las cuentas nuevas no reciben email: entran con la contraseña
+ * común (`CLAVE_CUENTAS_NUEVAS`).
  */
 export class PanelLocal implements PanelRepositorio {
-  async obtenerTaller(): Promise<Taller> {
+  async obtenerTaller(rol: RolPersonal): Promise<Taller> {
     await esperar(500);
-    return leerDatos();
+    const { empresas, equipos, cuentas, personal } = leerDatos();
+    // Como en Firestore, las cuentas solo las ve quien puede administrarlas.
+    return puede(rol, "cuentas") ? { empresas, equipos, cuentas, personal } : { empresas, equipos, cuentas: [], personal: [] };
   }
 
   async guardarEstado(codigo: string, estado: EstadoReparacion, etapas: Partial<Record<EstadoReparacion, Date>>): Promise<void> {
@@ -62,14 +76,54 @@ export class PanelLocal implements PanelRepositorio {
     return empresa;
   }
 
+  async editarEmpresa(id: string, nombre: string): Promise<void> {
+    await esperar(350);
+    const datos = leerDatos();
+    datos.empresas = datos.empresas.map((e) => (e.id === id ? { ...e, nombre } : e));
+    guardarDatos(datos);
+  }
+
   async crearCuenta(email: string, empresa: string): Promise<CuentaCliente> {
     await esperar(600);
     const datos = leerDatos();
-    if (datos.cuentas.some((c) => c.email === email)) throw new ErrorDePanel("email-en-uso");
+    // Como en Firebase Auth, un email tiene una sola cuenta, sea de cliente o del personal.
+    if (emailEnUso(datos, email)) throw new ErrorDePanel("email-en-uso");
     const cuenta = { uid: `local-${crypto.randomUUID()}`, email, empresa };
     datos.cuentas.push(cuenta);
     guardarDatos(datos);
     console.info("[modo local] Cuenta registrada (no se envía el email):", email);
     return cuenta;
   }
+
+  async editarCuenta(uid: string, empresa: string): Promise<void> {
+    await esperar(350);
+    const datos = leerDatos();
+    datos.cuentas = datos.cuentas.map((c) => (c.uid === uid ? { ...c, empresa } : c));
+    guardarDatos(datos);
+  }
+
+  async crearPersonal(email: string, rol: RolPersonal): Promise<CuentaPersonal> {
+    await esperar(600);
+    const datos = leerDatos();
+    if (emailEnUso(datos, email)) throw new ErrorDePanel("email-en-uso");
+    const cuenta = { uid: `local-${crypto.randomUUID()}`, email, rol };
+    datos.personal.push(cuenta);
+    guardarDatos(datos);
+    console.info("[modo local] Cuenta del personal registrada (no se envía el email):", email);
+    return cuenta;
+  }
+
+  async editarPersonal(uid: string, rol: RolPersonal): Promise<void> {
+    await esperar(350);
+    const datos = leerDatos();
+    datos.personal = datos.personal.map((p) => (p.uid === uid ? { ...p, rol } : p));
+    guardarDatos(datos);
+  }
+
+  async cambiarBaja(registro: Registro, id: string, baja: boolean): Promise<void> {
+    await esperar(350);
+    guardarDatos(conBaja(leerDatos(), registro, id, baja ? new Date() : undefined));
+  }
 }
+
+const emailEnUso = (datos: Taller, email: string) => [...datos.cuentas, ...datos.personal].some((c) => c.email === email);

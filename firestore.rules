@@ -3,12 +3,46 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Provisorio hasta construir el panel: es personal de Tecvol quien tiene
-    // un documento en personal/{uid}.
-    function esPersonal() {
-      return request.auth != null
-        && exists(/databases/$(database)/documents/personal/$(request.auth.uid));
+    // ---- Roles ----
+    // Personal de Tecvol: tiene un documento en personal/{uid} con un rol válido y sin baja.
+    //   - administrador: todo (equipos, bajas, empresas, cuentas de clientes y del personal).
+    //   - jefe-taller: registra equipos y los actualiza (datos, estado e informe). No da de baja.
+    // Mismos permisos que src/lib/dominio/roles.ts: si cambia uno, cambia el otro.
+    // Nada se borra (delete: false en todo): las bajas son lógicas, con el campo `baja` (timestamp).
+
+    function personalActual() {
+      return get(/databases/$(database)/documents/personal/$(request.auth.uid)).data;
     }
+
+    function activo(d) {
+      return d.get('baja', null) == null;
+    }
+
+    function rolDelPersonal() {
+      return request.auth != null
+          && exists(/databases/$(database)/documents/personal/$(request.auth.uid))
+          && activo(personalActual())
+        ? personalActual().get('rol', '')
+        : '';
+    }
+
+    function esPersonal() {
+      return rolDelPersonal() in ['administrador', 'jefe-taller'];
+    }
+
+    function esAdministrador() {
+      return rolDelPersonal() == 'administrador';
+    }
+
+    // Cuenta de cliente activa de la empresa (clientes/{uid} sin baja).
+    function esClienteDe(empresa) {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/clientes/$(request.auth.uid))
+        && activo(get(/databases/$(database)/documents/clientes/$(request.auth.uid)).data)
+        && get(/databases/$(database)/documents/clientes/$(request.auth.uid)).data.empresa == empresa;
+    }
+
+    // ---- Validaciones ----
 
     function textoHasta(valor, largo) {
       return valor is string && valor.size() > 0 && valor.size() <= largo;
@@ -18,22 +52,33 @@ service cloud.firestore {
       return !(campo in d) || textoHasta(d[campo], largo);
     }
 
-    // Empresa de la cuenta de cliente que hace la consulta.
-    function empresaDelCliente() {
-      return get(/databases/$(database)/documents/clientes/$(request.auth.uid)).data.empresa;
+    function bajaValida(d) {
+      return activo(d) || d.baja is timestamp;
     }
 
-    function esClienteDe(empresa) {
-      return request.auth != null
-        && exists(/databases/$(database)/documents/clientes/$(request.auth.uid))
-        && empresaDelCliente() == empresa;
+    // Cambia la baja: solo un administrador la pone o la saca.
+    function cambiaLaBaja() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasAny(['baja']);
     }
 
     // Lo que escribe el panel: un estado de la lista y la descripción del equipo.
     function seguimientoValido(d) {
       return d.estado in ['ingresado', 'diagnostico', 'presupuesto', 'reparacion', 'ensayos', 'listo', 'entregado']
         && textoHasta(d.equipo, 200)
-        && d.etapas is map;
+        && d.etapas is map
+        && bajaValida(d);
+    }
+
+    function personalValido(d) {
+      return d.rol in ['administrador', 'jefe-taller']
+        && textoHasta(d.email, 160)
+        && bajaValida(d);
+    }
+
+    function clienteValido(d) {
+      return textoHasta(d.empresa, 120)
+        && textoHasta(d.email, 160)
+        && bajaValida(d);
     }
 
     function consultaValida(d) {
@@ -51,50 +96,70 @@ service cloud.firestore {
         && d.creada == request.time;
     }
 
-    // Seguimiento público: cualquiera lee un código conocido; solo el personal recorre la colección.
+    // ---- Colecciones ----
+
+    // Seguimiento público: cualquiera lee un código conocido, salvo que esté dado de baja; solo el
+    // personal recorre la colección. Los dos roles registran y actualizan; solo el administrador da de baja.
     match /seguimiento/{codigo} {
-      allow get: if true;
+      allow get: if resource == null || activo(resource.data) || esPersonal();
       allow list: if esPersonal();
-      allow create, update: if esPersonal() && seguimientoValido(request.resource.data);
-      allow delete: if esPersonal();
+      allow create: if esPersonal() && seguimientoValido(request.resource.data) && activo(request.resource.data);
+      allow update: if esPersonal() && seguimientoValido(request.resource.data) && (esAdministrador() || !cambiaLaBaja());
+      allow delete: if false;
     }
 
     // Consultas de clientes potenciales: cualquiera crea, solo el personal lee.
     match /consultas/{consulta} {
       allow create: if consultaValida(request.resource.data);
-      allow read, update, delete: if esPersonal();
+      allow read, update: if esPersonal();
+      allow delete: if false;
     }
 
-    // Cada usuario puede leer solo su propio documento de personal: así la app sabe si
-    // va al panel. Nadie puede listar la colección ni escribirla desde la app.
+    // Cuentas del personal. Cada usuario lee su propio documento (así la app sabe su rol, o que está
+    // dado de baja); el administrador las lista y las maneja, pero no cambia la suya, para no quedarse
+    // sin acceso por error.
     match /personal/{uid} {
-      allow get: if request.auth != null && request.auth.uid == uid;
-      allow list, write: if false;
+      allow get: if (request.auth != null && request.auth.uid == uid) || esAdministrador();
+      allow list: if esAdministrador();
+      allow create: if esAdministrador() && personalValido(request.resource.data) && activo(request.resource.data);
+      allow update: if esAdministrador() && request.auth.uid != uid && personalValido(request.resource.data);
+      allow delete: if false;
     }
 
-    // Empresa de cada cuenta de cliente. El cliente lee solo la suya; la asocia el personal.
+    // Empresa de cada cuenta de cliente. El cliente lee solo la suya; las maneja el administrador.
     match /clientes/{uid} {
       allow get: if request.auth != null && request.auth.uid == uid;
-      allow read, write: if esPersonal();
+      allow read: if esAdministrador();
+      allow create: if esAdministrador() && clienteValido(request.resource.data) && activo(request.resource.data);
+      allow update: if esAdministrador() && clienteValido(request.resource.data);
+      allow delete: if false;
     }
 
-    // Empresas clientes: el cliente lee solo la suya (para ver su nombre); las maneja el personal.
+    // Empresas clientes: el cliente lee solo la suya (para ver su nombre); el personal las lee para
+    // asignarlas a los equipos; solo el administrador las crea, edita o da de baja.
     match /empresas/{empresa} {
       allow get: if esClienteDe(empresa);
-      allow read, write: if esPersonal();
+      allow read: if esPersonal();
+      allow create: if esAdministrador() && textoHasta(request.resource.data.nombre, 120) && activo(request.resource.data);
+      allow update: if esAdministrador() && textoHasta(request.resource.data.nombre, 120) && bajaValida(request.resource.data);
+      allow delete: if false;
     }
 
-    // Datos privados de cada orden (empresa, referencia del cliente, serie). Un cliente lee solo
-    // las órdenes de su empresa; la consulta del portal filtra por empresa para que esto se cumpla.
+    // Datos privados de cada orden (empresa, referencia del cliente, serie, chapa). Un cliente lee solo
+    // las órdenes de su empresa; la consulta del portal filtra por empresa para que esto se cumpla, y la
+    // app no muestra las dadas de baja.
     match /ordenes/{codigo} {
-      allow read: if esClienteDe(resource.data.empresa);
-      allow read, write: if esPersonal();
+      allow read: if esClienteDe(resource.data.empresa) || esPersonal();
+      allow create: if esPersonal() && activo(request.resource.data);
+      allow update: if esPersonal() && bajaValida(request.resource.data) && (esAdministrador() || !cambiaLaBaja());
+      allow delete: if false;
     }
 
     // Informe de diagnóstico de cada equipo (inspección, aislamiento, relación de transformación):
-    // solo el personal. El cliente no lo lee, ni siquiera el de su empresa.
+    // solo el personal, los dos roles. El cliente no lo lee, ni siquiera el de su empresa.
     match /informes/{codigo} {
-      allow read, write: if esPersonal();
+      allow read, create, update: if esPersonal();
+      allow delete: if false;
     }
 
     match /{documento=**} {

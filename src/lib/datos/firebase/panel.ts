@@ -17,13 +17,18 @@ import { generarCodigo } from "@/lib/dominio/codigo";
 import type { EstadoReparacion } from "@/lib/dominio/estados";
 import { informeParaGuardar, leerInforme, type Informe, type InformeGuardado } from "@/lib/dominio/informe";
 import { esUso, leerPlaca } from "@/lib/dominio/placa";
-import type { CuentaCliente, DatosEquipo, Empresa, EquipoTaller, Taller } from "@/lib/dominio/tipos";
+import { esRolPersonal, puede } from "@/lib/dominio/roles";
+import type { CuentaCliente, CuentaPersonal, DatosEquipo, Empresa, EquipoTaller, Registro, RolPersonal, Taller } from "@/lib/dominio/tipos";
 import { ErrorDePanel, type MotivoErrorDePanel, type PanelRepositorio } from "../repositorios";
 import { obtenerFirestore } from "./app";
 import { configuracionFirebase } from "./config";
 import { leerSeguimiento } from "./seguimiento";
 
 const texto = (valor: unknown) => (typeof valor === "string" && valor.trim() ? valor.trim() : undefined);
+const fecha = (valor: unknown) => (valor instanceof Timestamp ? valor.toDate() : undefined);
+
+/** Dónde vive cada registro que se da de baja. El equipo son dos documentos: ver `cambiarBaja`. */
+const COLECCIONES: Record<Exclude<Registro, "equipo">, string> = { empresa: "empresas", cuenta: "clientes", personal: "personal" };
 
 function motivo(error: unknown): MotivoErrorDePanel {
   if (!(error instanceof FirebaseError)) return "desconocido";
@@ -80,14 +85,17 @@ function claveInicial() {
 }
 
 export class PanelFirestore implements PanelRepositorio {
-  async obtenerTaller(): Promise<Taller> {
+  async obtenerTaller(rol: RolPersonal): Promise<Taller> {
     const db = obtenerFirestore();
-    const [empresas, ordenes, seguimientos, clientes] = await guardar(() =>
+    // Las reglas solo dejan leer las cuentas a quien puede administrarlas: los demás ni las piden.
+    const conCuentas = puede(rol, "cuentas");
+    const [empresas, ordenes, seguimientos, clientes, personal] = await guardar(() =>
       Promise.all([
         getDocs(collection(db, "empresas")),
         getDocs(collection(db, "ordenes")),
         getDocs(collection(db, "seguimiento")),
-        getDocs(collection(db, "clientes")),
+        conCuentas ? getDocs(collection(db, "clientes")) : null,
+        conCuentas ? getDocs(collection(db, "personal")) : null,
       ]),
     );
 
@@ -105,15 +113,26 @@ export class PanelFirestore implements PanelRepositorio {
         numeroOrden: texto(orden.numeroOrden),
         uso: esUso(orden.uso) ? orden.uso : undefined,
         placa: leerPlaca(orden.placa),
+        baja: fecha(s.data().baja),
       });
     }
 
     return {
       empresas: empresas.docs
-        .map((e) => ({ id: e.id, nombre: texto(e.data().nombre) ?? e.id }))
+        .map((e) => ({ id: e.id, nombre: texto(e.data().nombre) ?? e.id, baja: fecha(e.data().baja) }))
         .sort((a, b) => a.nombre.localeCompare(b.nombre, "es")),
       equipos,
-      cuentas: clientes.docs.map((c) => ({ uid: c.id, email: texto(c.data().email) ?? "", empresa: texto(c.data().empresa) ?? "" })),
+      cuentas: (clientes?.docs ?? []).map((c) => ({
+        uid: c.id,
+        email: texto(c.data().email) ?? "",
+        empresa: texto(c.data().empresa) ?? "",
+        baja: fecha(c.data().baja),
+      })),
+      // Un documento sin un rol válido no da acceso al panel (ver las reglas): no se lista.
+      personal: (personal?.docs ?? []).flatMap((p) => {
+        const datos = p.data();
+        return esRolPersonal(datos.rol) ? [{ uid: p.id, email: texto(datos.email) ?? "", rol: datos.rol, baja: fecha(datos.baja) }] : [];
+      }),
     };
   }
 
@@ -194,17 +213,59 @@ export class PanelFirestore implements PanelRepositorio {
     return { id: ref.id, nombre };
   }
 
+  async editarEmpresa(id: string, nombre: string): Promise<void> {
+    await guardar(() => updateDoc(doc(obtenerFirestore(), "empresas", id), { nombre }));
+  }
+
   async crearCuenta(email: string, empresa: string): Promise<CuentaCliente> {
     return guardar(async () => {
-      const auth = obtenerAuthAltas();
-      const { user } = await createUserWithEmailAndPassword(auth, email, claveInicial());
-      try {
-        await sendPasswordResetEmail(auth, email);
-      } finally {
-        await signOut(auth);
-      }
-      await setDoc(doc(obtenerFirestore(), "clientes", user.uid), { empresa, email, creada: serverTimestamp() });
-      return { uid: user.uid, email, empresa };
+      const uid = await crearUsuario(email);
+      await setDoc(doc(obtenerFirestore(), "clientes", uid), { empresa, email, creada: serverTimestamp() });
+      return { uid, email, empresa };
     });
   }
+
+  async editarCuenta(uid: string, empresa: string): Promise<void> {
+    await guardar(() => updateDoc(doc(obtenerFirestore(), "clientes", uid), { empresa }));
+  }
+
+  async crearPersonal(email: string, rol: RolPersonal): Promise<CuentaPersonal> {
+    return guardar(async () => {
+      const uid = await crearUsuario(email);
+      await setDoc(doc(obtenerFirestore(), "personal", uid), { rol, email, creada: serverTimestamp() });
+      return { uid, email, rol };
+    });
+  }
+
+  async editarPersonal(uid: string, rol: RolPersonal): Promise<void> {
+    await guardar(() => updateDoc(doc(obtenerFirestore(), "personal", uid), { rol }));
+  }
+
+  async cambiarBaja(registro: Registro, id: string, baja: boolean): Promise<void> {
+    const db = obtenerFirestore();
+    const valor = { baja: baja ? serverTimestamp() : deleteField() };
+    await guardar(async () => {
+      if (registro !== "equipo") return updateDoc(doc(db, COLECCIONES[registro], id), valor);
+      // El seguimiento esconde el código de la consulta pública; la orden, el equipo del portal del cliente.
+      const lote = writeBatch(db);
+      lote.update(doc(db, "seguimiento", id), valor);
+      lote.update(doc(db, "ordenes", id), valor);
+      await lote.commit();
+    });
+  }
+}
+
+/**
+ * Crea el usuario en Firebase Auth con una contraseña que nadie conoce y le envía el email para elegir la
+ * suya. Devuelve su UID, para asociarle la empresa o el rol.
+ */
+async function crearUsuario(email: string): Promise<string> {
+  const auth = obtenerAuthAltas();
+  const { user } = await createUserWithEmailAndPassword(auth, email, claveInicial());
+  try {
+    await sendPasswordResetEmail(auth, email);
+  } finally {
+    await signOut(auth);
+  }
+  return user.uid;
 }

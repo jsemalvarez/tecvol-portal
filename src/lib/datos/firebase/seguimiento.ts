@@ -1,3 +1,4 @@
+import { FirebaseError } from "firebase/app";
 import { doc, getDoc, Timestamp, type DocumentData } from "firebase/firestore";
 import { ESTADOS, esEstado, type EstadoReparacion } from "@/lib/dominio/estados";
 import type { SeguimientoPublico } from "@/lib/dominio/tipos";
@@ -26,10 +27,17 @@ export function leerSeguimiento(codigo: string, datos: DocumentData): Seguimient
 /**
  * Lee `seguimiento/{codigo}`. Las reglas permiten `get` sin sesión pero no `list`,
  * así que la colección no se puede recorrer: solo se lee un código conocido.
+ * Un equipo dado de baja se trata como un código que no existe: las reglas no lo dejan leer
+ * sin ser personal, y al personal tampoco se le muestra en la consulta.
  */
 export class SeguimientoFirestore implements SeguimientoRepositorio {
   async obtenerPorCodigo(codigo: string): Promise<SeguimientoPublico | null> {
-    const snap = await getDoc(doc(obtenerFirestore(), "seguimiento", codigo));
-    return snap.exists() ? leerSeguimiento(codigo, snap.data()) : null;
+    try {
+      const snap = await getDoc(doc(obtenerFirestore(), "seguimiento", codigo));
+      return snap.exists() && !snap.data().baja ? leerSeguimiento(codigo, snap.data()) : null;
+    } catch (error) {
+      if (error instanceof FirebaseError && error.code === "permission-denied") return null;
+      throw error;
+    }
   }
 }

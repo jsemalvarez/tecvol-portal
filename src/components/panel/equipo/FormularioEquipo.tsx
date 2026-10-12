@@ -62,6 +62,7 @@ export function FormularioEquipo({
   taller,
   acciones,
   equipo,
+  crearEmpresas,
   onRegistrado,
   onGuardado,
 }: {
@@ -69,13 +70,17 @@ export function FormularioEquipo({
   acciones: AccionesPanel;
   /** Sin equipo, el formulario registra uno nuevo. */
   equipo?: EquipoTaller;
+  /** Si puede dar de alta un cliente nuevo desde acá. Si no, elige solo entre las empresas que ya existen. */
+  crearEmpresas: boolean;
   onRegistrado?: (equipo: EquipoTaller) => void;
   onGuardado?: (equipo: EquipoTaller) => void;
 }) {
   const id = useId();
   const hoy = fechaParaCampo(new Date());
   const nuevo = !equipo;
-  const [inicial] = useState(() => valoresDe(equipo, hoy, taller.empresas.length ? "" : NUEVA_EMPRESA));
+  // Las empresas dadas de baja no se ofrecen, salvo la que ya tiene el equipo, para no cambiársela sin querer.
+  const empresas = taller.empresas.filter((e) => !e.baja || e.id === equipo?.empresa);
+  const [inicial] = useState(() => valoresDe(equipo, hoy, empresas.length || !crearEmpresas ? "" : NUEVA_EMPRESA));
   const [valores, setValores] = useState<Valores>(inicial);
   const [errores, setErrores] = useState<Errores>({});
   const [error, setError] = useState<string | null>(null);
@@ -230,14 +235,17 @@ export function FormularioEquipo({
                   <option value="" disabled>
                     Elegir…
                   </option>
-                  {taller.empresas.map((e) => (
+                  {empresas.map((e) => (
                     <option key={e.id} value={e.id}>
                       {e.nombre}
                     </option>
                   ))}
-                  <option value={NUEVA_EMPRESA}>Otro cliente, nuevo…</option>
+                  {crearEmpresas && <option value={NUEVA_EMPRESA}>Otro cliente, nuevo…</option>}
                 </select>
                 {errores.empresa && <MensajeCampo id={`${campoId("empresa")}-error`} texto={errores.empresa} />}
+                {!crearEmpresas && (
+                  <p className="mt-2 text-[0.9375rem] text-grafito">¿No está el cliente? Pídale a un administrador que lo dé de alta.</p>
+                )}
               </div>
               {valores.empresa === NUEVA_EMPRESA && (
                 <CampoTexto {...comun("nombreEmpresa")} etiqueta="Nombre del cliente nuevo" obligatorio />

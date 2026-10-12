@@ -5,13 +5,29 @@ import { useSesionDe } from "@/components/ingreso/useSesionDe";
 import { obtenerPanel } from "@/lib/datos/repositorios";
 import { etapasConEstado, type EstadoReparacion } from "@/lib/dominio/estados";
 import type { Informe, InformeGuardado } from "@/lib/dominio/informe";
-import { conTodosLosCampos, type CuentaCliente, type DatosEquipo, type Empresa, type EquipoTaller, type Sesion, type Taller } from "@/lib/dominio/tipos";
+import { esPersonal } from "@/lib/dominio/roles";
+import {
+  conBaja,
+  conTodosLosCampos,
+  type CuentaCliente,
+  type CuentaPersonal,
+  type DatosEquipo,
+  type Empresa,
+  type EquipoTaller,
+  type Registro,
+  type RolPersonal,
+  type Sesion,
+  type Taller,
+} from "@/lib/dominio/tipos";
+
+/** La sesión de quien usa el panel: siempre alguien del personal, con su rol. */
+export type SesionPersonal = Sesion & { rol: RolPersonal };
 
 export type EstadoPanel =
   | { fase: "verificando" }
-  | { fase: "cargando"; sesion: Sesion }
-  | { fase: "error"; sesion: Sesion }
-  | { fase: "listo"; sesion: Sesion; taller: Taller };
+  | { fase: "cargando"; sesion: SesionPersonal }
+  | { fase: "error"; sesion: SesionPersonal }
+  | { fase: "listo"; sesion: SesionPersonal; taller: Taller };
 
 /** Estado y etapas de un equipo antes de un cambio, para poder deshacerlo. */
 export type EstadoAnterior = Pick<EquipoTaller, "codigo" | "estado" | "etapas">;
@@ -25,7 +41,14 @@ export interface AccionesPanel {
   /** Guarda el informe a nombre de quien tiene la sesión abierta. */
   guardarInforme(codigo: string, informe: Informe): Promise<void>;
   crearEmpresa(nombre: string): Promise<Empresa>;
+  editarEmpresa(id: string, nombre: string): Promise<void>;
   crearCuenta(email: string, empresa: string): Promise<CuentaCliente>;
+  editarCuenta(uid: string, empresa: string): Promise<void>;
+  crearPersonal(email: string, rol: RolPersonal): Promise<CuentaPersonal>;
+  editarPersonal(uid: string, rol: RolPersonal): Promise<void>;
+  /** Baja lógica: el registro queda guardado y se puede reactivar. */
+  darDeBaja(registro: Registro, id: string): Promise<void>;
+  reactivar(registro: Registro, id: string): Promise<void>;
 }
 
 /**
@@ -33,16 +56,18 @@ export interface AccionesPanel {
  * la lista en pantalla; si falla, lanza el error para que lo muestre quien la pidió.
  */
 export function usePanel() {
-  const { sesion, salir } = useSesionDe("personal");
+  const { sesion: sesionArea, salir } = useSesionDe("panel");
+  const sesion = sesionArea && esPersonal(sesionArea.rol) ? (sesionArea as SesionPersonal) : null;
   const [taller, setTaller] = useState<{ uid: string; taller: Taller } | { uid: string; error: true } | null>(null);
   const [intento, setIntento] = useState(0);
   const uid = sesion?.uid ?? null;
+  const rol = sesion?.rol ?? null;
 
   useEffect(() => {
-    if (!uid) return;
+    if (!uid || !rol) return;
     let activo = true;
     obtenerPanel()
-      .then((repositorio) => repositorio.obtenerTaller())
+      .then((repositorio) => repositorio.obtenerTaller(rol))
       .then((datos) => {
         if (activo) setTaller({ uid, taller: datos });
       })
@@ -52,7 +77,7 @@ export function usePanel() {
     return () => {
       activo = false;
     };
-  }, [uid, intento]);
+  }, [uid, rol, intento]);
 
   const reintentar = useCallback(() => {
     setTaller(null);
@@ -100,10 +125,38 @@ export function usePanel() {
       actualizar((t) => ({ ...t, empresas: [...t.empresas, empresa].sort((a, b) => a.nombre.localeCompare(b.nombre, "es")) }));
       return empresa;
     },
+    async editarEmpresa(id, nombre) {
+      await (await obtenerPanel()).editarEmpresa(id, nombre);
+      actualizar((t) => ({
+        ...t,
+        empresas: t.empresas.map((e) => (e.id === id ? { ...e, nombre } : e)).sort((a, b) => a.nombre.localeCompare(b.nombre, "es")),
+      }));
+    },
     async crearCuenta(email, empresa) {
       const cuenta = await (await obtenerPanel()).crearCuenta(email, empresa);
       actualizar((t) => ({ ...t, cuentas: [...t.cuentas, cuenta] }));
       return cuenta;
+    },
+    async editarCuenta(uid, empresa) {
+      await (await obtenerPanel()).editarCuenta(uid, empresa);
+      actualizar((t) => ({ ...t, cuentas: t.cuentas.map((c) => (c.uid === uid ? { ...c, empresa } : c)) }));
+    },
+    async crearPersonal(email, rol) {
+      const cuenta = await (await obtenerPanel()).crearPersonal(email, rol);
+      actualizar((t) => ({ ...t, personal: [...t.personal, cuenta] }));
+      return cuenta;
+    },
+    async editarPersonal(uid, rol) {
+      await (await obtenerPanel()).editarPersonal(uid, rol);
+      actualizar((t) => ({ ...t, personal: t.personal.map((p) => (p.uid === uid ? { ...p, rol } : p)) }));
+    },
+    async darDeBaja(registro, id) {
+      await (await obtenerPanel()).cambiarBaja(registro, id, true);
+      actualizar((t) => conBaja(t, registro, id, new Date()));
+    },
+    async reactivar(registro, id) {
+      await (await obtenerPanel()).cambiarBaja(registro, id, false);
+      actualizar((t) => conBaja(t, registro, id, undefined));
     },
   };
 

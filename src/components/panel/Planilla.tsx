@@ -6,7 +6,7 @@ import { nombreDe, TextoEstado } from "@/components/portal/piezas";
 import { Senal } from "@/components/senal/Senal";
 import { formatearCodigo } from "@/lib/dominio/codigo";
 import { DEFINICIONES } from "@/lib/dominio/estados";
-import type { EquipoTaller } from "@/lib/dominio/tipos";
+import { activos, type EquipoTaller } from "@/lib/dominio/tipos";
 import { BarraFiltros, useFiltros } from "./Filtros";
 import { PaginaPanel, type ApiPanel } from "./PaginaPanel";
 
@@ -20,17 +20,21 @@ const recientes = (a: EquipoTaller, b: EquipoTaller) => (b.actualizado?.getTime(
 function Planilla({ api }: { api: ApiPanel }) {
   const filtros = useFiltros(api.taller.equipos, api.taller.empresas);
   const equipos = [...filtros.filtrados].sort(recientes);
+  const total = activos(api.taller.equipos).length;
+  const vistaBajas = filtros.estado === "baja";
 
   return (
     <div className="mt-10">
-      <BarraFiltros filtros={filtros} empresas={api.taller.empresas} total={api.taller.equipos.length} />
+      <BarraFiltros filtros={filtros} empresas={activos(api.taller.empresas)} total={total} conBajas={api.puede("baja-equipos")} />
       <div className="marco mt-6">
         <TornillosMarco />
         <div className="marco-cabecera">
-          <span className="rotulo text-base">Equipos</span>
+          <span className="rotulo text-base">{vistaBajas ? "Equipos dados de baja" : "Equipos"}</span>
           <span className="rotulo text-base">{equipos.length}</span>
         </div>
-        {api.taller.equipos.length === 0 ? (
+        {vistaBajas && equipos.length === 0 ? (
+          <p className="marco-cuerpo">No hay equipos dados de baja{filtros.texto || filtros.empresa ? " que coincidan con la búsqueda" : ""}.</p>
+        ) : total === 0 && !vistaBajas ? (
           <p className="marco-cuerpo">Todavía no hay equipos. Registre el primero con "Registrar equipo".</p>
         ) : equipos.length === 0 ? (
           <p className="marco-cuerpo">Ningún equipo coincide con la búsqueda.</p>
@@ -122,6 +126,21 @@ function Planilla({ api }: { api: ApiPanel }) {
 
 function Acciones({ api, equipo }: { api: ApiPanel; equipo: EquipoTaller }) {
   const nombre = nombreDe(equipo);
+  // Un equipo dado de baja no se trabaja: solo se puede reactivar.
+  if (equipo.baja) {
+    return (
+      <div className="flex md:justify-end">
+        <button
+          type="button"
+          onClick={() => api.reactivar("equipo", equipo.codigo, nombre)}
+          className="placa-secundaria w-full justify-center whitespace-nowrap md:w-auto"
+          aria-label={`Reactivar ${nombre}`}
+        >
+          Reactivar
+        </button>
+      </div>
+    );
+  }
   return (
     <div className="flex flex-wrap items-center gap-x-5 gap-y-3 md:flex-nowrap md:justify-end md:gap-x-4">
       <button type="button" onClick={() => api.abrirEstado(equipo)} className="placa-secundaria w-full justify-center whitespace-nowrap md:w-auto" aria-label={`Cambiar el estado de ${nombre}`}>
