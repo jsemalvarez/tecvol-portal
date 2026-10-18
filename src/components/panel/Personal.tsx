@@ -7,6 +7,7 @@ import { modoDatos } from "@/lib/datos/repositorios";
 import { NOMBRES_ROL } from "@/lib/dominio/roles";
 import { activos, type CuentaPersonal } from "@/lib/dominio/tipos";
 import { PaginaPanel, type ApiPanel } from "./PaginaPanel";
+import { ReenviarAcceso } from "./ReenviarAcceso";
 
 const enlace = "cursor-pointer text-[0.9375rem] font-semibold underline decoration-naranja decoration-2 underline-offset-4";
 
@@ -90,6 +91,7 @@ function Acciones({ api, cuenta }: { api: ApiPanel; cuenta: CuentaPersonal }) {
   }
   return (
     <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+      <ReenviarAcceso api={api} email={cuenta.email} className={enlace} />
       <button
         type="button"
         onClick={() => api.abrir({ tipo: "editar-personal", cuenta })}

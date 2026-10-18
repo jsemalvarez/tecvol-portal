@@ -70,6 +70,7 @@ const MENSAJES: Record<MotivoErrorDePanel, string> = {
   "email-invalido": "Revise el email: debe tener la forma nombre@empresa.com.ar.",
   "altas-deshabilitadas": "Firebase no permite crear cuentas desde la app. Habilítelo en la consola (vea el README).",
   permiso: "Su cuenta no tiene permiso para hacer este cambio.",
+  intentos: "Se enviaron demasiados emails seguidos. Espere unos minutos e intente de nuevo.",
   conexion: "No se pudo conectar. Revise su conexión e intente de nuevo.",
   desconocido: "No se pudo guardar. Intente de nuevo en unos minutos.",
 };

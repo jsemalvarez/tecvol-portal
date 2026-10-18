@@ -36,6 +36,8 @@ export interface ApiPanel {
   /** Da de baja y avisa, con la opción de deshacer. Si falla, avisa el motivo. */
   darDeBaja: (registro: Registro, id: string, nombre: string) => Promise<void>;
   reactivar: (registro: Registro, id: string, nombre: string) => Promise<void>;
+  /** Envía otra vez el email para elegir la contraseña y avisa el resultado. */
+  reenviarAcceso: (email: string) => Promise<void>;
 }
 
 export type Ventana =
@@ -153,6 +155,18 @@ export function PaginaPanel({
         try {
           await acciones.reactivar(registro, id);
           avisar(`Se reactivó ${nombre}.`, () => acciones.darDeBaja(registro, id));
+        } catch (e) {
+          avisar(mensajeDeError(e));
+        }
+      },
+      async reenviarAcceso(email) {
+        try {
+          await acciones.reenviarAcceso(email);
+          avisar(
+            modoDatos === "local"
+              ? `Con datos de prueba no se envían emails: ${email} entra con su contraseña de prueba.`
+              : `Se envió a ${email} un email nuevo para elegir su contraseña. El enlace anterior ya no sirve.`,
+          );
         } catch (e) {
           avisar(mensajeDeError(e));
         }

@@ -68,6 +68,8 @@ export interface PanelRepositorio {
   /** Como `crearCuenta`, pero la cuenta entra al panel con el rol elegido. */
   crearPersonal(email: string, rol: RolPersonal): Promise<CuentaPersonal>;
   editarPersonal(uid: string, rol: RolPersonal): Promise<void>;
+  /** Envía otra vez el email para elegir la contraseña, por si el anterior venció. El enlace anterior deja de servir. */
+  reenviarAcceso(email: string): Promise<void>;
   /**
    * Baja lógica: nada se borra. El registro queda guardado con la fecha de baja y deja de verse o de dar
    * acceso; con `baja` en `false` se reactiva.
@@ -75,7 +77,14 @@ export interface PanelRepositorio {
   cambiarBaja(registro: Registro, id: string, baja: boolean): Promise<void>;
 }
 
-export type MotivoErrorDePanel = "email-en-uso" | "email-invalido" | "altas-deshabilitadas" | "permiso" | "conexion" | "desconocido";
+export type MotivoErrorDePanel =
+  | "email-en-uso"
+  | "email-invalido"
+  | "altas-deshabilitadas"
+  | "permiso"
+  | "intentos"
+  | "conexion"
+  | "desconocido";
 
 export class ErrorDePanel extends Error {
   constructor(readonly motivo: MotivoErrorDePanel) {

@@ -46,6 +46,7 @@ export interface AccionesPanel {
   editarCuenta(uid: string, empresa: string): Promise<void>;
   crearPersonal(email: string, rol: RolPersonal): Promise<CuentaPersonal>;
   editarPersonal(uid: string, rol: RolPersonal): Promise<void>;
+  reenviarAcceso(email: string): Promise<void>;
   /** Baja lógica: el registro queda guardado y se puede reactivar. */
   darDeBaja(registro: Registro, id: string): Promise<void>;
   reactivar(registro: Registro, id: string): Promise<void>;
@@ -149,6 +150,9 @@ export function usePanel() {
     async editarPersonal(uid, rol) {
       await (await obtenerPanel()).editarPersonal(uid, rol);
       actualizar((t) => ({ ...t, personal: t.personal.map((p) => (p.uid === uid ? { ...p, rol } : p)) }));
+    },
+    async reenviarAcceso(email) {
+      await (await obtenerPanel()).reenviarAcceso(email);
     },
     async darDeBaja(registro, id) {
       await (await obtenerPanel()).cambiarBaja(registro, id, true);

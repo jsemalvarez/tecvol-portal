@@ -42,6 +42,8 @@ function motivo(error: unknown): MotivoErrorDePanel {
       return "altas-deshabilitadas";
     case "permission-denied":
       return "permiso";
+    case "auth/too-many-requests":
+      return "intentos";
     case "unavailable":
     case "auth/network-request-failed":
       return "conexion";
@@ -239,6 +241,10 @@ export class PanelFirestore implements PanelRepositorio {
 
   async editarPersonal(uid: string, rol: RolPersonal): Promise<void> {
     await guardar(() => updateDoc(doc(obtenerFirestore(), "personal", uid), { rol }));
+  }
+
+  async reenviarAcceso(email: string): Promise<void> {
+    await guardar(() => sendPasswordResetEmail(obtenerAuthAltas(), email));
   }
 
   async cambiarBaja(registro: Registro, id: string, baja: boolean): Promise<void> {

@@ -120,6 +120,11 @@ export class PanelLocal implements PanelRepositorio {
     guardarDatos(datos);
   }
 
+  async reenviarAcceso(email: string): Promise<void> {
+    await esperar(500);
+    console.info("[modo local] Email para elegir la contraseña (no se envía):", email);
+  }
+
   async cambiarBaja(registro: Registro, id: string, baja: boolean): Promise<void> {
     await esperar(350);
     guardarDatos(conBaja(leerDatos(), registro, id, baja ? new Date() : undefined));
