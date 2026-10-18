@@ -60,6 +60,15 @@ cuentas las crea un administrador desde el panel (ver más abajo).
 Después de ingresar, el cliente va a `/portal` y el personal a `/panel`. El enlace "¿Olvidó su contraseña?"
 envía el email de Firebase para elegir una nueva.
 
+**Enlace para elegir la contraseña.** Vence en poco tiempo y cada email nuevo anula el anterior; Firebase no
+deja alargar el plazo. Para que el cliente vea qué pasó y pida otro en el mismo lugar, el enlace lleva a
+`/ingresar/clave`, una página propia: hay que configurarlo en la consola, en Authentication → Plantillas →
+Restablecimiento de contraseña → editar (lápiz) → **Personalizar la URL de acción**, con
+`https://<dominio de producción>/ingresar/clave`. Esa URL vale para todas las plantillas; la app solo usa la
+de la contraseña. Primero hay que desplegar la página, después cambiar la URL. Con datos de prueba,
+`/ingresar/clave?oobCode=VENCIDO` (o `USADO`) muestra un enlace que no sirve y cualquier otro código, uno que
+sirve. Además, el administrador puede **reenviar el email de acceso** desde cada cuenta del panel.
+
 ### Personal del taller y roles
 
 Es personal quien tenga un documento en `personal/{uid}` (el UID de su usuario de Authentication) con

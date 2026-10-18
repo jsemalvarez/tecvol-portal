@@ -1,15 +1,23 @@
 import { FirebaseError } from "firebase/app";
 import {
+  confirmPasswordReset,
   onAuthStateChanged,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
+  verifyPasswordResetCode,
   type User,
 } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { esRolPersonal } from "@/lib/dominio/roles";
 import type { Rol, Sesion } from "@/lib/dominio/tipos";
-import { ErrorDeIngreso, type AutenticacionRepositorio, type MotivoErrorDeIngreso } from "../repositorios";
+import {
+  ErrorDeEnlace,
+  ErrorDeIngreso,
+  type AutenticacionRepositorio,
+  type MotivoErrorDeEnlace,
+  type MotivoErrorDeIngreso,
+} from "../repositorios";
 import { obtenerAuth, obtenerFirestore } from "./app";
 
 /** Códigos de Firebase Auth traducidos a los motivos que la interfaz sabe explicar. */
@@ -24,6 +32,27 @@ function motivo(error: unknown): MotivoErrorDeIngreso {
       return "credenciales";
     case "auth/too-many-requests":
       return "intentos";
+    case "auth/user-disabled":
+      return "deshabilitada";
+    case "auth/network-request-failed":
+      return "conexion";
+    default:
+      return "desconocido";
+  }
+}
+
+/** Errores del enlace para elegir la contraseña. Firebase da el mismo código si se usó o si lo reemplazó otro. */
+function motivoEnlace(error: unknown): MotivoErrorDeEnlace {
+  if (!(error instanceof FirebaseError)) return "desconocido";
+  switch (error.code) {
+    case "auth/expired-action-code":
+      return "vencido";
+    case "auth/invalid-action-code":
+    case "auth/user-not-found":
+      return "usado";
+    case "auth/weak-password":
+    case "auth/password-does-not-meet-requirements":
+      return "debil";
     case "auth/user-disabled":
       return "deshabilitada";
     case "auth/network-request-failed":
@@ -78,6 +107,23 @@ export class AutenticacionFirebase implements AutenticacionRepositorio {
       // Un email sin cuenta no se informa, para no revelar quién tiene cuenta.
       if (error instanceof FirebaseError && error.code === "auth/user-not-found") return;
       throw new ErrorDeIngreso(motivo(error));
+    }
+  }
+
+  async verificarEnlaceClave(codigo: string): Promise<string> {
+    try {
+      // Solo lee el código, no lo gasta: abrir el enlace no lo inutiliza; guardar la contraseña, sí.
+      return await verifyPasswordResetCode(obtenerAuth(), codigo);
+    } catch (error) {
+      throw new ErrorDeEnlace(motivoEnlace(error));
+    }
+  }
+
+  async elegirClave(codigo: string, clave: string): Promise<void> {
+    try {
+      await confirmPasswordReset(obtenerAuth(), codigo, clave);
+    } catch (error) {
+      throw new ErrorDeEnlace(motivoEnlace(error));
     }
   }
 

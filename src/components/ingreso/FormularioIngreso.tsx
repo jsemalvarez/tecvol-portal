@@ -49,10 +49,10 @@ function MensajeError({ id, texto }: { id: string; texto: string }) {
  * Ingreso con email y contraseña para clientes y personal. El rol de la cuenta decide el destino:
  * el cliente va al portal, el personal al panel. Incluye el pedido de una contraseña nueva.
  */
-export function FormularioIngreso() {
+export function FormularioIngreso({ modoInicial = "ingreso" }: { modoInicial?: "ingreso" | "restablecer" }) {
   const router = useRouter();
   const [sesion, setSesion] = useState<Sesion | null>(null);
-  const [modo, setModo] = useState<Modo>("ingreso");
+  const [modo, setModo] = useState<Modo>(modoInicial);
   const [email, setEmail] = useState("");
   const [clave, setClave] = useState("");
   const [verClave, setVerClave] = useState(false);

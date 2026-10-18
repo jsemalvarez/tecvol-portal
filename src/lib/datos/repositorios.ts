@@ -35,6 +35,10 @@ export interface AutenticacionRepositorio {
   salir(): Promise<void>;
   /** Envía el enlace para elegir una contraseña nueva. No revela si el email tiene cuenta. */
   restablecerClave(email: string): Promise<void>;
+  /** Email de la cuenta del enlace para elegir la contraseña. Si venció o ya no sirve, lanza `ErrorDeEnlace`. */
+  verificarEnlaceClave(codigo: string): Promise<string>;
+  /** Guarda la contraseña nueva con el código del enlace. Si falla, lanza `ErrorDeEnlace`. */
+  elegirClave(codigo: string, clave: string): Promise<void>;
   /** Avisa la sesión actual y cada cambio. Devuelve la función para dejar de escuchar. */
   observarSesion(alCambiar: (sesion: Sesion | null) => void): () => void;
 }
@@ -99,6 +103,19 @@ export class ErrorDeIngreso extends Error {
   constructor(readonly motivo: MotivoErrorDeIngreso) {
     super(`No se pudo ingresar: ${motivo}`);
     this.name = "ErrorDeIngreso";
+  }
+}
+
+/**
+ * Por qué no sirve un enlace para elegir la contraseña: `vencido` pasó su plazo; `usado` ya se usó o lo
+ * reemplazó uno más nuevo (cada email anula el anterior); `debil`, la contraseña no alcanza.
+ */
+export type MotivoErrorDeEnlace = "vencido" | "usado" | "debil" | "deshabilitada" | "conexion" | "desconocido";
+
+export class ErrorDeEnlace extends Error {
+  constructor(readonly motivo: MotivoErrorDeEnlace) {
+    super(`El enlace no sirve: ${motivo}`);
+    this.name = "ErrorDeEnlace";
   }
 }
 

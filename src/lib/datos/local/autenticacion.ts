@@ -1,6 +1,6 @@
 import { esRol } from "@/lib/dominio/roles";
 import type { Rol, Sesion } from "@/lib/dominio/tipos";
-import { ErrorDeIngreso, type AutenticacionRepositorio } from "../repositorios";
+import { ErrorDeEnlace, ErrorDeIngreso, type AutenticacionRepositorio } from "../repositorios";
 import { CLAVE_CUENTAS_NUEVAS, CUENTAS, leerDatos, PERSONAL } from "./datos";
 
 /**
@@ -82,6 +82,20 @@ export class AutenticacionLocal implements AutenticacionRepositorio {
   async restablecerClave(email: string): Promise<void> {
     await esperar(500);
     console.info("[modo local] Enlace para restablecer la contraseña (no se envía):", email);
+  }
+
+  /** Para ver la página del enlace sin emails: `?oobCode=VENCIDO` o `USADO` fallan; cualquier otro es de la cuenta de cliente. */
+  async verificarEnlaceClave(codigo: string): Promise<string> {
+    await esperar(400);
+    if (codigo === "VENCIDO") throw new ErrorDeEnlace("vencido");
+    if (codigo === "USADO") throw new ErrorDeEnlace("usado");
+    return CUENTAS[0].email;
+  }
+
+  async elegirClave(codigo: string): Promise<void> {
+    await this.verificarEnlaceClave(codigo);
+    // Las contraseñas de prueba son fijas: la nueva no se guarda.
+    console.info("[modo local] Contraseña nueva elegida (no se guarda).");
   }
 
   observarSesion(alCambiar: (sesion: Sesion | null) => void): () => void {
