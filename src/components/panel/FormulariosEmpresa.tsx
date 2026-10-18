@@ -164,7 +164,8 @@ export function FormularioCuenta({
     <form onSubmit={guardar} noValidate className="flex flex-col gap-6">
       <p className="max-w-[56ch]">
         La cuenta ve solo los equipos de <strong className="font-semibold">{empresa.nombre}</strong>. Al crearla, le llega un
-        email para elegir su contraseña. Avísele que, si no lo ve, revise la carpeta de spam.
+        email para elegir su contraseña. El enlace vence en poco tiempo: avísele que lo use apenas lo reciba y que, si no lo
+        ve, revise la carpeta de spam. Si se le vence, reenvíelo desde la lista de cuentas.
       </p>
       <ErrorFormulario texto={error} />
       <div>

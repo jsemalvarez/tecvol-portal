@@ -483,7 +483,7 @@ export function PaginaPanel({
 function avisoCuentaCreada(email: string) {
   return modoDatos === "local"
     ? `Se registró la cuenta de ${email}. Con datos de prueba entra con la contraseña ${CLAVE_CUENTAS_NUEVAS}.`
-    : `Se creó la cuenta de ${email}. Le llegó un email para elegir su contraseña.`;
+    : `Se creó la cuenta de ${email}. Se le envió un email para elegir su contraseña: avísele que lo use cuanto antes, porque vence.`;
 }
 
 /** Para qué equipo es la ventana: la referencia, la descripción y la empresa. */

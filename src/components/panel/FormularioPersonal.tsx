@@ -65,7 +65,8 @@ export function FormularioPersonal({
         </p>
       ) : (
         <p className="max-w-[56ch]">
-          Al crearla, le llega un email para elegir su contraseña. Avísele que, si no lo ve, revise la carpeta de spam.
+          Al crearla, le llega un email para elegir su contraseña. El enlace vence en poco tiempo: avísele que lo use apenas lo
+          reciba y que, si no lo ve, revise la carpeta de spam. Si se le vence, reenvíelo desde la lista.
         </p>
       )}
       <ErrorFormulario texto={error} />
