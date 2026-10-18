@@ -97,6 +97,9 @@ En `/panel` el personal (los dos roles):
 - **Asigna el estado** de cada equipo, con la fecha del cambio (hoy, si no indica otra). Puede saltear etapas
   (quedan sin fecha) o volver atrás para corregir (se borran las fechas de las etapas posteriores). Un cambio
   se puede deshacer desde el aviso que aparece abajo.
+- **Corrige las fechas** de cualquier etapa ya pasada, desde la misma ventana, sin cambiar el estado ni borrar
+  las otras. Las etapas salteadas pueden quedar sin fecha; el ingreso y la etapa actual, no. Las fechas tienen
+  que seguir el orden del taller (dos etapas pueden empezar el mismo día), también al cambiar el estado.
 - **Registra equipos**: la empresa dueña, la descripción, la referencia del cliente y la serie. La app genera
   el código de seguimiento, crea `seguimiento/{codigo}` y `ordenes/{codigo}` y muestra una **etiqueta para
   imprimir** con el código y un QR que abre `/seguimiento/{codigo}`.

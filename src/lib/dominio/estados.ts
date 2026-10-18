@@ -1,3 +1,5 @@
+import { fechaParaCampo } from "./fechas";
+
 /**
  * Estados de una reparación, en el orden fijo del taller.
  * Cada estado se comunica con la forma y el color de una señal de seguridad
@@ -129,4 +131,22 @@ export function etapasConEstado(
   }
   nuevas[estado] = fecha;
   return nuevas;
+}
+
+/**
+ * La primera etapa con fecha anterior a la de una etapa previa, junto con esa etapa previa; `null` si las
+ * fechas siguen el orden del taller. Se comparan días, no horas: dos etapas pueden empezar el mismo día.
+ */
+export function fechasDesordenadas(
+  etapas: Partial<Record<EstadoReparacion, Date>>,
+): { etapa: EstadoReparacion; anterior: EstadoReparacion } | null {
+  let anterior: { etapa: EstadoReparacion; dia: string } | null = null;
+  for (const etapa of ESTADOS) {
+    const fecha = etapas[etapa];
+    if (!fecha) continue;
+    const dia = fechaParaCampo(fecha);
+    if (anterior && dia < anterior.dia) return { etapa, anterior: anterior.etapa };
+    anterior = { etapa, dia };
+  }
+  return null;
 }

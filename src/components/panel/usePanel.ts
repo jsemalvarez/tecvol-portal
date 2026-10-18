@@ -34,6 +34,8 @@ export type EstadoAnterior = Pick<EquipoTaller, "codigo" | "estado" | "etapas">;
 
 export interface AccionesPanel {
   cambiarEstado(equipo: EquipoTaller, estado: EstadoReparacion, fecha: Date): Promise<EstadoAnterior>;
+  /** Corrige las fechas de las etapas sin cambiar el estado. */
+  corregirFechas(equipo: EquipoTaller, etapas: Partial<Record<EstadoReparacion, Date>>): Promise<EstadoAnterior>;
   restaurar(anterior: EstadoAnterior): Promise<void>;
   registrar(datos: DatosEquipo, ingreso: Date): Promise<EquipoTaller>;
   editar(codigo: string, datos: DatosEquipo): Promise<void>;
@@ -100,6 +102,11 @@ export function usePanel() {
       const etapas = etapasConEstado(equipo.etapas, estado, fecha);
       await (await obtenerPanel()).guardarEstado(equipo.codigo, estado, etapas);
       reemplazarEquipo(equipo.codigo, { estado, etapas, actualizado: new Date() });
+      return { codigo: equipo.codigo, estado: equipo.estado, etapas: equipo.etapas };
+    },
+    async corregirFechas(equipo, etapas) {
+      await (await obtenerPanel()).guardarEstado(equipo.codigo, equipo.estado, etapas);
+      reemplazarEquipo(equipo.codigo, { etapas, actualizado: new Date() });
       return { codigo: equipo.codigo, estado: equipo.estado, etapas: equipo.etapas };
     },
     async restaurar(anterior) {

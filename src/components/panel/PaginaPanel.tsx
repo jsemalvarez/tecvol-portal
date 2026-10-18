@@ -364,6 +364,10 @@ export function PaginaPanel({
                     avisarCambio(anterior, enVentana, nuevo);
                     cerrar();
                   }}
+                  onFechasCorregidas={(anterior) => {
+                    avisar(`Se corrigieron las fechas de ${nombreDe(enVentana)}.`, () => acciones.restaurar(anterior));
+                    cerrar();
+                  }}
                 />
               </>
             )}
