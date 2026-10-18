@@ -20,12 +20,13 @@ import {
   type Placa,
   type Uso,
 } from "@/lib/dominio/placa";
-import type { DatosEquipo, EquipoCliente, EquipoTaller, Taller } from "@/lib/dominio/tipos";
+import { formatearCodigo } from "@/lib/dominio/codigo";
+import { activos, type DatosEquipo, type EquipoCliente, type EquipoTaller, type Taller } from "@/lib/dominio/tipos";
 import { ErrorFormulario, MensajeCampo, mensajeDeError } from "../Dialogo";
 import type { AccionesPanel } from "../usePanel";
 import { CampoTexto, Grupo, Opciones, Sugerencias } from "./campos";
 import { useAvisoAlSalir } from "./useAvisoAlSalir";
-import { NUEVA_EMPRESA, placaDe, revisar, valoresDe, type Campo, type Errores, type Valores } from "./valores";
+import { normalizarOrden, NUEVA_EMPRESA, placaDe, revisar, valoresDe, type Campo, type Errores, type Valores } from "./valores";
 
 /** Sugerencias de base; se suman las que ya cargó el taller en otros equipos. */
 const SUGERENCIAS = {
@@ -134,13 +135,25 @@ export function FormularioEquipo({
   const descripcion = descripcionPublica(placa, equipo);
   const lista = (campo: CampoSugerido) => `${id}-sugerencias-${campo}`;
 
+  // El N.º de orden es obligatorio al registrar; en un equipo cargado antes sin número, no se exige, pero
+  // el que ya tiene uno no lo puede borrar.
+  const ordenObligatoria = nuevo || !!equipo.numeroOrden;
+
+  // Otros equipos con la misma orden: puede ser un error de tipeo o una orden con varios equipos, así que solo se avisa.
+  const mismaOrden = useMemo(() => {
+    const orden = normalizarOrden(valores.numeroOrden);
+    if (!orden) return [];
+    return activos(taller.equipos).filter((e) => e.codigo !== equipo?.codigo && e.numeroOrden && normalizarOrden(e.numeroOrden) === orden);
+  }, [valores.numeroOrden, taller.equipos, equipo?.codigo]);
+
   const faltan: string[] = [];
+  if (ordenObligatoria && !valores.numeroOrden.trim()) faltan.push("el N.º de orden");
   if (!valores.empresa || (valores.empresa === NUEVA_EMPRESA && !valores.nombreEmpresa.trim())) faltan.push("el cliente");
   if (nuevo && !valores.fases) faltan.push("las fases");
 
   async function guardar(evento: FormEvent) {
     evento.preventDefault();
-    const encontrados = revisar(valores, { nuevo, hoy });
+    const encontrados = revisar(valores, { nuevo, hoy, ordenObligatoria });
     setErrores(encontrados);
     setError(null);
     if (Object.keys(encontrados).length) {
@@ -220,6 +233,23 @@ export function FormularioEquipo({
           </div>
           <div className="marco-cuerpo">
             <div className="grid gap-x-8 gap-y-7 sm:grid-cols-2">
+              <CampoTexto
+                {...comun("numeroOrden")}
+                etiqueta="N.º de orden (Punto Técnico)"
+                obligatorio={ordenObligatoria}
+                maxLength={30}
+                ancho="max-w-[14rem]"
+                ayuda={
+                  mismaOrden.length > 0 ? (
+                    <span className="font-medium text-tinta">
+                      Esta orden ya está en {enumerar(mismaOrden.map((e) => `${nombreDe(e)} (${formatearCodigo(e.codigo)})`))}. Revise el
+                      número; si la orden incluye más de un equipo, puede seguir.
+                    </span>
+                  ) : (
+                    "El de la orden de trabajo de Punto Técnico, con la que empieza el trabajo."
+                  )
+                }
+              />
               <div>
                 <label htmlFor={campoId("empresa")} className="rotulo block text-[0.9375rem]">
                   Cliente <span className="font-semibold normal-case tracking-normal text-grafito">(obligatorio)</span>
@@ -274,13 +304,6 @@ export function FormularioEquipo({
                   <p className="mt-1 text-[0.9375rem] leading-snug text-grafito">Se corrige desde «Cambiar estado».</p>
                 </div>
               )}
-              <CampoTexto
-                {...comun("numeroOrden")}
-                etiqueta="N.º de orden de trabajo"
-                maxLength={30}
-                ancho="max-w-[14rem]"
-                ayuda="El que está escrito a mano en la planilla de papel."
-              />
               <CampoTexto
                 {...comun("referencia")}
                 etiqueta="Referencia del cliente"
@@ -463,7 +486,7 @@ export function FormularioEquipo({
           <ErrorFormulario texto={error} />
           {faltan.length > 0 && (
             <p className="text-[0.9375rem] leading-snug">
-              Para {nuevo ? "registrar" : "guardar"} falta elegir {enumerar(faltan)}.
+              Para {nuevo ? "registrar" : "guardar"} falta completar {enumerar(faltan)}.
             </p>
           )}
           <button type="submit" className="placa" disabled={guardando}>

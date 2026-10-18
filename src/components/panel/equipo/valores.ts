@@ -9,6 +9,9 @@ import {
 } from "@/lib/dominio/placa";
 import type { EquipoTaller } from "@/lib/dominio/tipos";
 
+/** "Ot 1234" y "OT-1234" son la misma orden: se comparan sin mayúsculas, espacios ni signos. */
+export const normalizarOrden = (orden: string) => orden.toUpperCase().replace(/[^0-9A-Z]/g, "");
+
 /** Lo que hay escrito en cada campo del formulario, tal cual. */
 export interface Valores {
   empresa: string;
@@ -113,10 +116,14 @@ export function placaDe(valores: Valores): Placa {
 
 /**
  * Revisa los valores antes de guardar: lo obligatorio (el cliente siempre; al registrar, también la
- * fecha y las fases) y que cada número se entienda.
+ * fecha y las fases; el N.º de orden, con `ordenObligatoria`) y que cada número se entienda.
  */
-export function revisar(valores: Valores, { nuevo, hoy }: { nuevo: boolean; hoy: string }): Errores {
+export function revisar(
+  valores: Valores,
+  { nuevo, hoy, ordenObligatoria }: { nuevo: boolean; hoy: string; ordenObligatoria: boolean },
+): Errores {
   const errores: Errores = {};
+  if (ordenObligatoria && !valores.numeroOrden.trim()) errores.numeroOrden = "Escriba el N.º de orden de Punto Técnico.";
   if (!valores.empresa) errores.empresa = "Elija el cliente dueño del equipo.";
   if (valores.empresa === NUEVA_EMPRESA && !valores.nombreEmpresa.trim()) errores.nombreEmpresa = "Escriba el nombre del cliente nuevo.";
   if (nuevo && (!/^\d{4}-\d{2}-\d{2}$/.test(valores.ingreso) || valores.ingreso > hoy)) {

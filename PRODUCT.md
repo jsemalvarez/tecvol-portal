@@ -45,7 +45,7 @@ En vez de dar el estado del equipo por teléfono, Tecvol le muestra al cliente e
 - **Presupuesto.** El taller lo carga como texto y el cliente lo aprueba online desde el portal.
 - **Informe de diagnóstico.** Después de desarmar el equipo, el jefe del taller anota la inspección visual (cada parte OK, Regular o Mal y si hay que reparar o cambiar), la resistencia de aislamiento y la relación de transformación, como en su planilla de papel. Quien cotiza usa ese informe. Se descarga en PDF con la grilla de esa planilla (con la chapa y lugar para las firmas), para imprimirlo o mandarlo. Por ahora es solo para el taller; el cliente no lo ve.
 - **Novedades.** Actualizaciones en texto que el taller carga sobre un equipo. Aparecen en la línea de tiempo del cliente.
-- **Ingreso.** El transformador se registra con los datos de su chapa (placa de características), en el mismo orden en que figuran en ella. Hoy el taller usa una planilla de papel por transformador, con el N.º de orden de trabajo escrito a mano; el sistema guarda ese número.
+- **Ingreso.** El transformador se registra con los datos de su chapa (placa de características), en el mismo orden en que figuran en ella. El trabajo empieza con la orden de trabajo de Punto Técnico: su número es lo primero que se carga, y es obligatorio. El sistema no numera órdenes; guarda ese número y avisa si ya está en otro equipo (una orden puede incluir más de uno).
 - **Contextos de uso.** Clientes desde el celular, en planta o en campo, con una sola pregunta y poco tiempo. El personal trabaja en la PC del taller, varias veces al día.
 - **Servicios de Tecvol sobre transformadores:** reparación / rebobinado, mantenimiento y ensayos. Tecvol no fabrica, vende ni alquila equipos.
 
@@ -65,7 +65,7 @@ En vez de dar el estado del equipo por teléfono, Tecvol le muestra al cliente e
 **Previsto pero no disponible todavía:** subida de archivos, fotos y PDFs (protocolos de ensayo, fotos del equipo, presupuestos en PDF). La interfaz reserva su lugar y lo marca como "próximamente".
 
 **Decisiones abiertas:**
-- Si el N.º de orden lo numera el sistema o se sigue escribiendo a mano. Los datos de la chapa se tomaron de una chapa real y de la planilla de ejemplo del taller, que todavía va a cambiar.
+- Los datos de la chapa se tomaron de una chapa real y de la planilla de ejemplo del taller, que todavía va a cambiar.
 - Si técnicos y administración tienen permisos distintos en el panel interno.
 - Si una empresa cliente puede tener más de un usuario.
 - Cómo se comunica una fecha estimada de entrega (el cliente pregunta "cuándo lo tengo", pero el dato no está definido).

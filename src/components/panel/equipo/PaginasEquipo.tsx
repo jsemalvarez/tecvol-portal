@@ -54,8 +54,8 @@ export function PanelRegistrar() {
         ) : (
           <>
             <p className="mt-4 max-w-[62ch] text-lg">
-              Con el equipo a la vista, copie su chapa de arriba hacia abajo. Solo son obligatorios el cliente, la fecha de recepción y
-              las fases.
+              Empiece por el N.º de orden de Punto Técnico y, con el equipo a la vista, copie su chapa de arriba hacia abajo. Solo
+              son obligatorios el N.º de orden, el cliente, la fecha de recepción y las fases.
             </p>
             <FormularioEquipo
               key={ronda}

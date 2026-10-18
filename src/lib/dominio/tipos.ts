@@ -73,7 +73,7 @@ export interface DatosEquipo {
   equipo: string;
   referencia?: string;
   serie?: string;
-  /** N.º de la orden de trabajo en papel, escrito a mano por el taller. */
+  /** N.º de la orden de trabajo de Punto Técnico, con la que empieza el trabajo. Una orden puede tener varios equipos. */
   numeroOrden?: string;
   uso?: Uso;
   placa?: Placa;
