@@ -104,6 +104,11 @@ En `/panel` el personal (los dos roles):
   pero deja seguir, porque una orden puede incluir varios), la empresa dueña, la referencia del cliente y la chapa. La app genera
   el código de seguimiento, crea `seguimiento/{codigo}` y `ordenes/{codigo}` y muestra una **etiqueta para
   imprimir** con el código y un QR que abre `/seguimiento/{codigo}`.
+- **Reconoce los reingresos** por el N.º de trafo (opcional, después del N.º de orden): si ese número ya pasó
+  por el taller, muestra el **historial del trafo** (cada reparación con su orden, fechas, estado, datos e
+  informe) y, al registrar, deja **usar los datos** de una reparación anterior para no copiar la chapa de nuevo.
+  Cada reparación sigue siendo un equipo con su propio código y su propia chapa; el historial se arma juntando
+  las que tienen el mismo N.º de trafo, sin una colección aparte. Lo ve solo el taller.
 - **Edita los datos** de un equipo y carga su **informe de diagnóstico**.
 
 Solo el administrador:
@@ -127,7 +132,7 @@ directamente: esa cuenta no tendría empresa ni sería personal, así que no ver
 | `personal/{uid}` | El administrador; cada uno, el suyo | El administrador (no el suyo) | `rol`, `email` y `baja` (opcional) |
 | `empresas/{id}` | El personal; cada cliente, la suya | El administrador | `nombre`: como lo ve el cliente en su portal; `baja` |
 | `clientes/{uid}` | El administrador; cada cliente, la suya | El administrador | `empresa` (el ID de `empresas`), `email` y `baja` |
-| `ordenes/{codigo}` | El personal; cada cliente, las de su empresa | El personal | `empresa`, `referencia`, `serie`, chapa… y `baja` |
+| `ordenes/{codigo}` | El personal; cada cliente, las de su empresa | El personal | `empresa`, `referencia`, `serie`, `numeroOrden`, `numeroTrafo`, chapa… y `baja` |
 | `informes/{codigo}` | El personal | El personal | Informe de diagnóstico |
 
 El estado y las etapas viven solo en `seguimiento/{codigo}`: el panel lo escribe y el portal y la consulta

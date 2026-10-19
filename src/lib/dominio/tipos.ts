@@ -75,6 +75,11 @@ export interface DatosEquipo {
   serie?: string;
   /** N.º de la orden de trabajo de Punto Técnico, con la que empieza el trabajo. Una orden puede tener varios equipos. */
   numeroOrden?: string;
+  /**
+   * N.º que identifica al transformador. Se repite en cada reparación del mismo trafo: así se arma su
+   * historial (ver `reparacionesDelTrafo`).
+   */
+  numeroTrafo?: string;
   uso?: Uso;
   placa?: Placa;
 }
@@ -90,6 +95,7 @@ export function conTodosLosCampos(datos: DatosEquipo): DatosEquipo {
     referencia: datos.referencia,
     serie: datos.serie,
     numeroOrden: datos.numeroOrden,
+    numeroTrafo: datos.numeroTrafo,
     uso: datos.uso,
     placa: datos.placa,
   };
@@ -99,6 +105,7 @@ export function conTodosLosCampos(datos: DatosEquipo): DatosEquipo {
 export interface EquipoTaller extends EquipoCliente {
   empresa: string;
   numeroOrden?: string;
+  numeroTrafo?: string;
   uso?: Uso;
   placa?: Placa;
   /** Fecha de baja: el cliente deja de verlo y su código deja de funcionar en la consulta pública. */

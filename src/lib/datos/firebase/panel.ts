@@ -113,6 +113,7 @@ export class PanelFirestore implements PanelRepositorio {
         referencia: texto(orden.referencia),
         serie: texto(orden.serie),
         numeroOrden: texto(orden.numeroOrden),
+        numeroTrafo: texto(orden.numeroTrafo),
         uso: esUso(orden.uso) ? orden.uso : undefined,
         placa: leerPlaca(orden.placa),
         baja: fecha(s.data().baja),
@@ -165,6 +166,7 @@ export class PanelFirestore implements PanelRepositorio {
         ...(datos.referencia ? { referencia: datos.referencia } : {}),
         ...(datos.serie ? { serie: datos.serie } : {}),
         ...(datos.numeroOrden ? { numeroOrden: datos.numeroOrden } : {}),
+        ...(datos.numeroTrafo ? { numeroTrafo: datos.numeroTrafo } : {}),
         ...(datos.uso ? { uso: datos.uso } : {}),
         ...(datos.placa ? { placa: datos.placa } : {}),
         creada: serverTimestamp(),
@@ -185,6 +187,7 @@ export class PanelFirestore implements PanelRepositorio {
         referencia: datos.referencia ?? deleteField(),
         serie: datos.serie ?? deleteField(),
         numeroOrden: datos.numeroOrden ?? deleteField(),
+        numeroTrafo: datos.numeroTrafo ?? deleteField(),
         uso: datos.uso ?? deleteField(),
         placa: datos.placa ?? deleteField(),
       });

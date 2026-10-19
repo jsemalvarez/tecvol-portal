@@ -1,5 +1,6 @@
 import type { EstadoReparacion } from "@/lib/dominio/estados";
 import type { InformeGuardado } from "@/lib/dominio/informe";
+import type { Placa } from "@/lib/dominio/placa";
 import type { CuentaCliente, CuentaPersonal, DatosEquipo, Empresa, EquipoTaller, SeguimientoPublico } from "@/lib/dominio/tipos";
 
 /**
@@ -133,6 +134,22 @@ const SEGUIMIENTOS: SeguimientoPublico[] = [
     }),
     actualizado: new Date("2026-06-30T12:00:00-03:00"),
   },
+  // Reparación anterior del mismo trafo que K7RM4XPA: muestra un reingreso y su historial.
+  {
+    codigo: "C8WP3JZT",
+    estado: "entregado",
+    equipo: "Transformador trifásico 315 kVA · 13,2/0,4 kV",
+    etapas: fechas({
+      ingresado: "2025-11-03",
+      diagnostico: "2025-11-04",
+      presupuesto: "2025-11-07",
+      reparacion: "2025-11-12",
+      ensayos: "2025-11-28",
+      listo: "2025-12-01",
+      entregado: "2025-12-05",
+    }),
+    actualizado: new Date("2025-12-05T12:00:00-03:00"),
+  },
 ];
 
 const EMPRESAS: Empresa[] = [
@@ -144,38 +161,50 @@ const EMPRESAS: Empresa[] = [
  * Datos privados de cada orden: la empresa dueña, la referencia del cliente, el N.º de fabricación y,
  * en algunos, la chapa. Los que no tienen chapa son como los equipos cargados antes de que existiera.
  */
+const PLACA_BARRIO_NORTE: Placa = {
+  fabricante: "Fábrica de Prueba S. A.",
+  tipo: "TP-315",
+  anio: 2014,
+  norma: "IRAM 2250",
+  fases: "trifasico",
+  potencia: 315,
+  frecuencia: 50,
+  servicio: "Continuo",
+  enfriamiento: "ONAN",
+  tensionCortocircuito: 4,
+  grupoConexion: "Dyn11",
+  tensionPrimaria: 13200,
+  tensionSecundaria: 400,
+  conmutador: [13860, 13530, 13200, 12870, 12540],
+  aceite: 310,
+  masa: 1240,
+  materialBobinados: "Cobre",
+};
+
 const ORDENES: Record<string, Omit<DatosEquipo, "equipo">> = {
   K7RM4XPA: {
     empresa: "coop-prueba",
     referencia: "Subestación Barrio Norte",
     serie: "PRUEBA-3150-21",
     numeroOrden: "PRUEBA-101",
+    numeroTrafo: "CEP-0457",
     uso: "distribucion",
-    placa: {
-      fabricante: "Fábrica de Prueba S. A.",
-      tipo: "TP-315",
-      anio: 2014,
-      norma: "IRAM 2250",
-      fases: "trifasico",
-      potencia: 315,
-      frecuencia: 50,
-      servicio: "Continuo",
-      enfriamiento: "ONAN",
-      tensionCortocircuito: 4,
-      grupoConexion: "Dyn11",
-      tensionPrimaria: 13200,
-      tensionSecundaria: 400,
-      conmutador: [13860, 13530, 13200, 12870, 12540],
-      aceite: 310,
-      masa: 1240,
-      materialBobinados: "Cobre",
-    },
+    placa: PLACA_BARRIO_NORTE,
+  },
+  C8WP3JZT: {
+    empresa: "coop-prueba",
+    referencia: "Subestación Barrio Norte",
+    serie: "PRUEBA-3150-21",
+    numeroOrden: "PRUEBA-087",
+    numeroTrafo: "CEP-0457",
+    uso: "distribucion",
+    placa: PLACA_BARRIO_NORTE,
   },
   B3NQ8HTW: { empresa: "coop-prueba", referencia: "Planta de bombeo 2", serie: "PRUEBA-5000-17" },
   Z9FD2KCY: { empresa: "coop-prueba", referencia: "Línea rural, km 12" },
   H4GE6VRA: { empresa: "coop-prueba", referencia: "Plaza central", serie: "PRUEBA-1600-09" },
   M5TC7WQE: { empresa: "coop-prueba", referencia: "Escuela técnica" },
-  R8VJ3NDS: { empresa: "coop-prueba", referencia: "Barrio Las Rosas", serie: "PRUEBA-1000-12" },
+  R8VJ3NDS: { empresa: "coop-prueba", referencia: "Barrio Las Rosas", serie: "PRUEBA-1000-12", numeroTrafo: "CEP-0612" },
   P6XH9EBK: { empresa: "coop-prueba", referencia: "Parque industrial, lote 4", serie: "PRUEBA-2500-19" },
   W2SG5MZU: { empresa: "coop-prueba", referencia: "Línea rural, km 31" },
   T3KA8PRW: {

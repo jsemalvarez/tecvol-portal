@@ -9,15 +9,13 @@ import {
 } from "@/lib/dominio/placa";
 import type { EquipoTaller } from "@/lib/dominio/tipos";
 
-/** "Ot 1234" y "OT-1234" son la misma orden: se comparan sin mayúsculas, espacios ni signos. */
-export const normalizarOrden = (orden: string) => orden.toUpperCase().replace(/[^0-9A-Z]/g, "");
-
 /** Lo que hay escrito en cada campo del formulario, tal cual. */
 export interface Valores {
   empresa: string;
   nombreEmpresa: string;
   ingreso: string;
   numeroOrden: string;
+  numeroTrafo: string;
   referencia: string;
   uso: Uso | "";
   fabricante: string;
@@ -71,6 +69,7 @@ export function valoresDe(equipo: EquipoTaller | undefined, hoy: string, empresa
     nombreEmpresa: "",
     ingreso: hoy,
     numeroOrden: equipo?.numeroOrden ?? "",
+    numeroTrafo: equipo?.numeroTrafo ?? "",
     referencia: equipo?.referencia ?? "",
     uso: equipo?.uso ?? "",
     fabricante: placa.fabricante ?? "",

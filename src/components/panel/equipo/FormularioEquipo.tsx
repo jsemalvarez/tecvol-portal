@@ -22,11 +22,13 @@ import {
 } from "@/lib/dominio/placa";
 import { formatearCodigo } from "@/lib/dominio/codigo";
 import { activos, type DatosEquipo, type EquipoCliente, type EquipoTaller, type Taller } from "@/lib/dominio/tipos";
+import { normalizarNumero, reparacionesDelTrafo } from "@/lib/dominio/trafo";
 import { ErrorFormulario, MensajeCampo, mensajeDeError } from "../Dialogo";
 import type { AccionesPanel } from "../usePanel";
 import { CampoTexto, Grupo, Opciones, Sugerencias } from "./campos";
+import { HistorialTrafo } from "./HistorialTrafo";
 import { useAvisoAlSalir } from "./useAvisoAlSalir";
-import { normalizarOrden, NUEVA_EMPRESA, placaDe, revisar, valoresDe, type Campo, type Errores, type Valores } from "./valores";
+import { NUEVA_EMPRESA, placaDe, revisar, valoresDe, type Campo, type Errores, type Valores } from "./valores";
 
 /** Sugerencias de base; se suman las que ya cargó el taller en otros equipos. */
 const SUGERENCIAS = {
@@ -87,6 +89,7 @@ export function FormularioEquipo({
   const [error, setError] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
   const [intento, setIntento] = useState(0);
+  const [copiadoDe, setCopiadoDe] = useState<string | null>(null);
   const formulario = useRef<HTMLFormElement>(null);
 
   const sucio = useMemo(() => JSON.stringify(valores) !== JSON.stringify(inicial), [valores, inicial]);
@@ -141,10 +144,31 @@ export function FormularioEquipo({
 
   // Otros equipos con la misma orden: puede ser un error de tipeo o una orden con varios equipos, así que solo se avisa.
   const mismaOrden = useMemo(() => {
-    const orden = normalizarOrden(valores.numeroOrden);
+    const orden = normalizarNumero(valores.numeroOrden);
     if (!orden) return [];
-    return activos(taller.equipos).filter((e) => e.codigo !== equipo?.codigo && e.numeroOrden && normalizarOrden(e.numeroOrden) === orden);
+    return activos(taller.equipos).filter((e) => e.codigo !== equipo?.codigo && e.numeroOrden && normalizarNumero(e.numeroOrden) === orden);
   }, [valores.numeroOrden, taller.equipos, equipo?.codigo]);
+
+  // Si el N.º de trafo ya pasó por el taller, es un reingreso: se muestra su historial.
+  const historial = useMemo(
+    () => reparacionesDelTrafo(taller.equipos, valores.numeroTrafo, equipo?.codigo),
+    [valores.numeroTrafo, taller.equipos, equipo?.codigo],
+  );
+
+  /** Copia la chapa, el cliente, la referencia y el uso de una reparación anterior; lo de este ingreso queda. */
+  function usarDatos(anterior: EquipoTaller) {
+    const copia = valoresDe(anterior, hoy, "");
+    setValores((v) => ({
+      ...copia,
+      empresa: empresas.some((e) => e.id === anterior.empresa) ? anterior.empresa : v.empresa,
+      nombreEmpresa: v.nombreEmpresa,
+      ingreso: v.ingreso,
+      numeroOrden: v.numeroOrden,
+      numeroTrafo: v.numeroTrafo,
+    }));
+    setErrores({});
+    setCopiadoDe(anterior.codigo);
+  }
 
   const faltan: string[] = [];
   if (ordenObligatoria && !valores.numeroOrden.trim()) faltan.push("el N.º de orden");
@@ -175,6 +199,7 @@ export function FormularioEquipo({
         referencia: valores.referencia.trim() || undefined,
         serie: valores.serie.trim() || undefined,
         numeroOrden: valores.numeroOrden.trim() || undefined,
+        numeroTrafo: valores.numeroTrafo.trim() || undefined,
         uso: valores.uso || undefined,
         placa: Object.keys(placa).length ? placa : undefined,
       };
@@ -250,6 +275,22 @@ export function FormularioEquipo({
                   )
                 }
               />
+              <CampoTexto
+                {...comun("numeroTrafo")}
+                etiqueta="N.º de trafo"
+                maxLength={30}
+                ancho="max-w-[14rem]"
+                ayuda={
+                  historial.length > 0 ? (
+                    <span className="font-medium text-tinta">
+                      Reingreso: ya pasó {historial.length === 1 ? "una vez" : `${historial.length} veces`} por el taller. Vea su historial
+                      abajo.
+                    </span>
+                  ) : (
+                    "El que identifica al transformador. Si ya pasó por el taller, aparece su historial."
+                  )
+                }
+              />
               <div>
                 <label htmlFor={campoId("empresa")} className="rotulo block text-[0.9375rem]">
                   Cliente <span className="font-semibold normal-case tracking-normal text-grafito">(obligatorio)</span>
@@ -320,6 +361,16 @@ export function FormularioEquipo({
             </div>
           </div>
         </div>
+
+        {historial.length > 0 && (
+          <HistorialTrafo
+            reparaciones={historial}
+            empresaDe={(empresa) => taller.empresas.find((e) => e.id === empresa)?.nombre ?? ""}
+            nuevo={nuevo}
+            copiadoDe={copiadoDe}
+            onUsar={usarDatos}
+          />
+        )}
 
         <div className="marco">
           <TornillosMarco />
