@@ -13,6 +13,7 @@ import {
   updateDoc,
   writeBatch,
 } from "firebase/firestore";
+import { bobinadoParaGuardar, leerBobinado, type Bobinado, type BobinadoGuardado } from "@/lib/dominio/bobinado";
 import { generarCodigo } from "@/lib/dominio/codigo";
 import type { EstadoReparacion } from "@/lib/dominio/estados";
 import { informeParaGuardar, leerInforme, type Informe, type InformeGuardado } from "@/lib/dominio/informe";
@@ -210,6 +211,24 @@ export class PanelFirestore implements PanelRepositorio {
     // Sin `merge`: el informe se reemplaza entero, así lo que se borró en el formulario no queda guardado.
     await guardar(() =>
       setDoc(doc(obtenerFirestore(), "informes", codigo), { ...informeParaGuardar(informe), por, actualizado: serverTimestamp() }),
+    );
+  }
+
+  async obtenerBobinado(codigo: string): Promise<BobinadoGuardado | null> {
+    const bobinado = await guardar(() => getDoc(doc(obtenerFirestore(), "bobinados", codigo)));
+    if (!bobinado.exists()) return null;
+    const datos = bobinado.data();
+    return {
+      ...leerBobinado(datos),
+      actualizado: datos.actualizado instanceof Timestamp ? datos.actualizado.toDate() : null,
+      por: texto(datos.por),
+    };
+  }
+
+  async guardarBobinado(codigo: string, bobinado: Bobinado, por: string): Promise<void> {
+    // Como el informe: se reemplaza entero, sin `merge`.
+    await guardar(() =>
+      setDoc(doc(obtenerFirestore(), "bobinados", codigo), { ...bobinadoParaGuardar(bobinado), por, actualizado: serverTimestamp() }),
     );
   }
 

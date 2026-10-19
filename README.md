@@ -110,6 +110,10 @@ En `/panel` el personal (los dos roles):
   Cada reparación sigue siendo un equipo con su propio código y su propia chapa; el historial se arma juntando
   las que tienen el mismo N.º de trafo, sin una colección aparte. Lo ve solo el taller.
 - **Edita los datos** de un equipo y carga su **informe de diagnóstico**.
+- Carga los **datos de bobinado** de cada reparación (`/panel/bobinado`): por bobina de alta y de baja, el
+  material y la medida del alambre, las espiras y el peso del conductor; el aislamiento de prespan (medidas y
+  peso), las derivaciones y los materiales. En un reingreso, puede copiar el bobinado de la reparación anterior
+  del mismo trafo. Como el informe, solo lo ve el personal.
 
 Solo el administrador:
 
@@ -134,6 +138,7 @@ directamente: esa cuenta no tendría empresa ni sería personal, así que no ver
 | `clientes/{uid}` | El administrador; cada cliente, la suya | El administrador | `empresa` (el ID de `empresas`), `email` y `baja` |
 | `ordenes/{codigo}` | El personal; cada cliente, las de su empresa | El personal | `empresa`, `referencia`, `serie`, `numeroOrden`, `numeroTrafo`, chapa… y `baja` |
 | `informes/{codigo}` | El personal | El personal | Informe de diagnóstico |
+| `bobinados/{codigo}` | El personal | El personal | Datos de bobinado: alambre, espiras, peso, prespan, derivaciones y materiales |
 
 El estado y las etapas viven solo en `seguimiento/{codigo}`: el panel lo escribe y el portal y la consulta
 pública lo leen. Solo el personal recorre `seguimiento` entera; las reglas validan que el estado sea uno de

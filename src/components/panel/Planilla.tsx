@@ -142,32 +142,42 @@ function Acciones({ api, equipo }: { api: ApiPanel; equipo: EquipoTaller }) {
     );
   }
   return (
-    <div className="flex flex-wrap items-center gap-x-5 gap-y-3 md:flex-nowrap md:justify-end md:gap-x-4">
+    <div className="flex flex-wrap items-center gap-x-5 gap-y-3 md:justify-end md:gap-x-4 2xl:flex-nowrap">
       <button type="button" onClick={() => api.abrirEstado(equipo)} className="placa-secundaria w-full justify-center whitespace-nowrap md:w-auto" aria-label={`Cambiar el estado de ${nombre}`}>
         Cambiar estado
       </button>
-      <Link
-        href={`/panel/editar?codigo=${equipo.codigo}`}
-        className="text-[0.9375rem] font-semibold underline decoration-naranja decoration-2 underline-offset-4"
-        aria-label={`Editar los datos de ${nombre}`}
-      >
-        Editar
-      </Link>
-      <Link
-        href={`/panel/informe?codigo=${equipo.codigo}`}
-        className="text-[0.9375rem] font-semibold underline decoration-naranja decoration-2 underline-offset-4"
-        aria-label={`Informe de diagnóstico de ${nombre}`}
-      >
-        Informe
-      </Link>
-      <button
-        type="button"
-        onClick={() => api.abrirEtiqueta(equipo)}
-        className="cursor-pointer text-[0.9375rem] font-semibold underline decoration-naranja decoration-2 underline-offset-4"
-        aria-label={`Etiqueta de ${nombre}`}
-      >
-        Etiqueta
-      </button>
+      {/* Los enlaces van juntos: en pantallas medianas pasan abajo del botón en vez de desbordar la fila. */}
+      <span className="flex flex-wrap items-center gap-x-4 gap-y-2 md:justify-end">
+        <Link
+          href={`/panel/editar?codigo=${equipo.codigo}`}
+          className="text-[0.9375rem] font-semibold underline decoration-naranja decoration-2 underline-offset-4"
+          aria-label={`Editar los datos de ${nombre}`}
+        >
+          Editar
+        </Link>
+        <Link
+          href={`/panel/informe?codigo=${equipo.codigo}`}
+          className="text-[0.9375rem] font-semibold underline decoration-naranja decoration-2 underline-offset-4"
+          aria-label={`Informe de diagnóstico de ${nombre}`}
+        >
+          Informe
+        </Link>
+        <Link
+          href={`/panel/bobinado?codigo=${equipo.codigo}`}
+          className="text-[0.9375rem] font-semibold underline decoration-naranja decoration-2 underline-offset-4"
+          aria-label={`Datos de bobinado de ${nombre}`}
+        >
+          Bobinado
+        </Link>
+        <button
+          type="button"
+          onClick={() => api.abrirEtiqueta(equipo)}
+          className="cursor-pointer text-[0.9375rem] font-semibold underline decoration-naranja decoration-2 underline-offset-4"
+          aria-label={`Etiqueta de ${nombre}`}
+        >
+          Etiqueta
+        </button>
+      </span>
     </div>
   );
 }

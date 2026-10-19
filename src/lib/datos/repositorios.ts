@@ -1,3 +1,4 @@
+import type { Bobinado, BobinadoGuardado } from "@/lib/dominio/bobinado";
 import type { EstadoReparacion } from "@/lib/dominio/estados";
 import type { Informe, InformeGuardado } from "@/lib/dominio/informe";
 import type {
@@ -63,6 +64,10 @@ export interface PanelRepositorio {
   obtenerInforme(codigo: string): Promise<InformeGuardado | null>;
   /** Reemplaza el informe entero y anota quién lo guardó. */
   guardarInforme(codigo: string, informe: Informe, por: string): Promise<void>;
+  /** Datos de bobinado de una reparación; `null` si todavía no tiene. */
+  obtenerBobinado(codigo: string): Promise<BobinadoGuardado | null>;
+  /** Reemplaza el bobinado entero y anota quién lo guardó. */
+  guardarBobinado(codigo: string, bobinado: Bobinado, por: string): Promise<void>;
   crearEmpresa(nombre: string): Promise<Empresa>;
   editarEmpresa(id: string, nombre: string): Promise<void>;
   /** Crea la cuenta, la asocia a la empresa y envía al cliente el email para elegir su contraseña. */

@@ -1,3 +1,4 @@
+import type { BobinadoGuardado } from "@/lib/dominio/bobinado";
 import type { EstadoReparacion } from "@/lib/dominio/estados";
 import type { InformeGuardado } from "@/lib/dominio/informe";
 import type { Placa } from "@/lib/dominio/placa";
@@ -218,6 +219,18 @@ const ORDENES: Record<string, Omit<DatosEquipo, "equipo">> = {
   N9QE4VXC: { empresa: "industria-prueba", referencia: "Oficinas", serie: "PRUEBA-3150-08" },
 };
 
+/** Bobinado de la reparación anterior de Barrio Norte: un reingreso puede copiarlo. */
+const BOBINADO_BARRIO_NORTE: BobinadoGuardado = {
+  alta: { material: "cobre", medida: "1,25 mm", espiras: 1650, peso: 62 },
+  baja: { material: "cobre", medida: "3 × 10 mm", espiras: 29, peso: 48 },
+  prespanMedidas: "0,5 mm entre capas; 2 mm entre bobinas",
+  prespanPeso: 6.5,
+  derivaciones: 5,
+  notas: "Se cambiaron los aisladores de BT.",
+  actualizado: new Date("2025-11-20T12:00:00-03:00"),
+  por: "jefe@prueba.tecvol.test",
+};
+
 export const CUENTAS: CuentaCliente[] = [{ uid: "local-cliente", email: "cliente@prueba.tecvol.test", empresa: "coop-prueba" }];
 
 /** Una cuenta del personal por rol. El panel las lista y el administrador puede cambiarles el rol o darlas de baja. */
@@ -243,6 +256,8 @@ export interface DatosLocales {
   personal: CuentaPersonal[];
   /** Informes de diagnóstico por código. Falta en los datos guardados antes de que existieran. */
   informes?: Record<string, InformeGuardado>;
+  /** Datos de bobinado por código. Falta en los datos guardados antes de que existieran. */
+  bobinados?: Record<string, BobinadoGuardado>;
 }
 
 function semilla(): DatosLocales {
@@ -251,6 +266,7 @@ function semilla(): DatosLocales {
     equipos: SEGUIMIENTOS.map((s) => ({ ...s, etapas: { ...s.etapas }, ...ORDENES[s.codigo] })),
     cuentas: CUENTAS.map((c) => ({ ...c })),
     personal: PERSONAL.map((p) => ({ ...p })),
+    bobinados: { C8WP3JZT: { ...BOBINADO_BARRIO_NORTE } },
   };
 }
 

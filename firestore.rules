@@ -162,6 +162,13 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Datos de bobinado de cada reparación (alambre, espiras, peso, prespan, derivaciones): como el
+    // informe, solo el personal. Por eso no van en `ordenes`, que el cliente de la empresa puede leer.
+    match /bobinados/{codigo} {
+      allow read, create, update: if esPersonal();
+      allow delete: if false;
+    }
+
     match /{documento=**} {
       allow read, write: if false;
     }
