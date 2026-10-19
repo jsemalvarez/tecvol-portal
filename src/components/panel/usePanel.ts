@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useSesionDe } from "@/components/ingreso/useSesionDe";
 import { obtenerPanel } from "@/lib/datos/repositorios";
+import type { LimitesAvisos } from "@/lib/dominio/avisos";
 import type { Bobinado, BobinadoGuardado } from "@/lib/dominio/bobinado";
 import { etapasConEstado, type EstadoReparacion } from "@/lib/dominio/estados";
 import type { Informe, InformeGuardado } from "@/lib/dominio/informe";
@@ -34,6 +35,7 @@ export type EstadoPanel =
 export type EstadoAnterior = Pick<EquipoTaller, "codigo" | "estado" | "etapas">;
 
 export interface AccionesPanel {
+  guardarAvisos(limites: LimitesAvisos): Promise<void>;
   cambiarEstado(equipo: EquipoTaller, estado: EstadoReparacion, fecha: Date): Promise<EstadoAnterior>;
   /** Corrige las fechas de las etapas sin cambiar el estado. */
   corregirFechas(equipo: EquipoTaller, etapas: Partial<Record<EstadoReparacion, Date>>): Promise<EstadoAnterior>;
@@ -102,6 +104,10 @@ export function usePanel() {
   );
 
   const acciones: AccionesPanel = {
+    async guardarAvisos(limites) {
+      await (await obtenerPanel()).guardarAvisos(limites);
+      actualizar((t) => ({ ...t, avisos: limites }));
+    },
     async cambiarEstado(equipo, estado, fecha) {
       const etapas = etapasConEstado(equipo.etapas, estado, fecha);
       await (await obtenerPanel()).guardarEstado(equipo.codigo, estado, etapas);

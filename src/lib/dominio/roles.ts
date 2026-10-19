@@ -24,12 +24,13 @@ export const DESCRIPCIONES_ROL: Record<RolPersonal, string> = {
  * - `baja-equipos`: dar de baja un equipo y reactivarlo.
  * - `empresas`: crear, editar y dar de baja empresas.
  * - `cuentas`: crear, editar y dar de baja cuentas de clientes y del personal.
+ * - `avisos`: cambiar los días que puede llevar un equipo antes de que el panel avise.
  */
-export type Permiso = "equipos" | "baja-equipos" | "empresas" | "cuentas";
+export type Permiso = "equipos" | "baja-equipos" | "empresas" | "cuentas" | "avisos";
 
 /** Las reglas de Firestore (`firestore.rules`) aplican lo mismo: si cambia acá, cambia allá. */
 const PERMISOS: Record<RolPersonal, readonly Permiso[]> = {
-  administrador: ["equipos", "baja-equipos", "empresas", "cuentas"],
+  administrador: ["equipos", "baja-equipos", "empresas", "cuentas", "avisos"],
   "jefe-taller": ["equipos"],
 };
 

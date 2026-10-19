@@ -13,6 +13,7 @@ import {
   updateDoc,
   writeBatch,
 } from "firebase/firestore";
+import { leerLimites, type LimitesAvisos } from "@/lib/dominio/avisos";
 import { bobinadoParaGuardar, leerBobinado, type Bobinado, type BobinadoGuardado } from "@/lib/dominio/bobinado";
 import { generarCodigo } from "@/lib/dominio/codigo";
 import type { EstadoReparacion } from "@/lib/dominio/estados";
@@ -92,13 +93,15 @@ export class PanelFirestore implements PanelRepositorio {
     const db = obtenerFirestore();
     // Las reglas solo dejan leer las cuentas a quien puede administrarlas: los demás ni las piden.
     const conCuentas = puede(rol, "cuentas");
-    const [empresas, ordenes, seguimientos, clientes, personal] = await guardar(() =>
+    const [empresas, ordenes, seguimientos, clientes, personal, avisos] = await guardar(() =>
       Promise.all([
         getDocs(collection(db, "empresas")),
         getDocs(collection(db, "ordenes")),
         getDocs(collection(db, "seguimiento")),
         conCuentas ? getDocs(collection(db, "clientes")) : null,
         conCuentas ? getDocs(collection(db, "personal")) : null,
+        // Si no se puede leer (por ejemplo, con reglas viejas), se usan los límites por defecto: el panel igual carga.
+        getDoc(doc(db, "ajustes", "avisos")).catch(() => null),
       ]),
     );
 
@@ -137,7 +140,12 @@ export class PanelFirestore implements PanelRepositorio {
         const datos = p.data();
         return esRolPersonal(datos.rol) ? [{ uid: p.id, email: texto(datos.email) ?? "", rol: datos.rol, baja: fecha(datos.baja) }] : [];
       }),
+      avisos: leerLimites(avisos?.exists() ? avisos.data() : null),
     };
+  }
+
+  async guardarAvisos(limites: LimitesAvisos): Promise<void> {
+    await guardar(() => setDoc(doc(obtenerFirestore(), "ajustes", "avisos"), { ingreso: limites.ingreso, aprobacion: limites.aprobacion }));
   }
 
   async guardarEstado(codigo: string, estado: EstadoReparacion, etapas: Partial<Record<EstadoReparacion, Date>>): Promise<void> {

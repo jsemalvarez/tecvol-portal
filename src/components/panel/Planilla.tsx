@@ -1,31 +1,77 @@
 "use client";
 
 import Link from "next/link";
+import { Alerta } from "@/components/iconos";
 import { TornillosMarco } from "@/components/inicio/TornillosMarco";
 import { nombreDe, TextoEstado } from "@/components/portal/piezas";
 import { Senal } from "@/components/senal/Senal";
+import { demorasDe, type Demora } from "@/lib/dominio/avisos";
 import { formatearCodigo } from "@/lib/dominio/codigo";
 import { DEFINICIONES } from "@/lib/dominio/estados";
 import { activos, type EquipoTaller } from "@/lib/dominio/tipos";
 import { BarraFiltros, useFiltros } from "./Filtros";
 import { PaginaPanel, type ApiPanel } from "./PaginaPanel";
 
-/** Equipos del panel: todos en una tabla, del último que cambió al primero, con búsqueda y filtros. */
+/**
+ * Equipos del panel: todos en una tabla, con búsqueda, filtros y orden. De entrada, el que lleva más
+ * tiempo en el taller va primero, con los días de cada uno y un aviso si pasó el límite.
+ */
 export function PanelPlanilla() {
   return <PaginaPanel seccion="equipos">{(api) => <Planilla api={api} />}</PaginaPanel>;
 }
 
-const recientes = (a: EquipoTaller, b: EquipoTaller) => (b.actualizado?.getTime() ?? 0) - (a.actualizado?.getTime() ?? 0);
+const enlace = "cursor-pointer font-semibold underline decoration-naranja decoration-2 underline-offset-4";
+
+const dias = (n: number) => (n === 1 ? "1 día" : `${n} días`);
+
+/** Cuánto lleva el equipo en el taller y desde la aprobación; en rojo y con el ícono, si pasó el límite. */
+function TextoDemoras({ equipo, api }: { equipo: EquipoTaller; api: ApiPanel }) {
+  const { ingreso, aprobacion } = demorasDe(equipo, api.taller.avisos, new Date());
+  const lineas = [
+    ingreso && { demora: ingreso, texto: `${dias(ingreso.dias)} en el taller` },
+    aprobacion && { demora: aprobacion, texto: `${dias(aprobacion.dias)} desde la aprobación` },
+  ].filter((l): l is { demora: Demora; texto: string } => !!l);
+  if (!lineas.length) return null;
+  return (
+    <>
+      {lineas.map(({ demora, texto }) =>
+        demora.vencida ? (
+          <span key={texto} className="mt-0.5 flex items-center gap-1.5 font-semibold text-rojo">
+            <Alerta className="size-4 shrink-0" />
+            {texto}
+            <span className="sr-only">: pasó el límite de {dias(demora.limite)}</span>
+          </span>
+        ) : (
+          <span key={texto} className="block text-grafito">
+            {texto}
+          </span>
+        ),
+      )}
+    </>
+  );
+}
 
 function Planilla({ api }: { api: ApiPanel }) {
-  const filtros = useFiltros(api.taller.equipos, api.taller.empresas);
-  const equipos = [...filtros.filtrados].sort(recientes);
+  const filtros = useFiltros(api.taller.equipos, api.taller.empresas, api.taller.avisos);
+  const equipos = filtros.filtrados;
   const total = activos(api.taller.equipos).length;
   const vistaBajas = filtros.estado === "baja";
+  const { ingreso, aprobacion } = api.taller.avisos;
 
   return (
     <div className="mt-10">
       <BarraFiltros filtros={filtros} empresas={activos(api.taller.empresas)} total={total} conBajas={api.puede("baja-equipos")} />
+      <p className="mt-1 text-[0.9375rem] text-grafito">
+        Avisa a los {dias(ingreso)} en el taller y a los {dias(aprobacion)} desde la aprobación del presupuesto.
+        {api.puede("avisos") && (
+          <>
+            {" "}
+            <button type="button" onClick={() => api.abrir({ tipo: "avisos" })} className={`${enlace} text-tinta`}>
+              Cambiar los avisos
+            </button>
+          </>
+        )}
+      </p>
       <div className="marco mt-6">
         <TornillosMarco />
         <div className="marco-cabecera">
@@ -69,9 +115,10 @@ function Planilla({ api }: { api: ApiPanel }) {
                       <td className="py-3.5 pl-[var(--marco-px)] pr-4 align-middle">
                         <div className="flex items-center gap-3">
                           <Senal forma={definicion.forma} pictograma={equipo.estado} simple className="size-10 shrink-0" />
-                          <span className="text-[0.9375rem] leading-snug">
+                          <div className="text-[0.9375rem] leading-snug">
                             <TextoEstado equipo={equipo} />
-                          </span>
+                            <TextoDemoras equipo={equipo} api={api} />
+                          </div>
                         </div>
                       </td>
                       <td className="px-4 py-3.5 align-middle">
@@ -101,9 +148,10 @@ function Planilla({ api }: { api: ApiPanel }) {
                       <Senal forma={definicion.forma} pictograma={equipo.estado} simple className="size-10 shrink-0" />
                       <div className="min-w-0">
                         <p className="font-semibold leading-snug">{nombreDe(equipo)}</p>
-                        <p className="text-[0.9375rem] leading-snug">
+                        <div className="text-[0.9375rem] leading-snug">
                           <TextoEstado equipo={equipo} />
-                        </p>
+                          <TextoDemoras equipo={equipo} api={api} />
+                        </div>
                         <p className="text-[0.9375rem] leading-snug">
                           {api.empresaDe(equipo) || "Sin empresa"} · <span className="tracking-[0.04em]">{formatearCodigo(equipo.codigo)}</span>
                           {equipo.numeroOrden && <> · Orden {equipo.numeroOrden}</>}

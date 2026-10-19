@@ -1,3 +1,4 @@
+import type { LimitesAvisos } from "@/lib/dominio/avisos";
 import type { Bobinado, BobinadoGuardado } from "@/lib/dominio/bobinado";
 import type { EstadoReparacion } from "@/lib/dominio/estados";
 import type { Informe, InformeGuardado } from "@/lib/dominio/informe";
@@ -55,6 +56,8 @@ export interface PanelRepositorio {
    * personal vienen solo si el rol puede administrarlas; si no, las listas quedan vacías.
    */
   obtenerTaller(rol: RolPersonal): Promise<Taller>;
+  /** Cambia los límites de los avisos. Solo el administrador. */
+  guardarAvisos(limites: LimitesAvisos): Promise<void>;
   /** Guarda el estado de un equipo con las fechas de sus etapas (ver `etapasConEstado`). */
   guardarEstado(codigo: string, estado: EstadoReparacion, etapas: Partial<Record<EstadoReparacion, Date>>): Promise<void>;
   /** Registra un equipo nuevo con un código de seguimiento nuevo, en estado "ingresado". */

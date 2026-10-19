@@ -169,6 +169,17 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Límites de los avisos del panel (días en el taller y desde la aprobación del presupuesto): los lee
+    // el personal; los cambia el administrador, con números enteros de 1 a 365.
+    match /ajustes/avisos {
+      allow read: if esPersonal();
+      allow create, update: if esAdministrador()
+        && request.resource.data.keys().hasOnly(['ingreso', 'aprobacion'])
+        && request.resource.data.ingreso is int && request.resource.data.ingreso >= 1 && request.resource.data.ingreso <= 365
+        && request.resource.data.aprobacion is int && request.resource.data.aprobacion >= 1 && request.resource.data.aprobacion <= 365;
+      allow delete: if false;
+    }
+
     match /{documento=**} {
       allow read, write: if false;
     }

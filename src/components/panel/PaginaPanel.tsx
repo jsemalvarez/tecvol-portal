@@ -7,12 +7,14 @@ import { EsqueletoAcceso } from "@/components/ingreso/piezas";
 import { nombreDe } from "@/components/portal/piezas";
 import { CLAVE_CUENTAS_NUEVAS, reiniciarDatos } from "@/lib/datos/local/datos";
 import { modoDatos } from "@/lib/datos/repositorios";
+import { conAviso } from "@/lib/dominio/avisos";
 import { formatearCodigo } from "@/lib/dominio/codigo";
 import { DEFINICIONES, type EstadoReparacion } from "@/lib/dominio/estados";
 import { NOMBRES_ROL, puede, type Permiso } from "@/lib/dominio/roles";
 import { activos, type CuentaCliente, type CuentaPersonal, type Empresa, type EquipoTaller, type Registro, type RolPersonal, type Taller } from "@/lib/dominio/tipos";
 import { Dialogo, mensajeDeError } from "./Dialogo";
 import { Etiqueta } from "./Etiqueta";
+import { FormularioAvisos } from "./FormularioAvisos";
 import { FormularioEstado } from "./FormularioEstado";
 import { FormularioCuenta, FormularioEditarCuenta, FormularioEmpresa } from "./FormulariosEmpresa";
 import { FormularioPersonal } from "./FormularioPersonal";
@@ -47,7 +49,8 @@ export type Ventana =
   | { tipo: "cuenta"; empresa: Empresa }
   | { tipo: "editar-cuenta"; cuenta: CuentaCliente }
   | { tipo: "personal" }
-  | { tipo: "editar-personal"; cuenta: CuentaPersonal };
+  | { tipo: "editar-personal"; cuenta: CuentaPersonal }
+  | { tipo: "avisos" };
 
 interface Aviso {
   id: number;
@@ -215,6 +218,8 @@ export function PaginaPanel({
   const equipos = activos(taller?.equipos ?? []);
   const enTaller = equipos.filter((e) => e.estado !== "entregado");
   const esperanCliente = enTaller.filter((e) => ["obligacion", "seguridad"].includes(DEFINICIONES[e.estado].forma));
+  const hoy = new Date();
+  const demorados = taller ? enTaller.filter((e) => conAviso(e, taller.avisos, hoy)) : [];
   const empresas = activos(taller?.empresas ?? []);
   const cuentas = activos(taller?.cuentas ?? []);
   const personal = activos(taller?.personal ?? []);
@@ -327,6 +332,15 @@ export function PaginaPanel({
                 </strong>
               </>
             )}
+            {demorados.length > 0 && (
+              <>
+                {" · "}
+                <strong className="inline-flex items-baseline gap-1.5 font-semibold text-rojo">
+                  <Alerta className="size-[1.0625rem] shrink-0 self-center" />
+                  {demorados.length} con aviso de demora
+                </strong>
+              </>
+            )}
             {" · "}
             {equipos.length - enTaller.length} entregados
           </p>
@@ -381,6 +395,19 @@ export function PaginaPanel({
           >
             {enVentana && ventana?.tipo === "etiqueta" && (
               <Etiqueta equipo={enVentana} empresa={nombreEmpresa(enVentana.empresa)} orden={enVentana.numeroOrden} />
+            )}
+          </Dialogo>
+
+          <Dialogo abierto={ventana?.tipo === "avisos"} titulo="Avisos de demora" onCerrar={cerrar}>
+            {ventana?.tipo === "avisos" && (
+              <FormularioAvisos
+                limites={taller.avisos}
+                acciones={acciones}
+                onGuardados={(limites) => {
+                  avisar(`Ahora avisa a los ${limites.ingreso} días en el taller y a los ${limites.aprobacion} desde la aprobación.`);
+                  cerrar();
+                }}
+              />
             )}
           </Dialogo>
 

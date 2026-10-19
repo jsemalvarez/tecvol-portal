@@ -1,3 +1,4 @@
+import type { LimitesAvisos } from "./avisos";
 import type { EstadoReparacion } from "./estados";
 import type { Placa, Uso } from "./placa";
 import type { Rol, RolPersonal } from "./roles";
@@ -118,10 +119,12 @@ export interface Taller {
   equipos: EquipoTaller[];
   cuentas: CuentaCliente[];
   personal: CuentaPersonal[];
+  /** Días que puede llevar un equipo antes de que el panel avise (ver `demorasDe`). */
+  avisos: LimitesAvisos;
 }
 
 /** El taller con un registro dado de baja en `baja`, o reactivado si `baja` es `undefined`. */
-export function conBaja<T extends Taller>(taller: T, registro: Registro, id: string, baja: Date | undefined): T {
+export function conBaja<T extends Omit<Taller, "avisos">>(taller: T, registro: Registro, id: string, baja: Date | undefined): T {
   switch (registro) {
     case "equipo":
       return { ...taller, equipos: taller.equipos.map((e) => (e.codigo === id ? { ...e, baja } : e)) };

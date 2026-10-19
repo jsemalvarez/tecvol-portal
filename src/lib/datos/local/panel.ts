@@ -1,3 +1,4 @@
+import { leerLimites, type LimitesAvisos } from "@/lib/dominio/avisos";
 import { bobinadoParaGuardar, type Bobinado, type BobinadoGuardado } from "@/lib/dominio/bobinado";
 import { generarCodigo } from "@/lib/dominio/codigo";
 import type { EstadoReparacion } from "@/lib/dominio/estados";
@@ -26,9 +27,17 @@ import { esperar, guardarDatos, leerDatos } from "./datos";
 export class PanelLocal implements PanelRepositorio {
   async obtenerTaller(rol: RolPersonal): Promise<Taller> {
     await esperar(500);
-    const { empresas, equipos, cuentas, personal } = leerDatos();
+    const { empresas, equipos, cuentas, personal, avisos } = leerDatos();
+    const limites = leerLimites(avisos);
     // Como en Firestore, las cuentas solo las ve quien puede administrarlas.
-    return puede(rol, "cuentas") ? { empresas, equipos, cuentas, personal } : { empresas, equipos, cuentas: [], personal: [] };
+    return puede(rol, "cuentas")
+      ? { empresas, equipos, cuentas, personal, avisos: limites }
+      : { empresas, equipos, cuentas: [], personal: [], avisos: limites };
+  }
+
+  async guardarAvisos(limites: LimitesAvisos): Promise<void> {
+    await esperar(350);
+    guardarDatos({ ...leerDatos(), avisos: limites });
   }
 
   async guardarEstado(codigo: string, estado: EstadoReparacion, etapas: Partial<Record<EstadoReparacion, Date>>): Promise<void> {
@@ -144,4 +153,4 @@ export class PanelLocal implements PanelRepositorio {
   }
 }
 
-const emailEnUso = (datos: Taller, email: string) => [...datos.cuentas, ...datos.personal].some((c) => c.email === email);
+const emailEnUso = (datos: Pick<Taller, "cuentas" | "personal">, email: string) => [...datos.cuentas, ...datos.personal].some((c) => c.email === email);

@@ -1,3 +1,4 @@
+import type { LimitesAvisos } from "@/lib/dominio/avisos";
 import type { BobinadoGuardado } from "@/lib/dominio/bobinado";
 import type { EstadoReparacion } from "@/lib/dominio/estados";
 import type { InformeGuardado } from "@/lib/dominio/informe";
@@ -258,6 +259,8 @@ export interface DatosLocales {
   informes?: Record<string, InformeGuardado>;
   /** Datos de bobinado por código. Falta en los datos guardados antes de que existieran. */
   bobinados?: Record<string, BobinadoGuardado>;
+  /** Límites de los avisos. Sin ellos, los de por defecto. */
+  avisos?: LimitesAvisos;
 }
 
 function semilla(): DatosLocales {
