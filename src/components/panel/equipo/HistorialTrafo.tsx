@@ -81,8 +81,8 @@ export function HistorialTrafo({
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-              <Link href={`/panel/editar?codigo=${r.codigo}`} target="_blank" className={enlace}>
-                Datos<span className="sr-only"> de la reparación que ingresó el {r.etapas.ingresado ? formatearFecha(r.etapas.ingresado) : "(sin fecha)"}, en otra pestaña</span>
+              <Link href={`/panel/equipo?codigo=${r.codigo}`} target="_blank" className={enlace}>
+                Ficha<span className="sr-only"> de la reparación que ingresó el {r.etapas.ingresado ? formatearFecha(r.etapas.ingresado) : "(sin fecha)"}, en otra pestaña</span>
               </Link>
               <Link href={`/panel/informe?codigo=${r.codigo}`} target="_blank" className={enlace}>
                 Informe<span className="sr-only"> de la reparación que ingresó el {r.etapas.ingresado ? formatearFecha(r.etapas.ingresado) : "(sin fecha)"}, en otra pestaña</span>

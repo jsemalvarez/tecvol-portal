@@ -109,6 +109,13 @@ En `/panel` el personal (los dos roles):
   informe) y, al registrar, deja **usar los datos** de una reparación anterior para no copiar la chapa de nuevo.
   Cada reparación sigue siendo un equipo con su propio código y su propia chapa; el historial se arma juntando
   las que tienen el mismo N.º de trafo, sin una colección aparte. Lo ve solo el taller.
+- Abre la **ficha de cada equipo** (`/panel/equipo`, tocando su nombre en la lista): el **recorrido** desde el
+  ingreso hasta hoy, con la fecha de cada etapa y cuántos días duró (o cuántos lleva la actual), los datos y lo
+  principal de la chapa, el historial del trafo y todas las acciones. Es la trazabilidad del equipo para el
+  personal.
+- En la lista, cada fila tiene **"Cambiar estado"**, lo de todos los días, y un menú **"Más"** con el resto: la
+  ficha, editar los datos, el informe, los datos del taller y la etiqueta. Las acciones salen de un solo lugar
+  (`accionesDe`, en `AccionesEquipo.tsx`): una nueva aparece en el menú y en la ficha.
 - **Edita los datos** de un equipo y carga su **informe de diagnóstico**.
 - **Lleva el orden de los trabajos**: la lista muestra cuántos días lleva cada equipo en el taller (desde el
   ingreso, hasta que está listo) y desde la aprobación del presupuesto (el inicio de "Reparación", mientras está

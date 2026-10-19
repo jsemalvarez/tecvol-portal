@@ -9,6 +9,7 @@ import { demorasDe, type Demora } from "@/lib/dominio/avisos";
 import { formatearCodigo } from "@/lib/dominio/codigo";
 import { DEFINICIONES } from "@/lib/dominio/estados";
 import { activos, type EquipoTaller } from "@/lib/dominio/tipos";
+import { accionesDe, MenuAcciones } from "./AccionesEquipo";
 import { BarraFiltros, useFiltros } from "./Filtros";
 import { PaginaPanel, type ApiPanel } from "./PaginaPanel";
 
@@ -22,10 +23,10 @@ export function PanelPlanilla() {
 
 const enlace = "cursor-pointer font-semibold underline decoration-naranja decoration-2 underline-offset-4";
 
-const dias = (n: number) => (n === 1 ? "1 día" : `${n} días`);
+export const dias = (n: number) => (n === 1 ? "1 día" : `${n} días`);
 
 /** Cuánto lleva el equipo en el taller y desde la aprobación; en rojo y con el ícono, si pasó el límite. */
-function TextoDemoras({ equipo, api }: { equipo: EquipoTaller; api: ApiPanel }) {
+export function TextoDemoras({ equipo, api }: { equipo: EquipoTaller; api: ApiPanel }) {
   const { ingreso, aprobacion } = demorasDe(equipo, api.taller.avisos, new Date());
   const lineas = [
     ingreso && { demora: ingreso, texto: `${dias(ingreso.dias)} en el taller` },
@@ -122,7 +123,7 @@ function Planilla({ api }: { api: ApiPanel }) {
                         </div>
                       </td>
                       <td className="px-4 py-3.5 align-middle">
-                        <span className="block font-semibold leading-snug">{nombreDe(equipo)}</span>
+                        <Link href={`/panel/equipo?codigo=${equipo.codigo}`} className="block font-semibold leading-snug underline decoration-acero decoration-1 underline-offset-4 hover:decoration-naranja hover:decoration-2">{nombreDe(equipo)}</Link>
                         {equipo.referencia && <span className="block text-[0.9375rem] leading-snug">{equipo.equipo}</span>}
                       </td>
                       <td className="px-4 py-3.5 align-middle text-[0.9375rem]">{api.empresaDe(equipo) || <span className="text-grafito">Sin empresa</span>}</td>
@@ -147,7 +148,7 @@ function Planilla({ api }: { api: ApiPanel }) {
                     <div className="flex items-start gap-3">
                       <Senal forma={definicion.forma} pictograma={equipo.estado} simple className="size-10 shrink-0" />
                       <div className="min-w-0">
-                        <p className="font-semibold leading-snug">{nombreDe(equipo)}</p>
+                        <Link href={`/panel/equipo?codigo=${equipo.codigo}`} className="block font-semibold leading-snug underline decoration-acero decoration-1 underline-offset-4 hover:decoration-naranja hover:decoration-2">{nombreDe(equipo)}</Link>
                         <div className="text-[0.9375rem] leading-snug">
                           <TextoEstado equipo={equipo} />
                           <TextoDemoras equipo={equipo} api={api} />
@@ -190,42 +191,17 @@ function Acciones({ api, equipo }: { api: ApiPanel; equipo: EquipoTaller }) {
     );
   }
   return (
-    <div className="flex flex-wrap items-center gap-x-5 gap-y-3 md:justify-end md:gap-x-4 2xl:flex-nowrap">
-      <button type="button" onClick={() => api.abrirEstado(equipo)} className="placa-secundaria w-full justify-center whitespace-nowrap md:w-auto" aria-label={`Cambiar el estado de ${nombre}`}>
+    // Cambiar el estado es lo de todos los días; el resto (ficha, datos, informe…) va en el menú "Más".
+    <div className="flex items-center gap-3 md:justify-end">
+      <button
+        type="button"
+        onClick={() => api.abrirEstado(equipo)}
+        className="placa-secundaria flex-1 justify-center whitespace-nowrap md:flex-none"
+        aria-label={`Cambiar el estado de ${nombre}`}
+      >
         Cambiar estado
       </button>
-      {/* Los enlaces van juntos: en pantallas medianas pasan abajo del botón en vez de desbordar la fila. */}
-      <span className="flex flex-wrap items-center gap-x-4 gap-y-2 md:justify-end">
-        <Link
-          href={`/panel/editar?codigo=${equipo.codigo}`}
-          className="text-[0.9375rem] font-semibold underline decoration-naranja decoration-2 underline-offset-4"
-          aria-label={`Editar los datos de ${nombre}`}
-        >
-          Editar
-        </Link>
-        <Link
-          href={`/panel/informe?codigo=${equipo.codigo}`}
-          className="text-[0.9375rem] font-semibold underline decoration-naranja decoration-2 underline-offset-4"
-          aria-label={`Informe de diagnóstico de ${nombre}`}
-        >
-          Informe
-        </Link>
-        <Link
-          href={`/panel/datos-taller?codigo=${equipo.codigo}`}
-          className="text-[0.9375rem] font-semibold underline decoration-naranja decoration-2 underline-offset-4"
-          aria-label={`Datos del taller de ${nombre}`}
-        >
-          Datos del taller
-        </Link>
-        <button
-          type="button"
-          onClick={() => api.abrirEtiqueta(equipo)}
-          className="cursor-pointer text-[0.9375rem] font-semibold underline decoration-naranja decoration-2 underline-offset-4"
-          aria-label={`Etiqueta de ${nombre}`}
-        >
-          Etiqueta
-        </button>
-      </span>
+      <MenuAcciones etiqueta={`Más acciones de ${nombre}`} acciones={accionesDe(equipo, api)} />
     </div>
   );
 }
