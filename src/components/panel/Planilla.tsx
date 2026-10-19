@@ -29,8 +29,8 @@ export const dias = (n: number) => (n === 1 ? "1 día" : `${n} días`);
 export function TextoDemoras({ equipo, api }: { equipo: EquipoTaller; api: ApiPanel }) {
   const { ingreso, aprobacion } = demorasDe(equipo, api.taller.avisos, new Date());
   const lineas = [
-    ingreso && { demora: ingreso, texto: `${dias(ingreso.dias)} en el taller` },
-    aprobacion && { demora: aprobacion, texto: `${dias(aprobacion.dias)} desde la aprobación` },
+    ingreso && { demora: ingreso, texto: ingreso.dias === 0 ? "Ingresó hoy" : `${dias(ingreso.dias)} en el taller` },
+    aprobacion && { demora: aprobacion, texto: aprobacion.dias === 0 ? "Aprobado hoy" : `${dias(aprobacion.dias)} desde la aprobación` },
   ].filter((l): l is { demora: Demora; texto: string } => !!l);
   if (!lineas.length) return null;
   return (
@@ -87,7 +87,7 @@ function Planilla({ api }: { api: ApiPanel }) {
           <p className="marco-cuerpo">Ningún equipo coincide con la búsqueda.</p>
         ) : (
           <>
-            <table className="hidden w-full text-left md:table">
+            <table className="hidden w-full text-left lg:table">
               <caption className="sr-only">Equipos del taller</caption>
               <thead className="border-b-2 border-acero bg-esmalte">
                 <tr>
@@ -140,7 +140,7 @@ function Planilla({ api }: { api: ApiPanel }) {
               </tbody>
             </table>
 
-            <ul className="md:hidden">
+            <ul className="lg:hidden">
               {equipos.map((equipo) => {
                 const definicion = DEFINICIONES[equipo.estado];
                 return (
@@ -178,11 +178,11 @@ function Acciones({ api, equipo }: { api: ApiPanel; equipo: EquipoTaller }) {
   // Un equipo dado de baja no se trabaja: solo se puede reactivar.
   if (equipo.baja) {
     return (
-      <div className="flex md:justify-end">
+      <div className="flex lg:justify-end">
         <button
           type="button"
           onClick={() => api.reactivar("equipo", equipo.codigo, nombre)}
-          className="placa-secundaria w-full justify-center whitespace-nowrap md:w-auto"
+          className="placa-secundaria w-full justify-center whitespace-nowrap lg:w-auto"
           aria-label={`Reactivar ${nombre}`}
         >
           Reactivar
@@ -192,11 +192,11 @@ function Acciones({ api, equipo }: { api: ApiPanel; equipo: EquipoTaller }) {
   }
   return (
     // Cambiar el estado es lo de todos los días; el resto (ficha, datos, informe…) va en el menú "Más".
-    <div className="flex items-center gap-3 md:justify-end">
+    <div className="flex items-center gap-3 lg:justify-end">
       <button
         type="button"
         onClick={() => api.abrirEstado(equipo)}
-        className="placa-secundaria flex-1 justify-center whitespace-nowrap md:flex-none"
+        className="placa-secundaria flex-1 justify-center whitespace-nowrap lg:flex-none"
         aria-label={`Cambiar el estado de ${nombre}`}
       >
         Cambiar estado
