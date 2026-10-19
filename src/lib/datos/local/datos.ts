@@ -1,5 +1,5 @@
 import type { LimitesAvisos } from "@/lib/dominio/avisos";
-import type { BobinadoGuardado } from "@/lib/dominio/bobinado";
+import type { DatosTallerGuardados } from "@/lib/dominio/datos-taller";
 import type { EstadoReparacion } from "@/lib/dominio/estados";
 import type { InformeGuardado } from "@/lib/dominio/informe";
 import type { Placa } from "@/lib/dominio/placa";
@@ -220,8 +220,8 @@ const ORDENES: Record<string, Omit<DatosEquipo, "equipo">> = {
   N9QE4VXC: { empresa: "industria-prueba", referencia: "Oficinas", serie: "PRUEBA-3150-08" },
 };
 
-/** Bobinado de la reparación anterior de Barrio Norte: un reingreso puede copiarlo. */
-const BOBINADO_BARRIO_NORTE: BobinadoGuardado = {
+/** Datos del taller de la reparación anterior de Barrio Norte: un reingreso puede copiarlos. */
+const DATOS_TALLER_BARRIO_NORTE: DatosTallerGuardados = {
   alta: { material: "cobre", medida: "1,25 mm", espiras: 1650, peso: 62 },
   baja: { material: "cobre", medida: "3 × 10 mm", espiras: 29, peso: 48 },
   prespanMedidas: "0,5 mm entre capas; 2 mm entre bobinas",
@@ -257,8 +257,8 @@ export interface DatosLocales {
   personal: CuentaPersonal[];
   /** Informes de diagnóstico por código. Falta en los datos guardados antes de que existieran. */
   informes?: Record<string, InformeGuardado>;
-  /** Datos de bobinado por código. Falta en los datos guardados antes de que existieran. */
-  bobinados?: Record<string, BobinadoGuardado>;
+  /** Datos del taller por código. Falta en los datos guardados antes de que existieran. */
+  datosTaller?: Record<string, DatosTallerGuardados>;
   /** Límites de los avisos. Sin ellos, los de por defecto. */
   avisos?: LimitesAvisos;
 }
@@ -269,7 +269,7 @@ function semilla(): DatosLocales {
     equipos: SEGUIMIENTOS.map((s) => ({ ...s, etapas: { ...s.etapas }, ...ORDENES[s.codigo] })),
     cuentas: CUENTAS.map((c) => ({ ...c })),
     personal: PERSONAL.map((p) => ({ ...p })),
-    bobinados: { C8WP3JZT: { ...BOBINADO_BARRIO_NORTE } },
+    datosTaller: { C8WP3JZT: { ...DATOS_TALLER_BARRIO_NORTE } },
   };
 }
 

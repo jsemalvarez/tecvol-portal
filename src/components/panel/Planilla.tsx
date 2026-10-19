@@ -211,11 +211,11 @@ function Acciones({ api, equipo }: { api: ApiPanel; equipo: EquipoTaller }) {
           Informe
         </Link>
         <Link
-          href={`/panel/bobinado?codigo=${equipo.codigo}`}
+          href={`/panel/datos-taller?codigo=${equipo.codigo}`}
           className="text-[0.9375rem] font-semibold underline decoration-naranja decoration-2 underline-offset-4"
-          aria-label={`Datos de bobinado de ${nombre}`}
+          aria-label={`Datos del taller de ${nombre}`}
         >
-          Bobinado
+          Datos del taller
         </Link>
         <button
           type="button"

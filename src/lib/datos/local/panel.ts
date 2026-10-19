@@ -1,5 +1,5 @@
 import { leerLimites, type LimitesAvisos } from "@/lib/dominio/avisos";
-import { bobinadoParaGuardar, type Bobinado, type BobinadoGuardado } from "@/lib/dominio/bobinado";
+import { datosTallerParaGuardar, type DatosTaller, type DatosTallerGuardados } from "@/lib/dominio/datos-taller";
 import { generarCodigo } from "@/lib/dominio/codigo";
 import type { EstadoReparacion } from "@/lib/dominio/estados";
 import { informeParaGuardar, type Informe, type InformeGuardado } from "@/lib/dominio/informe";
@@ -77,15 +77,15 @@ export class PanelLocal implements PanelRepositorio {
     guardarDatos(datos);
   }
 
-  async obtenerBobinado(codigo: string): Promise<BobinadoGuardado | null> {
+  async obtenerDatosTaller(codigo: string): Promise<DatosTallerGuardados | null> {
     await esperar(300);
-    return leerDatos().bobinados?.[codigo] ?? null;
+    return leerDatos().datosTaller?.[codigo] ?? null;
   }
 
-  async guardarBobinado(codigo: string, bobinado: Bobinado, por: string): Promise<void> {
+  async guardarDatosTaller(codigo: string, datosTaller: DatosTaller, por: string): Promise<void> {
     await esperar(350);
     const datos = leerDatos();
-    datos.bobinados = { ...datos.bobinados, [codigo]: { ...bobinadoParaGuardar(bobinado), por, actualizado: new Date() } };
+    datos.datosTaller = { ...datos.datosTaller, [codigo]: { ...datosTallerParaGuardar(datosTaller), por, actualizado: new Date() } };
     guardarDatos(datos);
   }
 

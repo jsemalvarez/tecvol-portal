@@ -1,5 +1,5 @@
 import type { LimitesAvisos } from "@/lib/dominio/avisos";
-import type { Bobinado, BobinadoGuardado } from "@/lib/dominio/bobinado";
+import type { DatosTaller, DatosTallerGuardados } from "@/lib/dominio/datos-taller";
 import type { EstadoReparacion } from "@/lib/dominio/estados";
 import type { Informe, InformeGuardado } from "@/lib/dominio/informe";
 import type {
@@ -67,10 +67,10 @@ export interface PanelRepositorio {
   obtenerInforme(codigo: string): Promise<InformeGuardado | null>;
   /** Reemplaza el informe entero y anota quién lo guardó. */
   guardarInforme(codigo: string, informe: Informe, por: string): Promise<void>;
-  /** Datos de bobinado de una reparación; `null` si todavía no tiene. */
-  obtenerBobinado(codigo: string): Promise<BobinadoGuardado | null>;
-  /** Reemplaza el bobinado entero y anota quién lo guardó. */
-  guardarBobinado(codigo: string, bobinado: Bobinado, por: string): Promise<void>;
+  /** Datos del taller de una reparación; `null` si todavía no tiene. */
+  obtenerDatosTaller(codigo: string): Promise<DatosTallerGuardados | null>;
+  /** Reemplaza los datos del taller enteros y anota quién lo guardó. */
+  guardarDatosTaller(codigo: string, datos: DatosTaller, por: string): Promise<void>;
   crearEmpresa(nombre: string): Promise<Empresa>;
   editarEmpresa(id: string, nombre: string): Promise<void>;
   /** Crea la cuenta, la asocia a la empresa y envía al cliente el email para elegir su contraseña. */

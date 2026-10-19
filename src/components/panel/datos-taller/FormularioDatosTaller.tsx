@@ -2,29 +2,29 @@
 
 import { useEffect, useId, useMemo, useRef, useState, type FormEvent } from "react";
 import { TornillosMarco } from "@/components/inicio/TornillosMarco";
-import { BOBINAS, MATERIALES_CONDUCTOR, NOMBRE_MATERIAL, type BobinadoGuardado, type IdBobina, type MaterialConductor } from "@/lib/dominio/bobinado";
+import { BOBINAS, MATERIALES_CONDUCTOR, NOMBRE_MATERIAL, type DatosTallerGuardados, type IdBobina, type MaterialConductor } from "@/lib/dominio/datos-taller";
 import { formatearFecha } from "@/lib/dominio/fechas";
 import type { EquipoTaller } from "@/lib/dominio/tipos";
 import { ErrorFormulario, mensajeDeError } from "../Dialogo";
 import { CampoTexto, Grupo, Opciones } from "../equipo/campos";
 import { useAvisoAlSalir } from "../equipo/useAvisoAlSalir";
 import type { AccionesPanel } from "../usePanel";
-import { leerValoresBobinado, valoresDeBobinado, type ErroresBobinado, type ValoresBobina, type ValoresBobinado } from "./valores";
+import { leerValoresDatosTaller, valoresDeDatosTaller, type ErroresDatosTaller, type ValoresBobina, type ValoresDatosTaller } from "./valores";
 
 const hora = new Intl.DateTimeFormat("es-AR", { hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: "America/Argentina/Buenos_Aires" });
 
-/** El bobinado de la reparación anterior del mismo trafo, para partir de él en un reingreso. */
-export interface BobinadoAnterior {
+/** Los datos del taller de la reparación anterior del mismo trafo, para partir de ellos en un reingreso. */
+export interface DatosTallerAnteriores {
   equipo: EquipoTaller;
-  bobinado: BobinadoGuardado;
+  datos: DatosTallerGuardados;
 }
 
 /**
- * Datos de bobinado de una reparación: cada bobina (material, medida del alambre, espiras y peso del
+ * Datos del taller de una reparación: cada bobina (material, medida del alambre, espiras y peso del
  * conductor), el aislamiento de prespan, las derivaciones y los materiales. Todo es opcional y se puede
- * guardar a medias. En un reingreso, se puede partir del bobinado de la reparación anterior.
+ * guardar a medias. En un reingreso, se puede partir de los datos de la reparación anterior.
  */
-export function FormularioBobinado({
+export function FormularioDatosTaller({
   equipo,
   acciones,
   email,
@@ -35,14 +35,14 @@ export function FormularioBobinado({
   acciones: AccionesPanel;
   /** Quién tiene la sesión abierta: queda como autor al guardar. */
   email: string;
-  guardado: BobinadoGuardado | null;
-  anterior: BobinadoAnterior | null;
+  guardado: DatosTallerGuardados | null;
+  anterior: DatosTallerAnteriores | null;
 }) {
   const id = useId();
-  const [base, setBase] = useState(() => valoresDeBobinado(guardado));
-  const [valores, setValores] = useState<ValoresBobinado>(base);
+  const [base, setBase] = useState(() => valoresDeDatosTaller(guardado));
+  const [valores, setValores] = useState<ValoresDatosTaller>(base);
   const [ultimo, setUltimo] = useState(guardado ? { actualizado: guardado.actualizado, por: guardado.por } : null);
-  const [errores, setErrores] = useState<ErroresBobinado>({});
+  const [errores, setErrores] = useState<ErroresDatosTaller>({});
   const [error, setError] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
   const [recienGuardado, setRecienGuardado] = useState(false);
@@ -60,7 +60,7 @@ export function FormularioBobinado({
     primero?.scrollIntoView({ block: "center", behavior: "smooth" });
   }, [intento]);
 
-  const actualizar = (cambio: (v: ValoresBobinado) => ValoresBobinado, clave?: string) => {
+  const actualizar = (cambio: (v: ValoresDatosTaller) => ValoresDatosTaller, clave?: string) => {
     setValores(cambio);
     setRecienGuardado(false);
     if (clave && errores[clave]) {
@@ -80,14 +80,14 @@ export function FormularioBobinado({
 
   function copiarAnterior() {
     if (!anterior) return;
-    actualizar(() => valoresDeBobinado(anterior.bobinado));
+    actualizar(() => valoresDeDatosTaller(anterior.datos));
     setErrores({});
     setCopiado(true);
   }
 
   async function guardar(evento: FormEvent) {
     evento.preventDefault();
-    const { bobinado, errores: encontrados } = leerValoresBobinado(valores);
+    const { datos, errores: encontrados } = leerValoresDatosTaller(valores);
     setErrores(encontrados);
     setError(null);
     setRecienGuardado(false);
@@ -97,7 +97,7 @@ export function FormularioBobinado({
     }
     setGuardando(true);
     try {
-      await acciones.guardarBobinado(equipo.codigo, bobinado);
+      await acciones.guardarDatosTaller(equipo.codigo, datos);
       setBase(valores);
       setUltimo({ actualizado: new Date(), por: email });
       setRecienGuardado(true);
@@ -233,7 +233,7 @@ export function FormularioBobinado({
 
       <aside aria-labelledby={`${id}-guardar`} className="border-t-[3px] border-acero pt-5 lg:sticky lg:top-8 lg:col-span-4 lg:self-start">
         <h2 id={`${id}-guardar`} className="rotulo text-base">
-          Datos de bobinado
+          Datos del taller
         </h2>
         <p className="mt-3 max-w-[44ch] text-[0.9375rem] leading-snug text-grafito">
           Solo los ve el personal del taller: el cliente no los ve en su portal. Todo es opcional y se puede guardar a medias.
@@ -243,10 +243,10 @@ export function FormularioBobinado({
           <div className="mt-5 border-t border-acero pt-5">
             <p className="max-w-[44ch] leading-snug">
               <strong className="font-semibold">Es un reingreso.</strong> La reparación que ingresó el{" "}
-              {ingresoAnterior ? formatearFecha(ingresoAnterior) : "(sin fecha)"} tiene datos de bobinado.
+              {ingresoAnterior ? formatearFecha(ingresoAnterior) : "(sin fecha)"} tiene datos del taller cargados.
             </p>
             <button type="button" onClick={copiarAnterior} className="placa-secundaria mt-3">
-              {copiado ? "Volver a copiar" : "Copiar el bobinado anterior"}
+              {copiado ? "Volver a copiar" : "Copiar los datos anteriores"}
             </button>
             {copiado && (
               <p role="status" className="mt-2 max-w-[44ch] text-[0.9375rem] leading-snug">
@@ -259,11 +259,11 @@ export function FormularioBobinado({
         <div className="mt-6 flex flex-col items-start gap-4 border-t border-acero pt-6">
           <ErrorFormulario texto={error} />
           <button type="submit" className="placa" disabled={guardando}>
-            {guardando ? "Guardando…" : "Guardar bobinado"}
+            {guardando ? "Guardando…" : "Guardar los datos"}
           </button>
           <p role="status" className="text-[0.9375rem] leading-snug">
             {recienGuardado ? (
-              <strong className="font-semibold">Se guardaron los datos de bobinado.</strong>
+              <strong className="font-semibold">Se guardaron los datos del taller.</strong>
             ) : ultimo?.actualizado ? (
               <span className="text-grafito">
                 Guardado por última vez el {formatearFecha(ultimo.actualizado)} a las {hora.format(ultimo.actualizado)}

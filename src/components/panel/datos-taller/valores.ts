@@ -1,4 +1,4 @@
-import { BOBINAS, type Bobina, type Bobinado, type IdBobina, type MaterialConductor } from "@/lib/dominio/bobinado";
+import { BOBINAS, type Bobina, type DatosTaller, type IdBobina, type MaterialConductor } from "@/lib/dominio/datos-taller";
 import { leerNumero, numeroParaCampo } from "@/lib/dominio/placa";
 
 /** Lo que hay escrito en cada campo de una bobina, tal cual. */
@@ -9,8 +9,8 @@ export interface ValoresBobina {
   peso: string;
 }
 
-/** Lo que hay escrito en el formulario de bobinado, tal cual. */
-export interface ValoresBobinado {
+/** Lo que hay escrito en el formulario de los datos del taller, tal cual. */
+export interface ValoresDatosTaller {
   alta: ValoresBobina;
   baja: ValoresBobina;
   prespanMedidas: string;
@@ -20,7 +20,7 @@ export interface ValoresBobinado {
 }
 
 /** Errores por campo, con claves como `alta.espiras` o `prespanPeso`. */
-export type ErroresBobinado = Record<string, string>;
+export type ErroresDatosTaller = Record<string, string>;
 
 function valoresDeBobina(bobina: Bobina | undefined): ValoresBobina {
   return {
@@ -31,23 +31,23 @@ function valoresDeBobina(bobina: Bobina | undefined): ValoresBobina {
   };
 }
 
-export function valoresDeBobinado(bobinado: Bobinado | null): ValoresBobinado {
+export function valoresDeDatosTaller(datos: DatosTaller | null): ValoresDatosTaller {
   return {
-    alta: valoresDeBobina(bobinado?.alta),
-    baja: valoresDeBobina(bobinado?.baja),
-    prespanMedidas: bobinado?.prespanMedidas ?? "",
-    prespanPeso: numeroParaCampo(bobinado?.prespanPeso),
-    derivaciones: numeroParaCampo(bobinado?.derivaciones),
-    notas: bobinado?.notas ?? "",
+    alta: valoresDeBobina(datos?.alta),
+    baja: valoresDeBobina(datos?.baja),
+    prespanMedidas: datos?.prespanMedidas ?? "",
+    prespanPeso: numeroParaCampo(datos?.prespanPeso),
+    derivaciones: numeroParaCampo(datos?.derivaciones),
+    notas: datos?.notas ?? "",
   };
 }
 
 /**
- * Revisa que cada número se entienda y arma el bobinado. Las espiras y las derivaciones son enteras; los
- * pesos pueden tener decimales. Sin errores, `bobinado` está listo para guardar.
+ * Revisa que cada número se entienda y arma los datos. Las espiras y las derivaciones son enteras; los
+ * pesos pueden tener decimales. Sin errores, `datos` está listo para guardar.
  */
-export function leerValoresBobinado(valores: ValoresBobinado): { bobinado: Bobinado; errores: ErroresBobinado } {
-  const errores: ErroresBobinado = {};
+export function leerValoresDatosTaller(valores: ValoresDatosTaller): { datos: DatosTaller; errores: ErroresDatosTaller } {
+  const errores: ErroresDatosTaller = {};
   const peso = (clave: string, texto: string) => {
     const leido = leerNumero(texto, true);
     if (leido === null) errores[clave] = "Escriba solo el número, en kg. Por ejemplo: 62,5.";
@@ -72,7 +72,7 @@ export function leerValoresBobinado(valores: ValoresBobinado): { bobinado: Bobin
   };
   const [alta, baja] = BOBINAS.map((b) => bobina(b.id));
   return {
-    bobinado: {
+    datos: {
       alta,
       baja,
       prespanMedidas: valores.prespanMedidas.trim() || undefined,

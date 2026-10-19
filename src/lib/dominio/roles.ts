@@ -16,11 +16,11 @@ export const NOMBRES_ROL: Record<Rol, string> = {
 export const DESCRIPCIONES_ROL: Record<RolPersonal, string> = {
   administrador: "Todo el panel: equipos, empresas, cuentas de clientes y cuentas del personal.",
   "jefe-taller":
-    "Registra equipos, cambia su estado, corrige sus datos y carga el informe y el bobinado. No da de baja ni maneja empresas o cuentas.",
+    "Registra equipos, cambia su estado, corrige sus datos y carga el informe y los datos del taller. No da de baja ni maneja empresas o cuentas.",
 };
 
 /**
- * - `equipos`: registrar equipos y actualizarlos (datos, estado, informe y bobinado).
+ * - `equipos`: registrar equipos y actualizarlos (datos, estado, informe y datos del taller).
  * - `baja-equipos`: dar de baja un equipo y reactivarlo.
  * - `empresas`: crear, editar y dar de baja empresas.
  * - `cuentas`: crear, editar y dar de baja cuentas de clientes y del personal.

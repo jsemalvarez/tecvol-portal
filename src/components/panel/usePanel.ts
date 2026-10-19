@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useSesionDe } from "@/components/ingreso/useSesionDe";
 import { obtenerPanel } from "@/lib/datos/repositorios";
 import type { LimitesAvisos } from "@/lib/dominio/avisos";
-import type { Bobinado, BobinadoGuardado } from "@/lib/dominio/bobinado";
+import type { DatosTaller, DatosTallerGuardados } from "@/lib/dominio/datos-taller";
 import { etapasConEstado, type EstadoReparacion } from "@/lib/dominio/estados";
 import type { Informe, InformeGuardado } from "@/lib/dominio/informe";
 import { esPersonal } from "@/lib/dominio/roles";
@@ -45,9 +45,9 @@ export interface AccionesPanel {
   obtenerInforme(codigo: string): Promise<InformeGuardado | null>;
   /** Guarda el informe a nombre de quien tiene la sesión abierta. */
   guardarInforme(codigo: string, informe: Informe): Promise<void>;
-  obtenerBobinado(codigo: string): Promise<BobinadoGuardado | null>;
-  /** Guarda el bobinado a nombre de quien tiene la sesión abierta. */
-  guardarBobinado(codigo: string, bobinado: Bobinado): Promise<void>;
+  obtenerDatosTaller(codigo: string): Promise<DatosTallerGuardados | null>;
+  /** Guarda los datos del taller a nombre de quien tiene la sesión abierta. */
+  guardarDatosTaller(codigo: string, datos: DatosTaller): Promise<void>;
   crearEmpresa(nombre: string): Promise<Empresa>;
   editarEmpresa(id: string, nombre: string): Promise<void>;
   crearCuenta(email: string, empresa: string): Promise<CuentaCliente>;
@@ -138,11 +138,11 @@ export function usePanel() {
     async guardarInforme(codigo, informe) {
       await (await obtenerPanel()).guardarInforme(codigo, informe, sesion?.email ?? "");
     },
-    async obtenerBobinado(codigo) {
-      return (await obtenerPanel()).obtenerBobinado(codigo);
+    async obtenerDatosTaller(codigo) {
+      return (await obtenerPanel()).obtenerDatosTaller(codigo);
     },
-    async guardarBobinado(codigo, bobinado) {
-      await (await obtenerPanel()).guardarBobinado(codigo, bobinado, sesion?.email ?? "");
+    async guardarDatosTaller(codigo, datos) {
+      await (await obtenerPanel()).guardarDatosTaller(codigo, datos, sesion?.email ?? "");
     },
     async crearEmpresa(nombre) {
       const empresa = await (await obtenerPanel()).crearEmpresa(nombre);

@@ -14,7 +14,7 @@ import {
   writeBatch,
 } from "firebase/firestore";
 import { leerLimites, type LimitesAvisos } from "@/lib/dominio/avisos";
-import { bobinadoParaGuardar, leerBobinado, type Bobinado, type BobinadoGuardado } from "@/lib/dominio/bobinado";
+import { datosTallerParaGuardar, leerDatosTaller, type DatosTaller, type DatosTallerGuardados } from "@/lib/dominio/datos-taller";
 import { generarCodigo } from "@/lib/dominio/codigo";
 import type { EstadoReparacion } from "@/lib/dominio/estados";
 import { informeParaGuardar, leerInforme, type Informe, type InformeGuardado } from "@/lib/dominio/informe";
@@ -222,21 +222,21 @@ export class PanelFirestore implements PanelRepositorio {
     );
   }
 
-  async obtenerBobinado(codigo: string): Promise<BobinadoGuardado | null> {
-    const bobinado = await guardar(() => getDoc(doc(obtenerFirestore(), "bobinados", codigo)));
-    if (!bobinado.exists()) return null;
-    const datos = bobinado.data();
+  async obtenerDatosTaller(codigo: string): Promise<DatosTallerGuardados | null> {
+    const documento = await guardar(() => getDoc(doc(obtenerFirestore(), "datosTaller", codigo)));
+    if (!documento.exists()) return null;
+    const datos = documento.data();
     return {
-      ...leerBobinado(datos),
+      ...leerDatosTaller(datos),
       actualizado: datos.actualizado instanceof Timestamp ? datos.actualizado.toDate() : null,
       por: texto(datos.por),
     };
   }
 
-  async guardarBobinado(codigo: string, bobinado: Bobinado, por: string): Promise<void> {
+  async guardarDatosTaller(codigo: string, datos: DatosTaller, por: string): Promise<void> {
     // Como el informe: se reemplaza entero, sin `merge`.
     await guardar(() =>
-      setDoc(doc(obtenerFirestore(), "bobinados", codigo), { ...bobinadoParaGuardar(bobinado), por, actualizado: serverTimestamp() }),
+      setDoc(doc(obtenerFirestore(), "datosTaller", codigo), { ...datosTallerParaGuardar(datos), por, actualizado: serverTimestamp() }),
     );
   }
 

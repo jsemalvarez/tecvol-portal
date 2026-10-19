@@ -6,40 +6,40 @@ import { useEffect, useState } from "react";
 import { Alerta } from "@/components/iconos";
 import { nombreDe } from "@/components/portal/piezas";
 import { ErrorDePanel } from "@/lib/datos/repositorios";
-import { bobinadoVacio, type BobinadoGuardado } from "@/lib/dominio/bobinado";
+import { datosTallerVacios, type DatosTallerGuardados } from "@/lib/dominio/datos-taller";
 import { formatearCodigo, normalizarCodigo } from "@/lib/dominio/codigo";
 import { reparacionesDelTrafo } from "@/lib/dominio/trafo";
 import { PaginaPanel, type ApiPanel } from "../PaginaPanel";
-import { FormularioBobinado, type BobinadoAnterior } from "./FormularioBobinado";
+import { FormularioDatosTaller, type DatosTallerAnteriores } from "./FormularioDatosTaller";
 
 const enlace = "font-semibold underline decoration-naranja decoration-2 underline-offset-4";
 
-/** Los datos de bobinado de una reparación, que carga el jefe de taller. */
-export function PanelBobinado() {
+/** Los datos del taller de una reparación (bobinado, materiales…), que carga el jefe de taller. */
+export function PanelDatosTaller() {
   const codigo = normalizarCodigo(useSearchParams().get("codigo") ?? "");
   return (
     <PaginaPanel
       seccion="equipos"
-      titulo="Datos de bobinado"
+      titulo="Datos del taller"
       nota={
         <>
-          <strong className="font-semibold">Los datos de bobinado son solo para el taller.</strong> El cliente no los ve en su portal ni
+          <strong className="font-semibold">Los datos del taller son solo para el personal.</strong> El cliente no los ve en su portal ni
           en la consulta pública.
         </>
       }
     >
-      {(api) => <ContenidoBobinado api={api} codigo={codigo} />}
+      {(api) => <ContenidoDatosTaller api={api} codigo={codigo} />}
     </PaginaPanel>
   );
 }
 
-type Carga = { guardado: BobinadoGuardado | null; anterior: BobinadoAnterior | null } | "error" | "permiso" | null;
+type Carga = { guardado: DatosTallerGuardados | null; anterior: DatosTallerAnteriores | null } | "error" | "permiso" | null;
 
-function ContenidoBobinado({ api, codigo }: { api: ApiPanel; codigo: string }) {
+function ContenidoDatosTaller({ api, codigo }: { api: ApiPanel; codigo: string }) {
   const equipo = api.taller.equipos.find((e) => e.codigo === codigo);
   const [carga, setCarga] = useState<Carga>(null);
   const [intento, setIntento] = useState(0);
-  const { obtenerBobinado } = api.acciones;
+  const { obtenerDatosTaller } = api.acciones;
   // Reparaciones anteriores del mismo trafo, de la más nueva a la más vieja.
   const anteriores = equipo?.numeroTrafo ? reparacionesDelTrafo(api.taller.equipos, equipo.numeroTrafo, equipo.codigo) : [];
   const claveAnteriores = anteriores.map((e) => e.codigo).join(",");
@@ -47,17 +47,17 @@ function ContenidoBobinado({ api, codigo }: { api: ApiPanel; codigo: string }) {
   useEffect(() => {
     if (!equipo) return;
     let activo = true;
-    Promise.all([obtenerBobinado(equipo.codigo), Promise.all(anteriores.map((e) => obtenerBobinado(e.codigo)))])
+    Promise.all([obtenerDatosTaller(equipo.codigo), Promise.all(anteriores.map((e) => obtenerDatosTaller(e.codigo)))])
       .then(([guardado, previos]) => {
         // La reparación anterior más nueva que tenga algo cargado.
-        const i = previos.findIndex((b) => b && !bobinadoVacio(b));
-        if (activo) setCarga({ guardado, anterior: i >= 0 ? { equipo: anteriores[i], bobinado: previos[i]! } : null });
+        const i = previos.findIndex((d) => d && !datosTallerVacios(d));
+        if (activo) setCarga({ guardado, anterior: i >= 0 ? { equipo: anteriores[i], datos: previos[i]! } : null });
       })
       .catch((e) => activo && setCarga(e instanceof ErrorDePanel && e.motivo === "permiso" ? "permiso" : "error"));
     return () => {
       activo = false;
     };
-    // `obtenerBobinado` y `anteriores` cambian en cada render del panel; alcanza con los códigos y los reintentos.
+    // `obtenerDatosTaller` y `anteriores` cambian en cada render del panel; alcanza con los códigos y los reintentos.
   }, [equipo?.codigo, claveAnteriores, intento]);
 
   if (!equipo) {
@@ -83,15 +83,15 @@ function ContenidoBobinado({ api, codigo }: { api: ApiPanel; codigo: string }) {
       </p>
       {carga === null ? (
         <p role="status" className="mt-10 text-lg">
-          Cargando los datos de bobinado…
+          Cargando los datos del taller…
         </p>
       ) : carga === "error" || carga === "permiso" ? (
         <div className="mt-8 flex flex-col items-start gap-5">
           <p role="alert" className="flex max-w-[52ch] items-start gap-2 text-lg font-medium text-rojo">
             <Alerta className="mt-1 size-5 shrink-0" />
             {carga === "permiso"
-              ? "Su cuenta no tiene permiso para ver los datos de bobinado. Avise a quien administra el sistema."
-              : "No se pudieron cargar los datos de bobinado. Revise su conexión e intente de nuevo."}
+              ? "Su cuenta no tiene permiso para ver los datos del taller. Avise a quien administra el sistema."
+              : "No se pudieron cargar los datos del taller. Revise su conexión e intente de nuevo."}
           </p>
           <button
             type="button"
@@ -105,7 +105,7 @@ function ContenidoBobinado({ api, codigo }: { api: ApiPanel; codigo: string }) {
           </button>
         </div>
       ) : (
-        <FormularioBobinado
+        <FormularioDatosTaller
           key={equipo.codigo}
           equipo={equipo}
           acciones={api.acciones}

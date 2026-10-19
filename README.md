@@ -116,10 +116,11 @@ En `/panel` el personal (los dos roles):
   una vista con solo esos. De entrada ordena por ingreso, el más antiguo primero; también por aprobación o por
   último cambio. Los límites (30 y 15 días por defecto) los cambia el administrador desde la lista y se guardan
   en `ajustes/avisos`. Los avisos se ven solo en el panel: no hay emails.
-- Carga los **datos de bobinado** de cada reparación (`/panel/bobinado`): por bobina de alta y de baja, el
-  material y la medida del alambre, las espiras y el peso del conductor; el aislamiento de prespan (medidas y
-  peso), las derivaciones y los materiales. En un reingreso, puede copiar el bobinado de la reparación anterior
-  del mismo trafo. Como el informe, solo lo ve el personal.
+- Carga los **datos del taller** de cada reparación (`/panel/datos-taller`): lo que anota el taller y no va en
+  el informe. Hoy, por bobina de alta y de baja, el material y la medida del alambre, las espiras y el peso del
+  conductor; el aislamiento de prespan (medidas y peso), las derivaciones y los materiales. Si se suman otros
+  datos del taller, van en esta misma página. En un reingreso, puede copiar los de la reparación anterior del
+  mismo trafo. Como el informe, solo lo ve el personal.
 
 Solo el administrador:
 
@@ -144,7 +145,7 @@ directamente: esa cuenta no tendría empresa ni sería personal, así que no ver
 | `clientes/{uid}` | El administrador; cada cliente, la suya | El administrador | `empresa` (el ID de `empresas`), `email` y `baja` |
 | `ordenes/{codigo}` | El personal; cada cliente, las de su empresa | El personal | `empresa`, `referencia`, `serie`, `numeroOrden`, `numeroTrafo`, chapa… y `baja` |
 | `informes/{codigo}` | El personal | El personal | Informe de diagnóstico |
-| `bobinados/{codigo}` | El personal | El personal | Datos de bobinado: alambre, espiras, peso, prespan, derivaciones y materiales |
+| `datosTaller/{codigo}` | El personal | El personal | Datos del taller: bobinado (alambre, espiras, peso), prespan, derivaciones y materiales |
 | `ajustes/avisos` | El personal | El administrador | `ingreso` y `aprobacion`: días (enteros, de 1 a 365) antes del aviso de demora |
 
 El estado y las etapas viven solo en `seguimiento/{codigo}`: el panel lo escribe y el portal y la consulta

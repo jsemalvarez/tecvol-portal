@@ -1,8 +1,9 @@
 /**
- * Datos de bobinado de una reparación: lo que el jefe de taller anota al desarmar y rebobinar el
- * transformador (alambre, espiras y peso de cada bobina, aislamiento de prespan y derivaciones). Es solo
- * para el taller: el cliente no lo ve. Se guarda por reparación, así el historial del trafo muestra con
- * qué se bobinó cada vez y un reingreso puede partir de lo anterior.
+ * Datos del taller de una reparación: lo que anota el jefe de taller y no va en el informe. Hoy, el
+ * bobinado (alambre, espiras y peso de cada bobina), el aislamiento de prespan, las derivaciones y los
+ * materiales; si se suman otros datos del taller, van acá. Es solo para el personal: el cliente no lo ve.
+ * Se guarda por reparación, así el historial del trafo muestra con qué se trabajó cada vez y un reingreso
+ * puede partir de lo anterior.
  */
 
 export const MATERIALES_CONDUCTOR = ["cobre", "aluminio"] as const;
@@ -26,7 +27,7 @@ export interface Bobina {
   peso?: number;
 }
 
-export interface Bobinado {
+export interface DatosTaller {
   alta: Bobina;
   baja: Bobina;
   /** Medidas del prespan del aislamiento, como las escribe el taller. */
@@ -39,8 +40,8 @@ export interface Bobinado {
   notas?: string;
 }
 
-/** Quién guardó el bobinado por última vez y cuándo. Lo pone el sistema, no el formulario. */
-export interface BobinadoGuardado extends Bobinado {
+/** Quién guardó los datos por última vez y cuándo. Lo pone el sistema, no el formulario. */
+export interface DatosTallerGuardados extends DatosTaller {
   actualizado: Date | null;
   por?: string;
 }
@@ -62,19 +63,19 @@ function leerBobina(valor: unknown): Bobina {
   });
 }
 
-/** El bobinado listo para guardar: sin campos vacíos, que Firestore no acepta. */
-export function bobinadoParaGuardar(bobinado: Bobinado): Bobinado {
+/** Los datos listos para guardar: sin campos vacíos, que Firestore no acepta. */
+export function datosTallerParaGuardar(datos: DatosTaller): DatosTaller {
   return sinVacios({
-    ...bobinado,
-    alta: sinVacios(bobinado.alta),
-    baja: sinVacios(bobinado.baja),
-    prespanMedidas: bobinado.prespanMedidas?.trim() || undefined,
-    notas: bobinado.notas?.trim() || undefined,
+    ...datos,
+    alta: sinVacios(datos.alta),
+    baja: sinVacios(datos.baja),
+    prespanMedidas: datos.prespanMedidas?.trim() || undefined,
+    notas: datos.notas?.trim() || undefined,
   });
 }
 
-/** Lee un bobinado guardado, descartando lo que no tenga la forma esperada. */
-export function leerBobinado(valor: unknown): Bobinado {
+/** Lee los datos guardados, descartando lo que no tenga la forma esperada. */
+export function leerDatosTaller(valor: unknown): DatosTaller {
   const datos = (valor && typeof valor === "object" ? valor : {}) as Record<string, unknown>;
   return sinVacios({
     alta: leerBobina(datos.alta),
@@ -87,7 +88,7 @@ export function leerBobinado(valor: unknown): Bobinado {
 }
 
 /** Si no tiene ningún dato cargado. */
-export function bobinadoVacio(bobinado: Bobinado): boolean {
-  const { alta, baja, ...resto } = bobinadoParaGuardar(bobinado);
+export function datosTallerVacios(datos: DatosTaller): boolean {
+  const { alta, baja, ...resto } = datosTallerParaGuardar(datos);
   return !Object.keys(alta).length && !Object.keys(baja).length && !Object.keys(resto).length;
 }

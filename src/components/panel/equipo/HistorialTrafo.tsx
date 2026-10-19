@@ -87,8 +87,8 @@ export function HistorialTrafo({
               <Link href={`/panel/informe?codigo=${r.codigo}`} target="_blank" className={enlace}>
                 Informe<span className="sr-only"> de la reparación que ingresó el {r.etapas.ingresado ? formatearFecha(r.etapas.ingresado) : "(sin fecha)"}, en otra pestaña</span>
               </Link>
-              <Link href={`/panel/bobinado?codigo=${r.codigo}`} target="_blank" className={enlace}>
-                Bobinado<span className="sr-only"> de la reparación que ingresó el {r.etapas.ingresado ? formatearFecha(r.etapas.ingresado) : "(sin fecha)"}, en otra pestaña</span>
+              <Link href={`/panel/datos-taller?codigo=${r.codigo}`} target="_blank" className={enlace}>
+                Datos del taller<span className="sr-only"> de la reparación que ingresó el {r.etapas.ingresado ? formatearFecha(r.etapas.ingresado) : "(sin fecha)"}, en otra pestaña</span>
               </Link>
               {nuevo && (
                 <button type="button" onClick={() => onUsar(r)} className="placa-secundaria">
