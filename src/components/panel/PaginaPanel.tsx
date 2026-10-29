@@ -442,7 +442,7 @@ export function PaginaPanel({
                 empresa={ventana.empresa}
                 acciones={acciones}
                 onGuardada={(empresa) => {
-                  avisar(`Se guardó el nombre de ${empresa.nombre}.`);
+                  avisar(`Se guardaron los datos de ${empresa.nombre}.`);
                   cerrar();
                 }}
               />

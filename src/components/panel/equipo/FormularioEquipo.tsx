@@ -189,7 +189,8 @@ export function FormularioEquipo({
     try {
       let empresa = valores.empresa;
       if (empresa === NUEVA_EMPRESA) {
-        empresa = (await acciones.crearEmpresa(valores.nombreEmpresa.trim())).id;
+        // Desde acá solo el nombre: los datos de facturación se completan después en "Empresas y cuentas".
+        empresa = (await acciones.crearEmpresa({ nombre: valores.nombreEmpresa.trim() })).id;
         // Si lo que sigue falla, al reintentar se usa la empresa ya creada en vez de crear otra.
         setValores((v) => ({ ...v, empresa, nombreEmpresa: "" }));
       }

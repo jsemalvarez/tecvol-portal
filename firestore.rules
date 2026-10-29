@@ -81,6 +81,25 @@ service cloud.firestore {
         && bajaValida(d);
     }
 
+    // Datos de facturación de una empresa: opcionales, y cada uno solo si tiene algo escrito.
+    // Mismos largos que src/lib/dominio/facturacion.ts.
+    function facturacionValida(d) {
+      return !('facturacion' in d) || (
+        d.facturacion is map
+        && d.facturacion.keys().hasOnly(['razonSocial', 'cuit', 'domicilio', 'telefonos', 'inicioActividades'])
+        && opcionalHasta(d.facturacion, 'razonSocial', 160)
+        && (!('cuit' in d.facturacion) || (d.facturacion.cuit is string && d.facturacion.cuit.matches('^[0-9]{11}$')))
+        && opcionalHasta(d.facturacion, 'domicilio', 200)
+        && opcionalHasta(d.facturacion, 'telefonos', 200)
+        && (!('inicioActividades' in d.facturacion)
+          || (d.facturacion.inicioActividades is string && d.facturacion.inicioActividades.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')))
+      );
+    }
+
+    function empresaValida(d) {
+      return textoHasta(d.nombre, 120) && facturacionValida(d) && bajaValida(d);
+    }
+
     function consultaValida(d) {
       return d.keys().hasOnly(['empresa', 'nombre', 'email', 'telefono', 'localidad', 'equipo', 'descripcion', 'estado', 'creada'])
         && d.keys().hasAll(['empresa', 'nombre', 'email', 'descripcion', 'estado', 'creada'])
@@ -135,13 +154,13 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // Empresas clientes: el cliente lee solo la suya (para ver su nombre); el personal las lee para
-    // asignarlas a los equipos; solo el administrador las crea, edita o da de baja.
+    // Empresas clientes: el cliente lee solo la suya (su nombre y sus datos de facturación); el personal
+    // las lee para asignarlas a los equipos; solo el administrador las crea, edita o da de baja.
     match /empresas/{empresa} {
       allow get: if esClienteDe(empresa);
       allow read: if esPersonal();
-      allow create: if esAdministrador() && textoHasta(request.resource.data.nombre, 120) && activo(request.resource.data);
-      allow update: if esAdministrador() && textoHasta(request.resource.data.nombre, 120) && bajaValida(request.resource.data);
+      allow create: if esAdministrador() && empresaValida(request.resource.data) && activo(request.resource.data);
+      allow update: if esAdministrador() && empresaValida(request.resource.data);
       allow delete: if false;
     }
 

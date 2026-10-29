@@ -6,6 +6,7 @@ import type {
   ConsultaNueva,
   CuentaCliente,
   CuentaPersonal,
+  DatosEmpresa,
   DatosEquipo,
   Empresa,
   EquipoTaller,
@@ -71,8 +72,9 @@ export interface PanelRepositorio {
   obtenerDatosTaller(codigo: string): Promise<DatosTallerGuardados | null>;
   /** Reemplaza los datos del taller enteros y anota quién lo guardó. */
   guardarDatosTaller(codigo: string, datos: DatosTaller, por: string): Promise<void>;
-  crearEmpresa(nombre: string): Promise<Empresa>;
-  editarEmpresa(id: string, nombre: string): Promise<void>;
+  crearEmpresa(datos: DatosEmpresa): Promise<Empresa>;
+  /** Reemplaza el nombre y los datos de facturación: lo que no viene en `datos` se borra. */
+  editarEmpresa(id: string, datos: DatosEmpresa): Promise<void>;
   /** Crea la cuenta, la asocia a la empresa y envía al cliente el email para elegir su contraseña. */
   crearCuenta(email: string, empresa: string): Promise<CuentaCliente>;
   /** Pasa la cuenta de un cliente a otra empresa. El email no se cambia desde la app. */

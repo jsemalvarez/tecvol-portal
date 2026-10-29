@@ -1,5 +1,6 @@
 import type { LimitesAvisos } from "./avisos";
 import type { EstadoReparacion } from "./estados";
+import type { Facturacion } from "./facturacion";
 import type { Placa, Uso } from "./placa";
 import type { Rol, RolPersonal } from "./roles";
 
@@ -43,9 +44,14 @@ export interface PortalCliente {
 export interface Empresa {
   id: string;
   nombre: string;
+  /** Para el certificado y la factura. Puede faltar: las empresas se crean con solo el nombre. */
+  facturacion?: Facturacion;
   /** Fecha de baja: ya no aparece para registrar equipos. Antes hay que dar de baja sus cuentas. */
   baja?: Date;
 }
+
+/** Lo que carga el administrador al crear o editar una empresa. */
+export type DatosEmpresa = Pick<Empresa, "nombre" | "facturacion">;
 
 /** Cuenta de cliente asociada a una empresa (`clientes/{uid}`). */
 export interface CuentaCliente {

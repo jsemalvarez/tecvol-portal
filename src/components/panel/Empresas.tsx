@@ -4,6 +4,8 @@ import { TornillosMarco } from "@/components/inicio/TornillosMarco";
 import { CUENTAS_DE_PRUEBA } from "@/lib/datos/local/autenticacion";
 import { CLAVE_CUENTAS_NUEVAS } from "@/lib/datos/local/datos";
 import { modoDatos } from "@/lib/datos/repositorios";
+import { formatearCuit, type Facturacion } from "@/lib/dominio/facturacion";
+import { fechaDeCampo, formatearFecha } from "@/lib/dominio/fechas";
 import { activos, type CuentaCliente, type Empresa } from "@/lib/dominio/tipos";
 import { PaginaPanel, type ApiPanel } from "./PaginaPanel";
 import { ReenviarAcceso } from "./ReenviarAcceso";
@@ -83,13 +85,15 @@ function TarjetaEmpresa({ api, empresa }: { api: ApiPanel; empresa: Empresa }) {
           {enTaller} en el taller · {suyos.length - enTaller} {suyos.length - enTaller === 1 ? "entregado" : "entregados"}
         </p>
         <p className="mt-2 flex flex-wrap gap-x-5 gap-y-2">
-          <button type="button" onClick={() => api.abrir({ tipo: "editar-empresa", empresa })} className={enlace} aria-label={`Cambiar el nombre de ${empresa.nombre}`}>
-            Cambiar el nombre
+          <button type="button" onClick={() => api.abrir({ tipo: "editar-empresa", empresa })} className={enlace} aria-label={`Editar los datos de ${empresa.nombre}`}>
+            Editar datos
           </button>
           <button type="button" onClick={darDeBaja} className={enlace} aria-label={`Dar de baja ${empresa.nombre}`}>
             Dar de baja
           </button>
         </p>
+        <h3 className="rotulo mt-6 border-b-[3px] border-acero pb-2 text-[0.9375rem]">Datos de facturación</h3>
+        <DatosFacturacion facturacion={empresa.facturacion} />
         <h3 className="rotulo mt-6 border-b-[3px] border-acero pb-2 text-[0.9375rem]">Cuentas del portal</h3>
         {suyas.length === 0 ? (
           <p className="py-3 text-[0.9375rem] text-grafito">Sin cuentas: nadie de la empresa entra al portal todavía.</p>
@@ -105,6 +109,30 @@ function TarjetaEmpresa({ api, empresa }: { api: ApiPanel; empresa: Empresa }) {
         </button>
       </div>
     </section>
+  );
+}
+
+function DatosFacturacion({ facturacion }: { facturacion?: Facturacion }) {
+  if (!facturacion) {
+    return <p className="py-3 text-[0.9375rem] text-grafito">Sin cargar. Complételos desde "Editar datos" para el certificado y la factura.</p>;
+  }
+  const inicio = facturacion.inicioActividades ? fechaDeCampo(facturacion.inicioActividades) : null;
+  const filas: [string, string | undefined][] = [
+    ["Razón social", facturacion.razonSocial],
+    ["CUIT", facturacion.cuit && formatearCuit(facturacion.cuit)],
+    ["Domicilio", facturacion.domicilio],
+    ["Teléfonos", facturacion.telefonos],
+    ["Inicio de actividades", inicio ? formatearFecha(inicio) : undefined],
+  ];
+  return (
+    <dl className="text-[0.9375rem]">
+      {filas.map(([rotulo, valor]) => (
+        <div key={rotulo} className="border-b border-acero py-2.5">
+          <dt className="text-grafito">{rotulo}</dt>
+          <dd className={valor ? "" : "text-grafito"}>{valor ?? "—"}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }
 

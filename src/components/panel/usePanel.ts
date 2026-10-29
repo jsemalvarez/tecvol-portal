@@ -6,6 +6,7 @@ import { obtenerPanel } from "@/lib/datos/repositorios";
 import type { LimitesAvisos } from "@/lib/dominio/avisos";
 import type { DatosTaller, DatosTallerGuardados } from "@/lib/dominio/datos-taller";
 import { etapasConEstado, type EstadoReparacion } from "@/lib/dominio/estados";
+import { facturacionParaGuardar } from "@/lib/dominio/facturacion";
 import type { Informe, InformeGuardado } from "@/lib/dominio/informe";
 import { esPersonal } from "@/lib/dominio/roles";
 import {
@@ -13,6 +14,7 @@ import {
   conTodosLosCampos,
   type CuentaCliente,
   type CuentaPersonal,
+  type DatosEmpresa,
   type DatosEquipo,
   type Empresa,
   type EquipoTaller,
@@ -48,8 +50,8 @@ export interface AccionesPanel {
   obtenerDatosTaller(codigo: string): Promise<DatosTallerGuardados | null>;
   /** Guarda los datos del taller a nombre de quien tiene la sesión abierta. */
   guardarDatosTaller(codigo: string, datos: DatosTaller): Promise<void>;
-  crearEmpresa(nombre: string): Promise<Empresa>;
-  editarEmpresa(id: string, nombre: string): Promise<void>;
+  crearEmpresa(datos: DatosEmpresa): Promise<Empresa>;
+  editarEmpresa(id: string, datos: DatosEmpresa): Promise<void>;
   crearCuenta(email: string, empresa: string): Promise<CuentaCliente>;
   editarCuenta(uid: string, empresa: string): Promise<void>;
   crearPersonal(email: string, rol: RolPersonal): Promise<CuentaPersonal>;
@@ -144,16 +146,17 @@ export function usePanel() {
     async guardarDatosTaller(codigo, datos) {
       await (await obtenerPanel()).guardarDatosTaller(codigo, datos, sesion?.email ?? "");
     },
-    async crearEmpresa(nombre) {
-      const empresa = await (await obtenerPanel()).crearEmpresa(nombre);
+    async crearEmpresa(datos) {
+      const empresa = await (await obtenerPanel()).crearEmpresa(datos);
       actualizar((t) => ({ ...t, empresas: [...t.empresas, empresa].sort((a, b) => a.nombre.localeCompare(b.nombre, "es")) }));
       return empresa;
     },
-    async editarEmpresa(id, nombre) {
-      await (await obtenerPanel()).editarEmpresa(id, nombre);
+    async editarEmpresa(id, datos) {
+      await (await obtenerPanel()).editarEmpresa(id, datos);
+      const cambios = { nombre: datos.nombre, facturacion: facturacionParaGuardar(datos.facturacion) };
       actualizar((t) => ({
         ...t,
-        empresas: t.empresas.map((e) => (e.id === id ? { ...e, nombre } : e)).sort((a, b) => a.nombre.localeCompare(b.nombre, "es")),
+        empresas: t.empresas.map((e) => (e.id === id ? { ...e, ...cambios } : e)).sort((a, b) => a.nombre.localeCompare(b.nombre, "es")),
       }));
     },
     async crearCuenta(email, empresa) {

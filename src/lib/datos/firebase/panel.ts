@@ -20,7 +20,8 @@ import type { EstadoReparacion } from "@/lib/dominio/estados";
 import { informeParaGuardar, leerInforme, type Informe, type InformeGuardado } from "@/lib/dominio/informe";
 import { esUso, leerPlaca } from "@/lib/dominio/placa";
 import { esRolPersonal, puede } from "@/lib/dominio/roles";
-import type { CuentaCliente, CuentaPersonal, DatosEquipo, Empresa, EquipoTaller, Registro, RolPersonal, Taller } from "@/lib/dominio/tipos";
+import { facturacionParaGuardar, leerFacturacion } from "@/lib/dominio/facturacion";
+import type { CuentaCliente, CuentaPersonal, DatosEmpresa, DatosEquipo, Empresa, EquipoTaller, Registro, RolPersonal, Taller } from "@/lib/dominio/tipos";
 import { ErrorDePanel, type MotivoErrorDePanel, type PanelRepositorio } from "../repositorios";
 import { obtenerFirestore } from "./app";
 import { configuracionFirebase } from "./config";
@@ -126,7 +127,12 @@ export class PanelFirestore implements PanelRepositorio {
 
     return {
       empresas: empresas.docs
-        .map((e) => ({ id: e.id, nombre: texto(e.data().nombre) ?? e.id, baja: fecha(e.data().baja) }))
+        .map((e) => ({
+          id: e.id,
+          nombre: texto(e.data().nombre) ?? e.id,
+          facturacion: leerFacturacion(e.data().facturacion),
+          baja: fecha(e.data().baja),
+        }))
         .sort((a, b) => a.nombre.localeCompare(b.nombre, "es")),
       equipos,
       cuentas: (clientes?.docs ?? []).map((c) => ({
@@ -240,13 +246,17 @@ export class PanelFirestore implements PanelRepositorio {
     );
   }
 
-  async crearEmpresa(nombre: string): Promise<Empresa> {
-    const ref = await guardar(() => addDoc(collection(obtenerFirestore(), "empresas"), { nombre, creada: serverTimestamp() }));
-    return { id: ref.id, nombre };
+  async crearEmpresa({ nombre, facturacion }: DatosEmpresa): Promise<Empresa> {
+    const datos = facturacionParaGuardar(facturacion);
+    const ref = await guardar(() =>
+      addDoc(collection(obtenerFirestore(), "empresas"), { nombre, ...(datos && { facturacion: datos }), creada: serverTimestamp() }),
+    );
+    return { id: ref.id, nombre, facturacion: datos };
   }
 
-  async editarEmpresa(id: string, nombre: string): Promise<void> {
-    await guardar(() => updateDoc(doc(obtenerFirestore(), "empresas", id), { nombre }));
+  async editarEmpresa(id: string, { nombre, facturacion }: DatosEmpresa): Promise<void> {
+    const datos = facturacionParaGuardar(facturacion);
+    await guardar(() => updateDoc(doc(obtenerFirestore(), "empresas", id), { nombre, facturacion: datos ?? deleteField() }));
   }
 
   async crearCuenta(email: string, empresa: string): Promise<CuentaCliente> {

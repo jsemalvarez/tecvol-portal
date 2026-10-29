@@ -3,13 +3,23 @@
 import { useId, useState, type FormEvent } from "react";
 import { CLAVE_CUENTAS_NUEVAS } from "@/lib/datos/local/datos";
 import { modoDatos } from "@/lib/datos/repositorios";
+import {
+  cuitValido,
+  digitosCuit,
+  facturacionParaGuardar,
+  formatearCuit,
+  LARGOS_FACTURACION,
+  type Facturacion,
+} from "@/lib/dominio/facturacion";
+import { fechaParaCampo } from "@/lib/dominio/fechas";
 import type { CuentaCliente, Empresa } from "@/lib/dominio/tipos";
 import { ErrorFormulario, MensajeCampo, mensajeDeError } from "./Dialogo";
+import { CampoTexto } from "./equipo/campos";
 import type { AccionesPanel } from "./usePanel";
 
 const EMAIL_VALIDO = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
-/** Crea una empresa o, con `empresa`, le cambia el nombre. */
+/** Crea una empresa o, con `empresa`, le cambia el nombre y los datos de facturación. */
 export function FormularioEmpresa({
   empresa,
   acciones,
@@ -21,19 +31,38 @@ export function FormularioEmpresa({
 }) {
   const id = useId();
   const [nombre, setNombre] = useState(empresa?.nombre ?? "");
+  const [facturacion, setFacturacion] = useState<Facturacion>(() => ({
+    ...empresa?.facturacion,
+    cuit: empresa?.facturacion?.cuit ? formatearCuit(empresa.facturacion.cuit) : undefined,
+  }));
   const [falta, setFalta] = useState(false);
+  const [errorCuit, setErrorCuit] = useState<string | undefined>();
   const [error, setError] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
+
+  const campo = (clave: keyof Facturacion) => (valor: string) => {
+    setFacturacion((actual) => ({ ...actual, [clave]: valor }));
+    if (clave === "cuit") setErrorCuit(undefined);
+  };
 
   async function guardar(evento: FormEvent) {
     evento.preventDefault();
     const valor = nombre.trim();
-    if (!valor) return setFalta(true);
+    const cuit = digitosCuit(facturacion.cuit ?? "");
+    const cuitMal = cuit && !cuitValido(cuit);
+    if (cuitMal) {
+      setErrorCuit(
+        cuit.length === 11 ? "Revise el CUIT: el último dígito no coincide con los demás." : "Revise el CUIT: debe tener 11 números, como 30-54574456-9.",
+      );
+    }
+    if (!valor) setFalta(true);
+    if (!valor || cuitMal) return;
+    const datos = { nombre: valor, facturacion: facturacionParaGuardar({ ...facturacion, cuit }) };
     setGuardando(true);
     try {
-      if (!empresa) return onGuardada(await acciones.crearEmpresa(valor));
-      await acciones.editarEmpresa(empresa.id, valor);
-      onGuardada({ ...empresa, nombre: valor });
+      if (!empresa) return onGuardada(await acciones.crearEmpresa(datos));
+      await acciones.editarEmpresa(empresa.id, datos);
+      onGuardada({ ...empresa, ...datos });
     } catch (e) {
       setError(mensajeDeError(e));
       setGuardando(false);
@@ -62,8 +91,62 @@ export function FormularioEmpresa({
         <p className="mt-2 text-[0.9375rem] text-grafito">Como la va a ver el cliente en su portal.</p>
         <MensajeCampo id={`${id}-nombre-error`} texto={falta ? "Escriba el nombre de la empresa." : undefined} />
       </div>
+      <fieldset className="flex flex-col gap-6 border-t-[3px] border-acero pt-5">
+        <legend className="sr-only">Datos de facturación</legend>
+        <div aria-hidden="true">
+          <p className="rotulo text-[0.9375rem]">Datos de facturación</p>
+          <p className="mt-1 text-[0.9375rem] text-grafito">Para el certificado y la factura. Si no los tiene ahora, puede completarlos después.</p>
+        </div>
+        <CampoTexto
+          id={`${id}-razon`}
+          etiqueta="Razón social"
+          valor={facturacion.razonSocial ?? ""}
+          onCambio={campo("razonSocial")}
+          maxLength={LARGOS_FACTURACION.razonSocial}
+        />
+        <div className="grid gap-6 sm:grid-cols-2">
+          <CampoTexto
+            id={`${id}-cuit`}
+            etiqueta="CUIT"
+            valor={facturacion.cuit ?? ""}
+            onCambio={campo("cuit")}
+            error={errorCuit}
+            numerico
+            maxLength={16}
+          />
+          <div>
+            <label htmlFor={`${id}-inicio`} className="rotulo block text-[0.9375rem]">
+              Inicio de actividades
+            </label>
+            <input
+              id={`${id}-inicio`}
+              type="date"
+              value={facturacion.inicioActividades ?? ""}
+              max={fechaParaCampo(new Date())}
+              onChange={(e) => campo("inicioActividades")(e.target.value)}
+              className="renglon mt-1"
+            />
+          </div>
+        </div>
+        <CampoTexto
+          id={`${id}-domicilio`}
+          etiqueta="Domicilio"
+          valor={facturacion.domicilio ?? ""}
+          onCambio={campo("domicilio")}
+          ayuda="Calle y número, localidad, código postal y provincia."
+          maxLength={LARGOS_FACTURACION.domicilio}
+        />
+        <CampoTexto
+          id={`${id}-telefonos`}
+          etiqueta="Teléfonos"
+          valor={facturacion.telefonos ?? ""}
+          onCambio={campo("telefonos")}
+          ayuda="Puede poner varios, con el fax y la guardia si los tiene."
+          maxLength={LARGOS_FACTURACION.telefonos}
+        />
+      </fieldset>
       <button type="submit" className="placa self-start" disabled={guardando}>
-        {guardando ? "Guardando…" : empresa ? "Guardar el nombre" : "Crear empresa"}
+        {guardando ? "Guardando…" : empresa ? "Guardar los cambios" : "Crear empresa"}
       </button>
     </form>
   );

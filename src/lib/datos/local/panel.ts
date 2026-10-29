@@ -2,6 +2,7 @@ import { leerLimites, type LimitesAvisos } from "@/lib/dominio/avisos";
 import { datosTallerParaGuardar, type DatosTaller, type DatosTallerGuardados } from "@/lib/dominio/datos-taller";
 import { generarCodigo } from "@/lib/dominio/codigo";
 import type { EstadoReparacion } from "@/lib/dominio/estados";
+import { facturacionParaGuardar } from "@/lib/dominio/facturacion";
 import { informeParaGuardar, type Informe, type InformeGuardado } from "@/lib/dominio/informe";
 import { puede } from "@/lib/dominio/roles";
 import {
@@ -9,6 +10,7 @@ import {
   conTodosLosCampos,
   type CuentaCliente,
   type CuentaPersonal,
+  type DatosEmpresa,
   type DatosEquipo,
   type Empresa,
   type EquipoTaller,
@@ -89,19 +91,19 @@ export class PanelLocal implements PanelRepositorio {
     guardarDatos(datos);
   }
 
-  async crearEmpresa(nombre: string): Promise<Empresa> {
+  async crearEmpresa({ nombre, facturacion }: DatosEmpresa): Promise<Empresa> {
     await esperar(350);
     const datos = leerDatos();
-    const empresa = { id: `local-${crypto.randomUUID()}`, nombre };
+    const empresa = { id: `local-${crypto.randomUUID()}`, nombre, facturacion: facturacionParaGuardar(facturacion) };
     datos.empresas.push(empresa);
     guardarDatos(datos);
     return empresa;
   }
 
-  async editarEmpresa(id: string, nombre: string): Promise<void> {
+  async editarEmpresa(id: string, { nombre, facturacion }: DatosEmpresa): Promise<void> {
     await esperar(350);
     const datos = leerDatos();
-    datos.empresas = datos.empresas.map((e) => (e.id === id ? { ...e, nombre } : e));
+    datos.empresas = datos.empresas.map((e) => (e.id === id ? { ...e, nombre, facturacion: facturacionParaGuardar(facturacion) } : e));
     guardarDatos(datos);
   }
 
