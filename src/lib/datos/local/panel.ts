@@ -7,19 +7,22 @@ import { informeParaGuardar, type Informe, type InformeGuardado } from "@/lib/do
 import { puede } from "@/lib/dominio/roles";
 import {
   conBaja,
-  conTodosLosCampos,
+  conTransformador,
   type CuentaCliente,
   type CuentaPersonal,
   type DatosEmpresa,
-  type DatosEquipo,
+  type DatosOrden,
+  type DatosTransformador,
   type Empresa,
   type EquipoTaller,
   type Registro,
   type RolPersonal,
   type Taller,
+  type Transformador,
 } from "@/lib/dominio/tipos";
+import { conCambioDeT, nuevoIdTrafo } from "@/lib/dominio/trafo";
 import { ErrorDePanel, type PanelRepositorio } from "../repositorios";
-import { esperar, guardarDatos, leerDatos } from "./datos";
+import { conTransformadores, esperar, guardarDatos, leerDatos } from "./datos";
 
 /**
  * Panel de prueba para desarrollar sin Firebase. En producción, solo en una demo (ver `modoDatos`).
@@ -29,12 +32,12 @@ import { esperar, guardarDatos, leerDatos } from "./datos";
 export class PanelLocal implements PanelRepositorio {
   async obtenerTaller(rol: RolPersonal): Promise<Taller> {
     await esperar(500);
-    const { empresas, equipos, cuentas, personal, avisos } = leerDatos();
+    const { empresas, transformadores, equipos, cuentas, personal, avisos } = leerDatos();
     const limites = leerLimites(avisos);
     // Como en Firestore, las cuentas solo las ve quien puede administrarlas.
     return puede(rol, "cuentas")
-      ? { empresas, equipos, cuentas, personal, avisos: limites }
-      : { empresas, equipos, cuentas: [], personal: [], avisos: limites };
+      ? { empresas, transformadores, equipos, cuentas, personal, avisos: limites }
+      : { empresas, transformadores, equipos, cuentas: [], personal: [], avisos: limites };
   }
 
   async guardarAvisos(limites: LimitesAvisos): Promise<void> {
@@ -49,21 +52,71 @@ export class PanelLocal implements PanelRepositorio {
     guardarDatos(datos);
   }
 
-  async registrarEquipo(nuevos: DatosEquipo, ingreso: Date): Promise<EquipoTaller> {
+  async registrarEquipo(
+    nuevos: DatosOrden,
+    ingreso: Date,
+    trafo: string | { empresa: string; datos: DatosTransformador },
+  ): Promise<{ equipo: EquipoTaller; transformador: Transformador }> {
     await esperar(450);
     const datos = leerDatos();
+    let transformador: Transformador | undefined;
+    if (typeof trafo === "string") {
+      transformador = datos.transformadores.find((t) => t.id === trafo);
+      if (!transformador) throw new ErrorDePanel("desconocido");
+    } else {
+      transformador = { id: nuevoIdTrafo(), empresa: trafo.empresa, ...trafo.datos };
+      datos.transformadores.push(transformador);
+    }
     let codigo = generarCodigo();
     while (datos.equipos.some((e) => e.codigo === codigo)) codigo = generarCodigo();
-    const equipo: EquipoTaller = { codigo, estado: "ingresado", etapas: { ingresado: ingreso }, actualizado: new Date(), ...nuevos };
+    const equipo = conTransformador(
+      {
+        codigo,
+        trafo: transformador.id,
+        empresa: transformador.empresa,
+        estado: "ingresado",
+        etapas: { ingresado: ingreso },
+        actualizado: new Date(),
+        equipo: transformador.equipo,
+        ...nuevos,
+        numeroTIngreso: transformador.numeroT,
+      },
+      transformador,
+    );
     datos.equipos.push(equipo);
     guardarDatos(datos);
-    return equipo;
+    return { equipo, transformador };
   }
 
-  async editarEquipo(codigo: string, nuevos: DatosEquipo): Promise<void> {
+  async crearTransformador(empresa: string, nuevos: DatosTransformador): Promise<Transformador> {
     await esperar(350);
     const datos = leerDatos();
-    datos.equipos = datos.equipos.map((e) => (e.codigo === codigo ? { ...e, ...conTodosLosCampos(nuevos), actualizado: new Date() } : e));
+    const transformador: Transformador = { id: nuevoIdTrafo(), empresa, ...nuevos };
+    datos.transformadores.push(transformador);
+    guardarDatos(datos);
+    return transformador;
+  }
+
+  async editarEquipo(codigo: string, nuevos: DatosOrden): Promise<void> {
+    await esperar(350);
+    const datos = leerDatos();
+    const cambios = {
+      numeroOrden: nuevos.numeroOrden,
+      numeroOrdenTemporal: nuevos.numeroOrdenTemporal,
+      referencia: nuevos.referencia,
+      motivo: nuevos.motivo,
+      actualizado: new Date(),
+    };
+    datos.equipos = datos.equipos.map((e) => (e.codigo === codigo ? { ...e, ...cambios } : e));
+    guardarDatos(datos);
+  }
+
+  async editarTransformador(id: string, nuevos: DatosTransformador): Promise<void> {
+    await esperar(350);
+    const datos = leerDatos();
+    const cambios = { numero: nuevos.numero, provisorio: nuevos.provisorio, numeroT: nuevos.numeroT, equipo: nuevos.equipo, uso: nuevos.uso, placa: nuevos.placa };
+    datos.transformadores = datos.transformadores.map((t) => (t.id === id ? { ...t, ...cambios, cambiosT: conCambioDeT(t, nuevos.numeroT) } : t));
+    datos.equipos = conTransformadores(datos.equipos, datos.transformadores);
     guardarDatos(datos);
   }
 

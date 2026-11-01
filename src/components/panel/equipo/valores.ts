@@ -7,20 +7,29 @@ import {
   type Placa,
   type Uso,
 } from "@/lib/dominio/placa";
-import type { EquipoTaller } from "@/lib/dominio/tipos";
+import type { EquipoTaller, Transformador } from "@/lib/dominio/tipos";
 
-/** Lo que hay escrito en cada campo del formulario, tal cual. */
-export interface Valores {
+/** Lo que hay escrito en cada campo de la orden de trabajo, tal cual. */
+export interface ValoresOrden {
   empresa: string;
   nombreEmpresa: string;
   ingreso: string;
   numeroOrden: string;
-  numeroTrafo: string;
+  /** El N.º de O.T. es uno temporal (`TEMP-0001`): todavía no llegó el del sistema de gestión. */
+  numeroOrdenTemporal: boolean;
   referencia: string;
+  motivo: string;
+}
+
+/** Lo que hay escrito en cada campo del transformador y su chapa, tal cual. */
+export interface Valores {
+  numero: string;
+  /** El N.º de trafo es uno temporal (`NT-0001`), porque no se ve en la chapa o no lo tiene. */
+  provisorio: boolean;
+  numeroT: string;
   uso: Uso | "";
   fabricante: string;
   tipo: string;
-  serie: string;
   anio: string;
   norma: string;
   fases: Fases | "";
@@ -38,10 +47,12 @@ export interface Valores {
   materialBobinados: string;
 }
 
-export type Campo = Exclude<keyof Valores, "conmutador">;
+export type Campo = Exclude<keyof Valores, "conmutador" | "provisorio">;
 
 /** Errores por campo; los puntos del conmutador van como `conmutador0` a `conmutador4`. */
 export type Errores = Partial<Record<Campo | `conmutador${number}`, string>>;
+
+export type ErroresOrden = Partial<Record<keyof ValoresOrden, string>>;
 
 type CampoNumerico = "anio" | "potencia" | "frecuencia" | "tensionCortocircuito" | "tensionPrimaria" | "tensionSecundaria" | "aceite" | "masa";
 
@@ -61,25 +72,34 @@ const TEXTOS = ["fabricante", "tipo", "norma", "servicio", "enfriamiento", "grup
 
 export const NUEVA_EMPRESA = "__nueva";
 
-/** Los valores iniciales: vacíos para un equipo nuevo (con 50 Hz, la frecuencia de la red) o los guardados. */
-export function valoresDe(equipo: EquipoTaller | undefined, hoy: string, empresaInicial: string): Valores {
-  const placa = equipo?.placa ?? {};
+/** Los valores iniciales de la orden: vacíos para una nueva o los guardados. */
+export function valoresOrdenDe(equipo: EquipoTaller | undefined, hoy: string, empresaInicial: string): ValoresOrden {
   return {
     empresa: equipo?.empresa ?? empresaInicial,
     nombreEmpresa: "",
     ingreso: hoy,
     numeroOrden: equipo?.numeroOrden ?? "",
-    numeroTrafo: equipo?.numeroTrafo ?? "",
+    numeroOrdenTemporal: !!equipo?.numeroOrdenTemporal,
     referencia: equipo?.referencia ?? "",
-    uso: equipo?.uso ?? "",
+    motivo: equipo?.motivo ?? "",
+  };
+}
+
+/** Los valores iniciales del transformador: vacíos para uno nuevo (con 50 Hz, la frecuencia de la red) o los guardados. */
+export function valoresDe(trafo: Transformador | undefined): Valores {
+  const placa = trafo?.placa ?? {};
+  return {
+    numero: trafo?.numero ?? "",
+    provisorio: !!trafo?.provisorio,
+    numeroT: trafo?.numeroT ?? "",
+    uso: trafo?.uso ?? "",
     fabricante: placa.fabricante ?? "",
     tipo: placa.tipo ?? "",
-    serie: equipo?.serie ?? "",
     anio: numeroParaCampo(placa.anio),
     norma: placa.norma ?? "",
     fases: placa.fases ?? "",
     potencia: numeroParaCampo(placa.potencia),
-    frecuencia: equipo ? numeroParaCampo(placa.frecuencia) : "50",
+    frecuencia: trafo ? numeroParaCampo(placa.frecuencia) : "50",
     tensionCortocircuito: numeroParaCampo(placa.tensionCortocircuito),
     grupoConexion: placa.grupoConexion ?? "",
     servicio: placa.servicio ?? "",
@@ -113,21 +133,30 @@ export function placaDe(valores: Valores): Placa {
   return placaSinVacios(placa) ?? {};
 }
 
+export const FALTA_NUMERO_ORDEN = "Escriba el N.º de O.T. Si todavía no lo tiene, use uno temporal.";
+
 /**
- * Revisa los valores antes de guardar: lo obligatorio (el cliente siempre; al registrar, también la
- * fecha y las fases; el N.º de orden, con `ordenObligatoria`) y que cada número se entienda.
+ * Revisa la orden antes de guardar: el cliente, el N.º de O.T. (o uno temporal) y, al registrar, una fecha
+ * de recepción de hoy o anterior.
  */
-export function revisar(
-  valores: Valores,
-  { nuevo, hoy, ordenObligatoria }: { nuevo: boolean; hoy: string; ordenObligatoria: boolean },
-): Errores {
-  const errores: Errores = {};
-  if (ordenObligatoria && !valores.numeroOrden.trim()) errores.numeroOrden = "Escriba el N.º de orden de Punto Técnico.";
-  if (!valores.empresa) errores.empresa = "Elija el cliente dueño del equipo.";
+export function revisarOrden(valores: ValoresOrden, { nuevo, hoy }: { nuevo: boolean; hoy: string }): ErroresOrden {
+  const errores: ErroresOrden = {};
+  if (!valores.empresa) errores.empresa = "Elija el cliente dueño del transformador.";
   if (valores.empresa === NUEVA_EMPRESA && !valores.nombreEmpresa.trim()) errores.nombreEmpresa = "Escriba el nombre del cliente nuevo.";
+  if (!valores.numeroOrden.trim()) errores.numeroOrden = FALTA_NUMERO_ORDEN;
   if (nuevo && (!/^\d{4}-\d{2}-\d{2}$/.test(valores.ingreso) || valores.ingreso > hoy)) {
     errores.ingreso = "Elija una fecha de recepción de hoy o anterior.";
   }
+  return errores;
+}
+
+/**
+ * Revisa el transformador antes de guardar: el N.º de trafo siempre; al darlo de alta, también las fases;
+ * y que cada número de la chapa se entienda.
+ */
+export function revisar(valores: Valores, { nuevo, hoy }: { nuevo: boolean; hoy: string }): Errores {
+  const errores: Errores = {};
+  if (!valores.numero.trim()) errores.numero = "Escriba el N.º de trafo de la chapa. Si no se ve o no lo tiene, use uno temporal.";
   if (nuevo && !valores.fases) errores.fases = "Elija las fases que figuran en la chapa.";
 
   for (const [campo, { puntoDeMiles, ejemplo }] of Object.entries(NUMEROS) as [CampoNumerico, (typeof NUMEROS)[CampoNumerico]][]) {

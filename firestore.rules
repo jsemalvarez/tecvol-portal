@@ -6,7 +6,8 @@ service cloud.firestore {
     // ---- Roles ----
     // Personal de Tecvol: tiene un documento en personal/{uid} con un rol válido y sin baja.
     //   - administrador: todo (equipos, bajas, empresas, cuentas de clientes y del personal).
-    //   - jefe-taller: registra equipos y los actualiza (datos, estado e informe). No da de baja.
+    //   - jefe-taller: registra equipos y los actualiza (datos, estado e informe), y da de baja transformadores.
+    //     No da de baja O.T.
     // Mismos permisos que src/lib/dominio/roles.ts: si cambia uno, cambia el otro.
     // Nada se borra (delete: false en todo): las bajas son lógicas, con el campo `baja` (timestamp).
 
@@ -56,7 +57,7 @@ service cloud.firestore {
       return activo(d) || d.baja is timestamp;
     }
 
-    // Cambia la baja: solo un administrador la pone o la saca.
+    // Cambia la baja. En las O.T., solo un administrador la pone o la saca.
     function cambiaLaBaja() {
       return request.resource.data.diff(resource.data).affectedKeys().hasAny(['baja']);
     }
@@ -161,6 +162,15 @@ service cloud.firestore {
       allow read: if esPersonal();
       allow create: if esAdministrador() && empresaValida(request.resource.data) && activo(request.resource.data);
       allow update: if esAdministrador() && empresaValida(request.resource.data);
+      allow delete: if false;
+    }
+
+    // Cada transformador: su cliente, su N.º de trafo, su N.º T y su chapa. Solo el personal; el portal del
+    // cliente lee el N.º de trafo copiado en cada orden. Los dos roles lo dan de baja (destruido) y lo reactivan.
+    match /transformadores/{id} {
+      allow read: if esPersonal();
+      allow create: if esPersonal() && activo(request.resource.data) && textoHasta(request.resource.data.numero, 60);
+      allow update: if esPersonal() && bajaValida(request.resource.data);
       allow delete: if false;
     }
 

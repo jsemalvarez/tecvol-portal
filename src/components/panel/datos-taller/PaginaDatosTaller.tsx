@@ -8,7 +8,7 @@ import { nombreDe } from "@/components/portal/piezas";
 import { ErrorDePanel } from "@/lib/datos/repositorios";
 import { datosTallerVacios, type DatosTallerGuardados } from "@/lib/dominio/datos-taller";
 import { formatearCodigo, normalizarCodigo } from "@/lib/dominio/codigo";
-import { reparacionesDelTrafo } from "@/lib/dominio/trafo";
+import { ordenesDelTrafo, trafoDeOrden } from "@/lib/dominio/trafo";
 import { PaginaPanel, type ApiPanel } from "../PaginaPanel";
 import { FormularioDatosTaller, type DatosTallerAnteriores } from "./FormularioDatosTaller";
 
@@ -40,8 +40,8 @@ function ContenidoDatosTaller({ api, codigo }: { api: ApiPanel; codigo: string }
   const [carga, setCarga] = useState<Carga>(null);
   const [intento, setIntento] = useState(0);
   const { obtenerDatosTaller } = api.acciones;
-  // Reparaciones anteriores del mismo trafo, de la más nueva a la más vieja.
-  const anteriores = equipo?.numeroTrafo ? reparacionesDelTrafo(api.taller.equipos, equipo.numeroTrafo, equipo.codigo) : [];
+  // Otras órdenes del mismo transformador, de la más nueva a la más vieja.
+  const anteriores = equipo ? ordenesDelTrafo(api.taller.equipos, equipo.trafo, { excepto: equipo.codigo }) : [];
   const claveAnteriores = anteriores.map((e) => e.codigo).join(",");
 
   useEffect(() => {
@@ -78,8 +78,8 @@ function ContenidoDatosTaller({ api, codigo }: { api: ApiPanel; codigo: string }
         <span className="font-semibold">{nombreDe(equipo)}</span>
         {equipo.referencia && <> · {equipo.equipo}</>} · {api.empresaDe(equipo) || "Sin cliente"} · código{" "}
         <span className="tracking-[0.04em]">{formatearCodigo(equipo.codigo)}</span>
-        {equipo.numeroOrden && <> · orden N.º {equipo.numeroOrden}</>}
-        {equipo.numeroTrafo && <> · trafo N.º {equipo.numeroTrafo}</>}
+        {equipo.numeroOrden && <> · OT {equipo.numeroOrden}</>}
+        {equipo.serie && <> · trafo {trafoDeOrden(equipo)}</>}
       </p>
       {carga === null ? (
         <p role="status" className="mt-10 text-lg">

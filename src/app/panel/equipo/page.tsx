@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { PanelFicha } from "@/components/panel/ficha/PaginaFicha";
 
 export const metadata: Metadata = {
-  title: "Ficha del equipo · Panel · Tecvol",
+  title: "Orden de trabajo · Panel · Tecvol",
   robots: { index: false, follow: false },
 };
 

@@ -7,7 +7,7 @@ import type { Rol, RolPersonal } from "./roles";
 export type { Rol, RolPersonal } from "./roles";
 
 /** Lo que se puede dar de baja en el panel. La baja es lógica: queda guardado con la fecha y se puede reactivar. */
-export type Registro = "equipo" | "empresa" | "cuenta" | "personal";
+export type Registro = "equipo" | "transformador" | "empresa" | "cuenta" | "personal";
 
 /**
  * Documento público `seguimiento/{codigo}`: solo lo que puede ver cualquiera
@@ -72,56 +72,111 @@ export interface CuentaPersonal {
 }
 
 /**
- * Datos de un equipo que carga el personal: de qué empresa es, cómo se identifica y su chapa.
- * `equipo` es la descripción pública, que se arma con la chapa (ver `describirEquipo`).
+ * Un transformador (`transformadores/{id}`): la máquina, que pasa por el taller una o más veces, cada vez
+ * con una orden de trabajo. Es siempre del mismo cliente: no se vende ni pasa de una empresa a otra.
  */
-export interface DatosEquipo {
+export interface Transformador {
+  id: string;
   empresa: string;
-  equipo: string;
-  referencia?: string;
-  serie?: string;
-  /** N.º de la orden de trabajo de Punto Técnico, con la que empieza el trabajo. Una orden puede tener varios equipos. */
-  numeroOrden?: string;
   /**
-   * N.º que identifica al transformador. Se repite en cada reparación del mismo trafo: así se arma su
-   * historial (ver `reparacionesDelTrafo`).
+   * N.º de trafo: el de fábrica, en la chapa. Si no se ve o no lo tiene, uno temporal (`NT-0001`) hasta que
+   * se corrija; `provisorio` dice que es temporal.
    */
-  numeroTrafo?: string;
+  numero: string;
+  provisorio?: boolean;
+  /**
+   * N.º T: el número interno que le pone el cliente. No todos lo usan. El cliente puede cambiárselo o
+   * pasárselo a otro transformador: entre los activos de un cliente no se repite, y cada O.T. guarda el que
+   * tenía al ingresar (ver `historialNumeroT`).
+   */
+  numeroT?: string;
+  /**
+   * Los N.º T que tuvo antes, con la fecha en que dejó de tenerlos: así se sabe que lo tuvo aunque no haya
+   * ingresado al taller con él. Lo anota el repositorio al cambiar el N.º T (ver `conCambioDeT`).
+   */
+  cambiosT?: CambioT[];
+  /** Descripción pública, armada con la chapa (ver `describirEquipo`). La copian sus órdenes. */
+  equipo: string;
   uso?: Uso;
   placa?: Placa;
+  /** Fecha de baja: se destruyó o el cliente ya no lo tiene. Sus órdenes quedan y su N.º T queda libre. */
+  baja?: Date;
+}
+
+/** Un N.º T que tuvo un transformador y la fecha en que dejó de tenerlo. */
+export interface CambioT {
+  numeroT: string;
+  hasta: Date;
 }
 
 /**
- * Los datos de un equipo con todos sus campos opcionales presentes, aunque estén vacíos: al mezclarlos
- * con los anteriores, lo que se vació en el formulario borra lo que había.
+ * Lo que se carga de un transformador. El cliente se elige al darlo de alta y no cambia; los N.º T de antes
+ * los anota el repositorio.
  */
-export function conTodosLosCampos(datos: DatosEquipo): DatosEquipo {
-  return {
-    empresa: datos.empresa,
-    equipo: datos.equipo,
-    referencia: datos.referencia,
-    serie: datos.serie,
-    numeroOrden: datos.numeroOrden,
-    numeroTrafo: datos.numeroTrafo,
-    uso: datos.uso,
-    placa: datos.placa,
-  };
+export type DatosTransformador = Omit<Transformador, "id" | "empresa" | "baja" | "cambiosT">;
+
+/**
+ * Datos de una orden de trabajo que carga el personal. Lo del transformador (cliente, números y chapa)
+ * va en el transformador.
+ */
+export interface DatosOrden {
+  /**
+   * N.º de la orden de trabajo del sistema de gestión de la empresa, con el que después se factura. Es
+   * obligatorio; como a veces llega después del ingreso, se puede usar uno temporal (`TEMP-0001`) y
+   * cambiarlo después. Varias órdenes facturadas juntas lo comparten.
+   */
+  numeroOrden: string;
+  /** El N.º de O.T. es uno temporal: falta cargar el del sistema de gestión. */
+  numeroOrdenTemporal?: boolean;
+  /** Cómo llama el cliente al transformador o dónde estaba instalado, p. ej. "Subestación Barrio Norte". */
+  referencia?: string;
+  /** Lo que informa el cliente al mandarlo: la falla, una pérdida de aceite, un mantenimiento… */
+  motivo?: string;
 }
 
-/** Un equipo como lo ve el personal: el seguimiento, los datos privados, la empresa dueña y la chapa. */
+/**
+ * Un equipo como lo ve el personal: una orden de trabajo, con el seguimiento, sus datos y lo de su
+ * transformador (el cliente, los números, la descripción y la chapa), copiado al leerla (ver `conTransformador`).
+ */
 export interface EquipoTaller extends EquipoCliente {
+  /** El transformador de esta orden: lo comparten todas sus órdenes (ver `ordenesDelTrafo`). */
+  trafo: string;
   empresa: string;
+  /** Las cargadas antes de que fuera obligatorio pueden no tenerlo. */
   numeroOrden?: string;
-  numeroTrafo?: string;
+  numeroOrdenTemporal?: boolean;
+  motivo?: string;
+  /** El N.º T que tiene hoy el transformador. `serie` es su N.º de trafo, el de fábrica. */
+  numeroT?: string;
+  /**
+   * El N.º T con el que ingresó: el que tenía el transformador al crear la O.T. No cambia si después se lo
+   * cambian, así se puede seguir el número de un transformador a otro.
+   */
+  numeroTIngreso?: string;
   uso?: Uso;
   placa?: Placa;
   /** Fecha de baja: el cliente deja de verlo y su código deja de funcionar en la consulta pública. */
   baja?: Date;
 }
 
+/** La orden con lo de su transformador: el cliente, los números, la descripción y la chapa. */
+export function conTransformador(orden: EquipoTaller, trafo: Transformador | undefined): EquipoTaller {
+  if (!trafo) return orden;
+  return {
+    ...orden,
+    empresa: trafo.empresa,
+    equipo: trafo.equipo || orden.equipo,
+    serie: trafo.numero,
+    numeroT: trafo.numeroT,
+    uso: trafo.uso,
+    placa: trafo.placa,
+  };
+}
+
 /** Todo lo que maneja el panel del taller. Las cuentas solo las lee quien puede administrarlas. */
 export interface Taller {
   empresas: Empresa[];
+  transformadores: Transformador[];
   equipos: EquipoTaller[];
   cuentas: CuentaCliente[];
   personal: CuentaPersonal[];
@@ -134,6 +189,8 @@ export function conBaja<T extends Omit<Taller, "avisos">>(taller: T, registro: R
   switch (registro) {
     case "equipo":
       return { ...taller, equipos: taller.equipos.map((e) => (e.codigo === id ? { ...e, baja } : e)) };
+    case "transformador":
+      return { ...taller, transformadores: taller.transformadores.map((t) => (t.id === id ? { ...t, baja } : t)) };
     case "empresa":
       return { ...taller, empresas: taller.empresas.map((e) => (e.id === id ? { ...e, baja } : e)) };
     case "cuenta":

@@ -76,8 +76,8 @@ Es personal quien tenga un documento en `personal/{uid}` (el UID de su usuario d
 
 | Rol (`rol`) | Puede |
 |---|---|
-| `administrador` | Todo: equipos (alta, edición, estado, informe, baja), empresas, cuentas de clientes y cuentas del personal |
-| `jefe-taller` | Registrar equipos y actualizarlos (datos, estado e informe). No da de baja ni ve empresas o cuentas |
+| `administrador` | Todo: equipos (alta, edición, estado, informe, baja), transformadores (alta, edición, baja), empresas, cuentas de clientes y cuentas del personal |
+| `jefe-taller` | Registrar equipos y actualizarlos (datos, estado e informe), y dar de baja transformadores. No da de baja O.T. ni ve empresas o cuentas |
 
 Las cuentas de clientes solo leen los equipos de su empresa, en el portal.
 
@@ -100,21 +100,41 @@ En `/panel` el personal (los dos roles):
 - **Corrige las fechas** de cualquier etapa ya pasada, desde la misma ventana, sin cambiar el estado ni borrar
   las otras. Las etapas salteadas pueden quedar sin fecha; el ingreso y la etapa actual, no. Las fechas tienen
   que seguir el orden del taller (dos etapas pueden empezar el mismo día), también al cambiar el estado.
-- **Registra equipos**: primero el N.º de orden de Punto Técnico (obligatorio; si ya está en otro equipo, avisa
-  pero deja seguir, porque una orden puede incluir varios), la empresa dueña, la referencia del cliente y la chapa. La app genera
-  el código de seguimiento, crea `seguimiento/{codigo}` y `ordenes/{codigo}` y muestra una **etiqueta para
-  imprimir** con el código y un QR que abre `/seguimiento/{codigo}`.
-- **Reconoce los reingresos** por el N.º de trafo (opcional, después del N.º de orden): si ese número ya pasó
-  por el taller, muestra el **historial del trafo** (cada reparación con su orden, fechas, estado, datos e
-  informe) y, al registrar, deja **usar los datos** de una reparación anterior para no copiar la chapa de nuevo.
-  Cada reparación sigue siendo un equipo con su propio código y su propia chapa; el historial se arma juntando
-  las que tienen el mismo N.º de trafo, sin una colección aparte. Lo ve solo el taller.
-- Abre la **ficha de cada equipo** (`/panel/equipo`, tocando su nombre en la lista): el **recorrido** desde el
-  ingreso hasta hoy, con la fecha de cada etapa y cuántos días duró (o cuántos lleva la actual), los datos y lo
-  principal de la chapa, el historial del trafo y todas las acciones. Es la trazabilidad del equipo para el
-  personal.
+- Crea **órdenes de trabajo** ("+ Nueva O.T."): cada ingreso al taller es una O.T. de un **transformador**, en
+  una sola pantalla. Arriba la orden: el cliente, el N.º de O.T. (obligatorio: lo genera el sistema de gestión
+  de la empresa y se usa para facturar; si todavía no llegó, el botón "Usar N.º temporal" pone uno, `TEMP-0001`,
+  que queda marcado como temporal hasta que se escribe el verdadero desde "Editar"; si ya está en otra O.T.
+  avisa pero deja seguir, porque varias se facturan juntas), la fecha, la referencia y el motivo del ingreso.
+  Abajo el transformador: se busca entre los del cliente por N.º de trafo o N.º T (también uno que tuvo antes);
+  si ya pasó por el taller se elige, y si llegó con otro N.º T se le cambia ahí mismo; si no, se da de alta con
+  su chapa. La app genera el código de seguimiento, crea `seguimiento/{codigo}` y `ordenes/{codigo}` y muestra
+  una **etiqueta para imprimir** con el código y un QR que abre `/seguimiento/{codigo}` (sin el N.º de O.T. si
+  es temporal).
+- Cada **transformador** (`transformadores/{id}`) es de un solo cliente y no cambia de dueño. Tiene su
+  **N.º de trafo** (el de fábrica; obligatorio, y si no lo tiene o no se ve en la chapa, el botón "Usar N.º
+  temporal" pone uno, `NT-0001`, marcado como temporal hasta que se corrige), su **N.º T** (el interno del
+  cliente, opcional) y su chapa. El N.º T no se repite entre los transformadores activos de un cliente: si se
+  le pone a uno el que tiene otro, se pregunta qué pasó (el cliente se lo pasó a este y aquel queda sin N.º T;
+  aquel se destruyó y se da de baja; o es un error). Cada orden copia la empresa y el
+  N.º de trafo (`serie`), que el portal del cliente lee sin acceder a `transformadores`, y guarda el N.º T con
+  el que ingresó (`numeroTIngreso`), que no cambia aunque después se lo cambien al transformador; el
+  transformador anota los N.º T que tuvo y hasta cuándo (`cambiosT`). Con eso se sigue un N.º T de un
+  transformador a otro. Las órdenes cargadas antes reciben su transformador al abrir el panel
+  (`migrarTransformadores`): el N.º de fabricación pasa a ser el N.º de trafo y el N.º de trafo de antes
+  (`numeroTrafo`), el N.º T y el N.º T con el que ingresaron.
+- La sección **Transformadores** (`/panel/transformadores`) los lista con su última O.T. y los busca también
+  por un N.º T que tuvieron antes o por el N.º de cualquiera de sus O.T. Su botón "Nuevo transformador"
+  (`/panel/transformador/nuevo`) da de alta uno sin O.T.: el cliente, el N.º de trafo (o uno temporal), el N.º T
+  y la chapa, con aviso si el cliente ya tiene uno con el mismo N.º de trafo. La **ficha del transformador**
+  (`/panel/transformador?id=`) muestra sus datos y su chapa (se editan en `/panel/transformador/editar`), todas
+  sus O.T. (cada una con el N.º T con el que ingresó, si era otro), la **trazabilidad de cada N.º T** que tuvo
+  (qué transformadores lo tuvieron, hasta cuándo y con qué O.T. ingresaron con él), el botón para crear su O.T.
+  nueva cuando vuelve al taller y la baja (los dos roles). Por ahora la ve solo el taller.
+- Abre cada **orden de trabajo** (`/panel/equipo`, tocando su N.º de O.T. en la lista): su transformador, el
+  **recorrido** desde el ingreso hasta hoy, con la fecha de cada etapa y cuántos días duró (o cuántos lleva la
+  actual), sus datos, las demás O.T. del transformador y todas las acciones.
 - En la lista, cada fila tiene **"Cambiar estado"**, lo de todos los días, y un menú **"Más"** con el resto: la
-  ficha, editar los datos, el informe, los datos del taller y la etiqueta. Las acciones salen de un solo lugar
+  ficha, editar los datos, el informe, los datos del taller, la ficha del transformador y la etiqueta. Las acciones salen de un solo lugar
   (`accionesDe`, en `AccionesEquipo.tsx`): una nueva aparece en el menú y en la ficha.
 - **Edita los datos** de un equipo y carga su **informe de diagnóstico**.
 - **Lleva el orden de los trabajos**: la lista muestra cuántos días lleva cada equipo en el taller (desde el
@@ -126,8 +146,8 @@ En `/panel` el personal (los dos roles):
 - Carga los **datos del taller** de cada reparación (`/panel/datos-taller`): lo que anota el taller y no va en
   el informe. Hoy, por bobina de alta y de baja, el material y la medida del alambre, las espiras y el peso del
   conductor; el aislamiento de prespan (medidas y peso), las derivaciones y los materiales. Si se suman otros
-  datos del taller, van en esta misma página. En un reingreso, puede copiar los de la reparación anterior del
-  mismo trafo. Como el informe, solo lo ve el personal.
+  datos del taller, van en esta misma página. En un reingreso, puede copiar los de una orden anterior del mismo
+  transformador. Como el informe, solo lo ve el personal.
 
 Solo el administrador:
 
@@ -150,14 +170,15 @@ directamente: esa cuenta no tendría empresa ni sería personal, así que no ver
 | `personal/{uid}` | El administrador; cada uno, el suyo | El administrador (no el suyo) | `rol`, `email` y `baja` (opcional) |
 | `empresas/{id}` | El personal; cada cliente, la suya | El administrador | `nombre`: como lo ve el cliente en su portal; `baja` |
 | `clientes/{uid}` | El administrador; cada cliente, la suya | El administrador | `empresa` (el ID de `empresas`), `email` y `baja` |
-| `ordenes/{codigo}` | El personal; cada cliente, las de su empresa | El personal | `empresa`, `referencia`, `serie`, `numeroOrden`, `numeroTrafo`, chapa… y `baja` |
+| `ordenes/{codigo}` | El personal; cada cliente, las de su empresa | El personal | `empresa`, `trafo`, `referencia`, `serie`, `numeroOrden`, `numeroOrdenTemporal`, `numeroTIngreso` (antes `numeroTrafo`), chapa… y `baja` |
 | `informes/{codigo}` | El personal | El personal | Informe de diagnóstico |
 | `datosTaller/{codigo}` | El personal | El personal | Datos del taller: bobinado (alambre, espiras, peso), prespan, derivaciones y materiales |
 | `ajustes/avisos` | El personal | El administrador | `ingreso` y `aprobacion`: días (enteros, de 1 a 365) antes del aviso de demora |
 
 El estado y las etapas viven solo en `seguimiento/{codigo}`: el panel lo escribe y el portal y la consulta
 pública lo leen. Solo el personal recorre `seguimiento` entera; las reglas validan que el estado sea uno de
-la lista. En `seguimiento` y `ordenes`, solo el administrador pone o saca `baja`.
+la lista. En `seguimiento` y `ordenes`, solo el administrador pone o saca `baja`; en `transformadores`, los
+dos roles.
 
 El portal es de consulta: el cliente ve los equipos de su empresa, el estado de cada uno, la fecha de cada
 etapa y los entregados. Con "Compartir seguimiento" le pasa un equipo a otra persona (un operario, por

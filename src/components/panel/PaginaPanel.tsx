@@ -10,6 +10,7 @@ import { modoDatos } from "@/lib/datos/repositorios";
 import { conAviso } from "@/lib/dominio/avisos";
 import { formatearCodigo } from "@/lib/dominio/codigo";
 import { DEFINICIONES, type EstadoReparacion } from "@/lib/dominio/estados";
+import { ordenParaEtiqueta } from "@/lib/dominio/trafo";
 import { NOMBRES_ROL, puede, type Permiso } from "@/lib/dominio/roles";
 import { activos, type CuentaCliente, type CuentaPersonal, type Empresa, type EquipoTaller, type Registro, type RolPersonal, type Taller } from "@/lib/dominio/tipos";
 import { Dialogo, mensajeDeError } from "./Dialogo";
@@ -58,11 +59,12 @@ interface Aviso {
   deshacer?: () => Promise<void>;
 }
 
-type Seccion = "equipos" | "empresas" | "personal";
+type Seccion = "equipos" | "transformadores" | "empresas" | "personal";
 
-/** Cada sección se ve solo con su permiso: el jefe de taller ve solo los equipos. */
+/** Cada sección se ve solo con su permiso: el jefe de taller ve las órdenes y los transformadores. */
 const SECCIONES: { id: Seccion; href: string; nombre: string; permiso: Permiso }[] = [
-  { id: "equipos", href: "/panel", nombre: "Equipos", permiso: "equipos" },
+  { id: "equipos", href: "/panel", nombre: "Órdenes de trabajo", permiso: "equipos" },
+  { id: "transformadores", href: "/panel/transformadores", nombre: "Transformadores", permiso: "equipos" },
   { id: "empresas", href: "/panel/empresas", nombre: "Empresas y cuentas", permiso: "empresas" },
   { id: "personal", href: "/panel/personal", nombre: "Personal", permiso: "cuentas" },
 ];
@@ -274,7 +276,7 @@ export function PaginaPanel({
         aria-busy={estado.fase === "verificando" || estado.fase === "cargando"}
         className="mx-auto w-full max-w-[1500px] flex-1 px-7 pb-20 pt-8 sm:px-12 sm:pt-10 xl:px-24"
       >
-        {/* Con una sola sección (el jefe de taller ve solo los equipos) no hace falta el menú. */}
+        {/* Con una sola sección no hace falta el menú. */}
         {visibles.length > 1 && (
           <nav aria-label="Secciones del panel" className="flex flex-wrap gap-x-7 gap-y-2">
             {visibles.map((s) => (
@@ -306,8 +308,16 @@ export function PaginaPanel({
             </h1>
           </div>
           {conEncabezado && seccion === "equipos" && (
-            <Link href="/panel/registrar" className="placa">
-              Registrar equipo
+            <div className="flex flex-col items-center gap-1.5">
+              <Link href="/panel/registrar" className="placa">
+                + Nueva O.T.
+              </Link>
+              <span className="text-[0.9375rem] text-grafito">(OT) Orden de Trabajo</span>
+            </div>
+          )}
+          {conEncabezado && seccion === "transformadores" && (
+            <Link href="/panel/transformador/nuevo" className="placa">
+              + Nuevo transformador
             </Link>
           )}
           {conEncabezado && seccion === "empresas" && (
@@ -394,7 +404,7 @@ export function PaginaPanel({
             ancho="max-w-[34rem]"
           >
             {enVentana && ventana?.tipo === "etiqueta" && (
-              <Etiqueta equipo={enVentana} empresa={nombreEmpresa(enVentana.empresa)} orden={enVentana.numeroOrden} />
+              <Etiqueta equipo={enVentana} empresa={nombreEmpresa(enVentana.empresa)} orden={ordenParaEtiqueta(enVentana)} />
             )}
           </Dialogo>
 

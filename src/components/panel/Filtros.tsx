@@ -41,8 +41,8 @@ function comparador(orden: Orden) {
 }
 
 /**
- * Búsqueda por código, referencia, equipo, N.º de fabricación, N.º de orden, N.º de trafo, fabricante o empresa, más los
- * filtros de empresa y estado, y el orden.
+ * Búsqueda por código, referencia, equipo, N.º de trafo, N.º de O.T., N.º T (el de hoy o el que tenía al
+ * ingresar), motivo, fabricante o empresa, más los filtros de empresa y estado, y el orden.
  */
 export function useFiltros(equipos: EquipoTaller[], empresas: Empresa[], limites: LimitesAvisos) {
   const [texto, setTexto] = useState("");
@@ -65,7 +65,9 @@ export function useFiltros(equipos: EquipoTaller[], empresas: Empresa[], limites
         if (!buscado) return true;
         if (codigo.length >= 2 && e.codigo.includes(codigo)) return true;
         return sinAcentos(
-          [e.referencia, e.equipo, e.serie, e.numeroOrden, e.numeroTrafo, e.placa?.fabricante, nombres.get(e.empresa)].filter(Boolean).join(" "),
+          [e.referencia, e.equipo, e.serie, e.numeroOrden, e.numeroT, e.numeroTIngreso, e.motivo, e.placa?.fabricante, nombres.get(e.empresa)]
+            .filter(Boolean)
+            .join(" "),
         ).includes(buscado);
       })
       .sort(comparador(orden));
@@ -91,7 +93,7 @@ export function BarraFiltros({
 }) {
   const id = useId();
   return (
-    <div role="search" aria-label="Buscar equipos">
+    <div role="search" aria-label="Buscar órdenes de trabajo">
       <div className="grid gap-x-6 gap-y-4 md:grid-cols-3 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
         {/* La búsqueda ocupa la fila entera en pantallas medianas; en las grandes, las cuatro van en fila. */}
         <div className="md:col-span-3 xl:col-span-1">
@@ -164,8 +166,8 @@ export function BarraFiltros({
         {filtros.estado === "baja"
           ? `${filtros.filtrados.length} ${filtros.filtrados.length === 1 ? "dado" : "dados"} de baja`
           : filtros.filtrados.length === total
-            ? `${total} ${total === 1 ? "equipo" : "equipos"}`
-            : `${filtros.filtrados.length} de ${total} equipos`}
+            ? `${total} ${total === 1 ? "orden de trabajo" : "órdenes de trabajo"}`
+            : `${filtros.filtrados.length} de ${total} órdenes de trabajo`}
       </p>
     </div>
   );

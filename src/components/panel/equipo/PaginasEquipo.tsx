@@ -3,65 +3,81 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { nombreDe } from "@/components/portal/piezas";
 import { formatearCodigo, normalizarCodigo } from "@/lib/dominio/codigo";
 import type { EquipoTaller } from "@/lib/dominio/tipos";
+import { nombreOrden, ordenParaEtiqueta, trafoDeOrden } from "@/lib/dominio/trafo";
 import { Dialogo, ErrorFormulario, mensajeDeError } from "../Dialogo";
 import { Etiqueta } from "../Etiqueta";
 import { dejarAviso, PaginaPanel } from "../PaginaPanel";
 import type { AccionesPanel } from "../usePanel";
-import { FormularioEquipo } from "./FormularioEquipo";
+import { FormularioOrden, FormularioOT } from "./FormularioOT";
 
 const enlace = "font-semibold underline decoration-naranja decoration-2 underline-offset-4";
 
 /**
- * Registrar un equipo que llega al taller. Al terminar, la misma página muestra la etiqueta con el
- * código y el QR para imprimir, y deja registrar el siguiente.
+ * Una orden de trabajo nueva para el transformador que llega: uno que ya pasó por el taller (desde su
+ * ficha llega en `?trafo=`) o uno nuevo. Al terminar, la misma página muestra la etiqueta con el código y
+ * el QR para imprimir, y deja crear la siguiente.
  */
 export function PanelRegistrar() {
+  const router = useRouter();
+  const trafoInicial = useSearchParams().get("trafo") ?? undefined;
   const [registrado, setRegistrado] = useState<EquipoTaller | null>(null);
-  // Cambia con cada equipo nuevo, para que el formulario vuelva a empezar vacío.
+  // Cambia con cada O.T. nueva, para que el formulario vuelva a empezar vacío.
   const [ronda, setRonda] = useState(0);
 
   return (
-    <PaginaPanel seccion="equipos" titulo={registrado ? "Equipo registrado" : "Registrar equipo"}>
+    <PaginaPanel seccion="equipos" titulo={registrado ? "O.T. creada" : "Nueva O.T."}>
       {(api) =>
         registrado ? (
           <div className="mt-6 flex flex-col items-start gap-6">
             <p role="status" className="max-w-[56ch] text-lg">
-              Quedó registrado como <strong className="font-semibold">Ingresado</strong> con el código{" "}
-              <strong className="font-semibold tracking-[0.04em]">{formatearCodigo(registrado.codigo)}</strong>. Imprima la etiqueta y
-              péguela en el equipo o en la orden de trabajo en papel.
+              La <strong className="font-semibold">{nombreOrden(registrado)}</strong>
+              {registrado.numeroOrdenTemporal && " (N.º temporal)"} del transformador{" "}
+              <strong className="font-semibold">{trafoDeOrden(registrado)}</strong> quedó como <strong className="font-semibold">Ingresado</strong>{" "}
+              con el código <strong className="font-semibold tracking-[0.04em]">{formatearCodigo(registrado.codigo)}</strong>. Imprima la
+              etiqueta y péguela en el transformador o en la orden en papel.
+              {registrado.numeroOrdenTemporal && " La etiqueta sale sin el N.º de O.T.: cárguelo en la O.T. cuando lo tenga."}
             </p>
-            <Etiqueta equipo={registrado} empresa={api.empresaDe(registrado)} orden={registrado.numeroOrden} />
+            <Etiqueta equipo={registrado} empresa={api.empresaDe(registrado)} orden={ordenParaEtiqueta(registrado)} />
             <p className="flex flex-wrap gap-x-6 gap-y-2">
               <button
                 type="button"
                 onClick={() => {
                   setRegistrado(null);
                   setRonda((n) => n + 1);
+                  // La siguiente puede ser de otro transformador: se empieza sin el de la dirección.
+                  if (trafoInicial) router.replace("/panel/registrar");
                   window.scrollTo({ top: 0 });
                 }}
                 className={`cursor-pointer ${enlace}`}
               >
-                Registrar otro equipo
+                Crear otra O.T.
               </button>
+              <Link href={`/panel/equipo?codigo=${registrado.codigo}`} className={enlace}>
+                Ver la O.T.
+              </Link>
+              <Link href={`/panel/transformador?id=${registrado.trafo}`} className={enlace}>
+                Ver el transformador
+              </Link>
               <Link href="/panel" className={enlace}>
-                Ver todos los equipos
+                Ver todas las órdenes de trabajo
               </Link>
             </p>
           </div>
         ) : (
           <>
             <p className="mt-4 max-w-[62ch] text-lg">
-              Empiece por el N.º de orden de Punto Técnico y, con el equipo a la vista, copie su chapa de arriba hacia abajo. Solo
-              son obligatorios el N.º de orden, el cliente, la fecha de recepción y las fases.
+              Primero los datos de la orden y después el transformador que llegó: si ya pasó por el taller, búsquelo por su N.º de trafo o
+              su N.º T; si no, dé de alta uno nuevo con su chapa.
             </p>
-            <FormularioEquipo
+            <FormularioOT
               key={ronda}
               taller={api.taller}
               acciones={api.acciones}
               crearEmpresas={api.puede("empresas")}
+              puedeDarDeBaja={api.puede("baja-transformadores")}
+              trafoInicial={trafoInicial}
               onRegistrado={(equipo) => {
                 setRegistrado(equipo);
                 window.scrollTo({ top: 0 });
@@ -74,21 +90,21 @@ export function PanelRegistrar() {
   );
 }
 
-/** Corregir o completar los datos y la chapa de un equipo ya registrado. Al guardar, vuelve a la lista. */
+/** Corregir o completar los datos de una orden ya creada. Al guardar, vuelve a su ficha. */
 export function PanelEditar() {
   const router = useRouter();
   const codigo = normalizarCodigo(useSearchParams().get("codigo") ?? "");
 
   return (
-    <PaginaPanel seccion="equipos" titulo="Datos del equipo">
+    <PaginaPanel seccion="equipos" titulo="Datos de la O.T.">
       {(api) => {
         const equipo = api.taller.equipos.find((e) => e.codigo === codigo);
         if (!equipo) {
           return (
             <p className="mt-6 max-w-[56ch] text-lg">
-              No se encontró el equipo{codigo ? ` ${formatearCodigo(codigo)}` : ""}.{" "}
+              No se encontró la orden de trabajo{codigo ? ` ${formatearCodigo(codigo)}` : ""}.{" "}
               <Link href="/panel" className={enlace}>
-                Volver a la lista de equipos
+                Volver a las órdenes de trabajo
               </Link>
               .
             </p>
@@ -98,11 +114,11 @@ export function PanelEditar() {
           return (
             <div className="mt-6 flex flex-col items-start gap-5">
               <p className="max-w-[56ch] text-lg">
-                <span className="font-semibold">{nombreDe(equipo)}</span> está dado de baja: no se puede editar.
-                {api.puede("baja-equipos") ? " Reactívelo para volver a trabajar con él." : " Si hace falta, pídale a un administrador que lo reactive."}
+                La <span className="font-semibold">{nombreOrden(equipo)}</span> está dada de baja: no se puede editar.
+                {api.puede("baja-equipos") ? " Reactívela para volver a trabajar con ella." : " Si hace falta, pídale a un administrador que la reactive."}
               </p>
               {api.puede("baja-equipos") && (
-                <button type="button" onClick={() => api.reactivar("equipo", equipo.codigo, nombreDe(equipo))} className="placa-secundaria">
+                <button type="button" onClick={() => api.reactivar("equipo", equipo.codigo, nombreOrden(equipo))} className="placa-secundaria">
                   Reactivar
                 </button>
               )}
@@ -112,18 +128,19 @@ export function PanelEditar() {
         return (
           <>
             <p className="mt-4 text-lg">
-              <span className="font-semibold">{nombreDe(equipo)}</span> · código{" "}
-              <span className="tracking-[0.04em]">{formatearCodigo(equipo.codigo)}</span>
-              {equipo.numeroOrden && <> · orden N.º {equipo.numeroOrden}</>}
+              <span className="font-semibold">{nombreOrden(equipo)}</span> · código{" "}
+              <span className="tracking-[0.04em]">{formatearCodigo(equipo.codigo)}</span> · transformador{" "}
+              <Link href={`/panel/transformador?id=${equipo.trafo}`} className={enlace}>
+                {trafoDeOrden(equipo)}
+              </Link>
             </p>
-            <FormularioEquipo
+            <FormularioOrden
               taller={api.taller}
               acciones={api.acciones}
               equipo={equipo}
-              crearEmpresas={api.puede("empresas")}
               onGuardado={(guardado) => {
-                dejarAviso(`Se guardaron los datos de ${nombreDe(guardado)}.`);
-                router.push("/panel");
+                dejarAviso(`Se guardaron los datos de la ${nombreOrden(guardado)}.`);
+                router.push(`/panel/equipo?codigo=${guardado.codigo}`);
               }}
             />
             {api.puede("baja-equipos") && (
@@ -131,7 +148,7 @@ export function PanelEditar() {
                 equipo={equipo}
                 acciones={api.acciones}
                 onBaja={() => {
-                  dejarAviso(`Se dio de baja ${nombreDe(equipo)}. Para reactivarlo, elija la vista "Dados de baja".`);
+                  dejarAviso(`Se dio de baja la ${nombreOrden(equipo)}. Para reactivarla, elija la vista "Dados de baja".`);
                   router.push("/panel");
                 }}
               />
@@ -144,7 +161,7 @@ export function PanelEditar() {
 }
 
 /**
- * Dar de baja un equipo, con confirmación: el cliente deja de verlo y el código deja de funcionar. Nada se
+ * Dar de baja una orden, con confirmación: el cliente deja de verla y el código deja de funcionar. Nada se
  * borra: queda en la vista "Dados de baja" de la lista, desde donde se reactiva.
  */
 function BajaEquipo({ equipo, acciones, onBaja }: { equipo: EquipoTaller; acciones: AccionesPanel; onBaja: () => void }) {
@@ -170,16 +187,16 @@ function BajaEquipo({ equipo, acciones, onBaja }: { equipo: EquipoTaller; accion
         Dar de baja
       </h2>
       <p className="mt-2">
-        Para un equipo cargado por error o que ya no corresponde seguir. El cliente deja de verlo en su portal y el código deja de
+        Para una O.T. cargada por error o que ya no corresponde seguir. El cliente deja de verla en su portal y el código deja de
         funcionar en la consulta pública. Nada se borra: se puede reactivar.
       </p>
       <button type="button" onClick={() => setConfirmando(true)} className="placa-secundaria mt-4">
-        Dar de baja el equipo
+        Dar de baja la O.T.
       </button>
-      <Dialogo abierto={confirmando} titulo="Dar de baja el equipo" onCerrar={() => setConfirmando(false)}>
+      <Dialogo abierto={confirmando} titulo="Dar de baja la O.T." onCerrar={() => setConfirmando(false)}>
         <div className="flex flex-col gap-5">
           <p className="max-w-[56ch]">
-            ¿Dar de baja <strong className="font-semibold">{nombreDe(equipo)}</strong> ({formatearCodigo(equipo.codigo)})? Los cambios
+            ¿Dar de baja la <strong className="font-semibold">{nombreOrden(equipo)}</strong> ({formatearCodigo(equipo.codigo)})? Los cambios
             sin guardar de este formulario se pierden.
           </p>
           <ErrorFormulario texto={error} />

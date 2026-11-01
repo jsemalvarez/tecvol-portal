@@ -7,11 +7,14 @@ import {
   doc,
   getDoc,
   getDocs,
+  query,
   serverTimestamp,
   setDoc,
   Timestamp,
   updateDoc,
+  where,
   writeBatch,
+  type DocumentData,
 } from "firebase/firestore";
 import { leerLimites, type LimitesAvisos } from "@/lib/dominio/avisos";
 import { datosTallerParaGuardar, leerDatosTaller, type DatosTaller, type DatosTallerGuardados } from "@/lib/dominio/datos-taller";
@@ -21,7 +24,21 @@ import { informeParaGuardar, leerInforme, type Informe, type InformeGuardado } f
 import { esUso, leerPlaca } from "@/lib/dominio/placa";
 import { esRolPersonal, puede } from "@/lib/dominio/roles";
 import { facturacionParaGuardar, leerFacturacion } from "@/lib/dominio/facturacion";
-import type { CuentaCliente, CuentaPersonal, DatosEmpresa, DatosEquipo, Empresa, EquipoTaller, Registro, RolPersonal, Taller } from "@/lib/dominio/tipos";
+import { conCambioDeT, migrarTransformadores, nuevoIdTrafo, type OrdenAntigua } from "@/lib/dominio/trafo";
+import {
+  conTransformador,
+  type CuentaCliente,
+  type CuentaPersonal,
+  type DatosEmpresa,
+  type DatosOrden,
+  type DatosTransformador,
+  type Empresa,
+  type EquipoTaller,
+  type Registro,
+  type RolPersonal,
+  type Taller,
+  type Transformador,
+} from "@/lib/dominio/tipos";
 import { ErrorDePanel, type MotivoErrorDePanel, type PanelRepositorio } from "../repositorios";
 import { obtenerFirestore } from "./app";
 import { configuracionFirebase } from "./config";
@@ -31,7 +48,12 @@ const texto = (valor: unknown) => (typeof valor === "string" && valor.trim() ? v
 const fecha = (valor: unknown) => (valor instanceof Timestamp ? valor.toDate() : undefined);
 
 /** Dónde vive cada registro que se da de baja. El equipo son dos documentos: ver `cambiarBaja`. */
-const COLECCIONES: Record<Exclude<Registro, "equipo">, string> = { empresa: "empresas", cuenta: "clientes", personal: "personal" };
+const COLECCIONES: Record<Exclude<Registro, "equipo">, string> = {
+  transformador: "transformadores",
+  empresa: "empresas",
+  cuenta: "clientes",
+  personal: "personal",
+};
 
 function motivo(error: unknown): MotivoErrorDePanel {
   if (!(error instanceof FirebaseError)) return "desconocido";
@@ -94,9 +116,10 @@ export class PanelFirestore implements PanelRepositorio {
     const db = obtenerFirestore();
     // Las reglas solo dejan leer las cuentas a quien puede administrarlas: los demás ni las piden.
     const conCuentas = puede(rol, "cuentas");
-    const [empresas, ordenes, seguimientos, clientes, personal, avisos] = await guardar(() =>
+    const [empresas, trafos, ordenes, seguimientos, clientes, personal, avisos] = await guardar(() =>
       Promise.all([
         getDocs(collection(db, "empresas")),
+        getDocs(collection(db, "transformadores")),
         getDocs(collection(db, "ordenes")),
         getDocs(collection(db, "seguimiento")),
         conCuentas ? getDocs(collection(db, "clientes")) : null,
@@ -107,22 +130,40 @@ export class PanelFirestore implements PanelRepositorio {
     );
 
     const privados = new Map(ordenes.docs.map((o) => [o.id, o.data()]));
+    const publicos = new Map(
+      seguimientos.docs.flatMap((s) => {
+        const publico = leerSeguimiento(s.id, s.data());
+        return publico ? [[s.id, { publico, baja: fecha(s.data().baja) }] as const] : [];
+      }),
+    );
+    const transformadores = trafos.docs.map((t) => leerTransformador(t.id, t.data()));
+    const { nuevos, asignados } = await migrar(privados, publicos, transformadores);
+    transformadores.push(...nuevos);
+    const porId = new Map(transformadores.map((t) => [t.id, t]));
+
     const equipos: EquipoTaller[] = [];
-    for (const s of seguimientos.docs) {
-      const publico = leerSeguimiento(s.id, s.data());
-      if (!publico) continue;
-      const orden = privados.get(s.id) ?? {};
-      equipos.push({
-        ...publico,
-        empresa: texto(orden.empresa) ?? "",
-        referencia: texto(orden.referencia),
-        serie: texto(orden.serie),
-        numeroOrden: texto(orden.numeroOrden),
-        numeroTrafo: texto(orden.numeroTrafo),
-        uso: esUso(orden.uso) ? orden.uso : undefined,
-        placa: leerPlaca(orden.placa),
-        baja: fecha(s.data().baja),
-      });
+    for (const [codigo, { publico, baja }] of publicos) {
+      const orden = privados.get(codigo) ?? {};
+      const trafo = asignados.get(codigo) ?? texto(orden.trafo);
+      equipos.push(
+        conTransformador(
+          {
+            ...publico,
+            // Un seguimiento sin orden (no debería pasar) queda solo, con un transformador que no existe.
+            trafo: trafo ?? nuevoIdTrafo(),
+            empresa: texto(orden.empresa) ?? "",
+            referencia: texto(orden.referencia),
+            serie: texto(orden.serie),
+            numeroOrden: texto(orden.numeroOrden),
+            ...(orden.numeroOrdenTemporal === true ? { numeroOrdenTemporal: true } : {}),
+            motivo: texto(orden.motivo),
+            // Las cargadas antes de que existieran los transformadores tienen el N.º T como `numeroTrafo`.
+            numeroTIngreso: texto(orden.numeroTIngreso) ?? texto(orden.numeroTrafo),
+            baja,
+          },
+          trafo ? porId.get(trafo) : undefined,
+        ),
+      );
     }
 
     return {
@@ -134,6 +175,7 @@ export class PanelFirestore implements PanelRepositorio {
           baja: fecha(e.data().baja),
         }))
         .sort((a, b) => a.nombre.localeCompare(b.nombre, "es")),
+      transformadores,
       equipos,
       cuentas: (clientes?.docs ?? []).map((c) => ({
         uid: c.id,
@@ -160,9 +202,21 @@ export class PanelFirestore implements PanelRepositorio {
     );
   }
 
-  async registrarEquipo(datos: DatosEquipo, ingreso: Date): Promise<EquipoTaller> {
+  async registrarEquipo(
+    datos: DatosOrden,
+    ingreso: Date,
+    trafo: string | { empresa: string; datos: DatosTransformador },
+  ): Promise<{ equipo: EquipoTaller; transformador: Transformador }> {
     const db = obtenerFirestore();
     return guardar(async () => {
+      let transformador: Transformador;
+      if (typeof trafo === "string") {
+        const guardado = await getDoc(doc(db, "transformadores", trafo));
+        if (!guardado.exists()) throw new ErrorDePanel("desconocido");
+        transformador = leerTransformador(guardado.id, guardado.data());
+      } else {
+        transformador = { id: doc(collection(db, "transformadores")).id, empresa: trafo.empresa, ...trafo.datos };
+      }
       // El código es aleatorio: se descarta si ya existe, algo muy improbable.
       let codigo = generarCodigo();
       for (let intento = 0; (await getDoc(doc(db, "seguimiento", codigo))).exists(); intento++) {
@@ -170,42 +224,95 @@ export class PanelFirestore implements PanelRepositorio {
         codigo = generarCodigo();
       }
       const lote = writeBatch(db);
+      if (typeof trafo !== "string") {
+        lote.set(doc(db, "transformadores", transformador.id), { ...transformadorParaGuardar(transformador), creado: serverTimestamp() });
+      }
       lote.set(doc(db, "seguimiento", codigo), {
         estado: "ingresado",
-        equipo: datos.equipo,
+        equipo: transformador.equipo,
         etapas: { ingresado: Timestamp.fromDate(ingreso) },
         actualizado: serverTimestamp(),
       });
+      // La empresa y el N.º de trafo se copian en la orden: el portal del cliente lee solo las órdenes. El
+      // N.º T queda como estaba al ingresar, aunque después se lo cambien al transformador.
       lote.set(doc(db, "ordenes", codigo), {
-        empresa: datos.empresa,
+        trafo: transformador.id,
+        empresa: transformador.empresa,
+        serie: transformador.numero,
+        ...(transformador.numeroT ? { numeroTIngreso: transformador.numeroT } : {}),
+        numeroOrden: datos.numeroOrden,
+        ...(datos.numeroOrdenTemporal ? { numeroOrdenTemporal: true } : {}),
         ...(datos.referencia ? { referencia: datos.referencia } : {}),
-        ...(datos.serie ? { serie: datos.serie } : {}),
-        ...(datos.numeroOrden ? { numeroOrden: datos.numeroOrden } : {}),
-        ...(datos.numeroTrafo ? { numeroTrafo: datos.numeroTrafo } : {}),
-        ...(datos.uso ? { uso: datos.uso } : {}),
-        ...(datos.placa ? { placa: datos.placa } : {}),
+        ...(datos.motivo ? { motivo: datos.motivo } : {}),
         creada: serverTimestamp(),
       });
       await lote.commit();
-      return { codigo, estado: "ingresado", etapas: { ingresado: ingreso }, actualizado: new Date(), ...datos };
+      const equipo = conTransformador(
+        {
+          codigo,
+          trafo: transformador.id,
+          empresa: transformador.empresa,
+          estado: "ingresado",
+          etapas: { ingresado: ingreso },
+          actualizado: new Date(),
+          equipo: transformador.equipo,
+          ...datos,
+          numeroTIngreso: transformador.numeroT,
+        },
+        transformador,
+      );
+      return { equipo, transformador };
     });
   }
 
-  async editarEquipo(codigo: string, datos: DatosEquipo): Promise<void> {
+  async crearTransformador(empresa: string, datos: DatosTransformador): Promise<Transformador> {
+    const db = obtenerFirestore();
+    const transformador: Transformador = { id: doc(collection(db, "transformadores")).id, empresa, ...datos };
+    await guardar(() =>
+      setDoc(doc(db, "transformadores", transformador.id), { ...transformadorParaGuardar(transformador), creado: serverTimestamp() }),
+    );
+    return transformador;
+  }
+
+  async editarEquipo(codigo: string, datos: DatosOrden): Promise<void> {
+    await guardar(() =>
+      updateDoc(doc(obtenerFirestore(), "ordenes", codigo), {
+        numeroOrden: datos.numeroOrden,
+        numeroOrdenTemporal: datos.numeroOrdenTemporal ? true : deleteField(),
+        referencia: datos.referencia ?? deleteField(),
+        motivo: datos.motivo ?? deleteField(),
+      }),
+    );
+  }
+
+  async editarTransformador(id: string, datos: DatosTransformador): Promise<void> {
     const db = obtenerFirestore();
     await guardar(async () => {
+      const [ordenes, guardado] = await Promise.all([
+        getDocs(query(collection(db, "ordenes"), where("trafo", "==", id))),
+        getDoc(doc(db, "transformadores", id)),
+      ]);
+      // Si cambia el N.º T, el de antes queda anotado con la fecha (ver `conCambioDeT`).
+      const anterior = guardado.exists() ? leerTransformador(id, guardado.data()) : undefined;
+      const cambiosT = anterior && conCambioDeT(anterior, datos.numeroT);
       const lote = writeBatch(db);
-      lote.update(doc(db, "seguimiento", codigo), { equipo: datos.equipo, actualizado: serverTimestamp() });
       // `update` reemplaza la placa entera: un `set` con `merge` mezclaría la anterior y no borraría lo que se vació.
-      lote.update(doc(db, "ordenes", codigo), {
-        empresa: datos.empresa,
-        referencia: datos.referencia ?? deleteField(),
-        serie: datos.serie ?? deleteField(),
-        numeroOrden: datos.numeroOrden ?? deleteField(),
-        numeroTrafo: datos.numeroTrafo ?? deleteField(),
+      lote.update(doc(db, "transformadores", id), {
+        numero: datos.numero,
+        provisorio: datos.provisorio ? true : deleteField(),
+        numeroT: datos.numeroT ?? deleteField(),
+        ...(cambiosT && cambiosT !== anterior.cambiosT
+          ? { cambiosT: cambiosT.map((c) => ({ numeroT: c.numeroT, hasta: Timestamp.fromDate(c.hasta) })) }
+          : {}),
+        equipo: datos.equipo,
         uso: datos.uso ?? deleteField(),
         placa: datos.placa ?? deleteField(),
       });
+      // Sus órdenes copian la descripción (la ven el cliente y cualquiera con el código) y el N.º de trafo.
+      for (const orden of ordenes.docs) {
+        lote.update(doc(db, "seguimiento", orden.id), { equipo: datos.equipo, actualizado: serverTimestamp() });
+        lote.update(orden.ref, { serie: datos.numero });
+      }
       await lote.commit();
     });
   }
@@ -299,6 +406,88 @@ export class PanelFirestore implements PanelRepositorio {
       await lote.commit();
     });
   }
+}
+
+/** Un transformador como está guardado. Un N.º de trafo vacío (no debería pasar) se muestra como "Sin número". */
+function leerTransformador(id: string, datos: DocumentData): Transformador {
+  return {
+    id,
+    empresa: texto(datos.empresa) ?? "",
+    numero: texto(datos.numero) ?? "Sin número",
+    ...(datos.provisorio === true ? { provisorio: true } : {}),
+    numeroT: texto(datos.numeroT),
+    cambiosT: Array.isArray(datos.cambiosT)
+      ? datos.cambiosT.flatMap((c: DocumentData) => {
+          const numeroT = texto(c?.numeroT);
+          const hasta = fecha(c?.hasta);
+          return numeroT && hasta ? [{ numeroT, hasta }] : [];
+        })
+      : undefined,
+    equipo: texto(datos.equipo) ?? "Transformador",
+    uso: esUso(datos.uso) ? datos.uso : undefined,
+    placa: leerPlaca(datos.placa),
+    baja: fecha(datos.baja),
+  };
+}
+
+/** El transformador como se guarda: sin los campos vacíos, que Firestore no acepta como `undefined`. */
+function transformadorParaGuardar(trafo: Transformador) {
+  return {
+    empresa: trafo.empresa,
+    numero: trafo.numero,
+    ...(trafo.provisorio ? { provisorio: true } : {}),
+    ...(trafo.numeroT ? { numeroT: trafo.numeroT } : {}),
+    equipo: trafo.equipo,
+    ...(trafo.uso ? { uso: trafo.uso } : {}),
+    ...(trafo.placa ? { placa: trafo.placa } : {}),
+  };
+}
+
+/** Cuántas escrituras entran en un lote de Firestore (el límite es 500). */
+const POR_LOTE = 450;
+
+/**
+ * Da de alta los transformadores de las órdenes que todavía no tienen uno guardado (las cargadas antes de
+ * que existieran), con su chapa y sus números, y les anota el transformador. Se hace una sola vez; si no
+ * se puede guardar, el panel igual carga con esa asignación y se reintenta la próxima vez.
+ */
+async function migrar(
+  privados: Map<string, DocumentData>,
+  publicos: Map<string, { publico: { equipo: string; etapas: { ingresado?: Date } } }>,
+  existentes: Transformador[],
+): Promise<{ nuevos: Transformador[]; asignados: Map<string, string> }> {
+  const ordenes: OrdenAntigua[] = [...privados].map(([codigo, datos]) => ({
+    codigo,
+    trafo: texto(datos.trafo),
+    empresa: texto(datos.empresa) ?? "",
+    serie: texto(datos.serie),
+    numeroTrafo: texto(datos.numeroTrafo),
+    equipo: publicos.get(codigo)?.publico.equipo ?? "Transformador",
+    uso: esUso(datos.uso) ? datos.uso : undefined,
+    placa: leerPlaca(datos.placa),
+    ingreso: publicos.get(codigo)?.publico.etapas.ingresado,
+  }));
+  const { transformadores: nuevos, asignados } = migrarTransformadores(ordenes, existentes);
+  if (!nuevos.length) return { nuevos, asignados };
+  const db = obtenerFirestore();
+  // Primero los transformadores: una orden nunca queda apuntando a uno que no está guardado.
+  const escrituras: { coleccion: "transformadores" | "ordenes"; id: string; datos: DocumentData }[] = [
+    ...nuevos.map((t) => ({ coleccion: "transformadores" as const, id: t.id, datos: { ...transformadorParaGuardar(t), creado: serverTimestamp() } })),
+    ...[...asignados].map(([codigo, trafo]) => ({ coleccion: "ordenes" as const, id: codigo, datos: { trafo } })),
+  ];
+  try {
+    for (let i = 0; i < escrituras.length; i += POR_LOTE) {
+      const lote = writeBatch(db);
+      for (const e of escrituras.slice(i, i + POR_LOTE)) {
+        if (e.coleccion === "transformadores") lote.set(doc(db, e.coleccion, e.id), e.datos);
+        else lote.update(doc(db, e.coleccion, e.id), e.datos);
+      }
+      await lote.commit();
+    }
+  } catch (error) {
+    console.warn("No se pudieron guardar los transformadores de las órdenes anteriores; se reintenta al volver a cargar.", error);
+  }
+  return { nuevos, asignados };
 }
 
 /**

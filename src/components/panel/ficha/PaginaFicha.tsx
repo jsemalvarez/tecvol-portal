@@ -9,10 +9,11 @@ import { diasEntre } from "@/lib/dominio/avisos";
 import { formatearCodigo, normalizarCodigo } from "@/lib/dominio/codigo";
 import { DEFINICIONES, ESTADOS, indiceEstado, type EstadoReparacion } from "@/lib/dominio/estados";
 import { formatearFecha } from "@/lib/dominio/fechas";
-import { NOMBRE_USOS } from "@/lib/dominio/placa";
-import type { EquipoTaller } from "@/lib/dominio/tipos";
-import { reparacionesDelTrafo } from "@/lib/dominio/trafo";
+import type { EquipoTaller, Transformador } from "@/lib/dominio/tipos";
+import { nombreOrden, nombreTrafo, normalizarNumero, ordenesDelTrafo } from "@/lib/dominio/trafo";
 import { accionesDe } from "../AccionesEquipo";
+import { MarcaTemporal } from "../equipo/campos";
+import { resumenChapa } from "../equipo/FormularioOT";
 import { HistorialTrafo } from "../equipo/HistorialTrafo";
 import { PaginaPanel, type ApiPanel } from "../PaginaPanel";
 import { dias, TextoDemoras } from "../Planilla";
@@ -20,14 +21,14 @@ import { dias, TextoDemoras } from "../Planilla";
 const enlace = "font-semibold underline decoration-naranja decoration-2 underline-offset-4";
 
 /**
- * Ficha de un equipo: todo lo de una reparación en un solo lugar. El recorrido desde el ingreso hasta hoy
- * (cada etapa con su fecha y cuánto duró), los datos y la chapa, el historial del trafo y todas las
- * acciones. Es la trazabilidad del equipo para el personal; el cliente ve su propia línea de etapas.
+ * Una orden de trabajo: todo lo de un ingreso al taller en un solo lugar. Su transformador, el recorrido
+ * desde el ingreso hasta hoy (cada etapa con su fecha y cuánto duró), sus datos, las demás O.T. del mismo
+ * transformador y todas las acciones. El cliente ve su propia línea de etapas.
  */
 export function PanelFicha() {
   const codigo = normalizarCodigo(useSearchParams().get("codigo") ?? "");
   return (
-    <PaginaPanel seccion="equipos" titulo="Ficha del equipo">
+    <PaginaPanel seccion="equipos" titulo="Orden de trabajo">
       {(api) => <Ficha api={api} codigo={codigo} />}
     </PaginaPanel>
   );
@@ -38,9 +39,9 @@ function Ficha({ api, codigo }: { api: ApiPanel; codigo: string }) {
   if (!equipo) {
     return (
       <p className="mt-6 max-w-[56ch] text-lg">
-        No se encontró el equipo{codigo ? ` ${formatearCodigo(codigo)}` : ""}.{" "}
+        No se encontró la orden de trabajo{codigo ? ` ${formatearCodigo(codigo)}` : ""}.{" "}
         <Link href="/panel" className={enlace}>
-          Volver a la lista de equipos
+          Volver a las órdenes de trabajo
         </Link>
         .
       </p>
@@ -48,19 +49,34 @@ function Ficha({ api, codigo }: { api: ApiPanel; codigo: string }) {
   }
 
   const empresa = api.empresaDe(equipo);
-  const otras = equipo.numeroTrafo ? reparacionesDelTrafo(api.taller.equipos, equipo.numeroTrafo, equipo.codigo) : [];
+  const trafo = api.taller.transformadores.find((t) => t.id === equipo.trafo);
+  const otras = ordenesDelTrafo(api.taller.equipos, equipo.trafo, { excepto: equipo.codigo });
 
   return (
     <>
-      <p className="mt-4 max-w-[70ch] text-lg">
-        <span className="font-semibold">{nombreDe(equipo)}</span>
-        {equipo.referencia && <> · {equipo.equipo}</>} · {empresa || "Sin cliente"}
+      <p className="mt-4 font-cartel text-[2.5rem] font-bold leading-none">
+        {nombreOrden(equipo)}
+        {equipo.numeroOrdenTemporal && <MarcaTemporal className="ml-3" />}
       </p>
+      <p className="mt-2 max-w-[70ch] text-lg">
+        {empresa || "Sin cliente"} · código <span className="tracking-[0.04em]">{formatearCodigo(equipo.codigo)}</span>
+        {equipo.etapas.ingresado && <> · ingresó el {formatearFecha(equipo.etapas.ingresado)}</>}
+      </p>
+      {!equipo.baja && (equipo.numeroOrdenTemporal || !equipo.numeroOrden) && (
+        <p className="mt-4 max-w-[64ch] font-medium">
+          {equipo.numeroOrdenTemporal ? "El N.º de O.T. es temporal." : "Falta el N.º de O.T."} Cuando tenga el del sistema de gestión,{" "}
+          <Link href={`/panel/editar?codigo=${equipo.codigo}`} className={enlace}>
+            cárguelo
+          </Link>
+          .
+        </p>
+      )}
       <div className="mt-10 grid gap-10 lg:grid-cols-12 lg:gap-12">
         <div className="flex flex-col gap-10 lg:col-span-8">
+          {trafo && <TrafoDeLaOrden trafo={trafo} cuantas={otras.length + 1} />}
           <Recorrido equipo={equipo} />
-          <Datos equipo={equipo} empresa={empresa} />
-          {otras.length > 0 && <HistorialTrafo reparaciones={otras} empresaDe={(id) => api.taller.empresas.find((e) => e.id === id)?.nombre ?? ""} nuevo={false} copiadoDe={null} onUsar={() => {}} />}
+          <Datos equipo={equipo} trafo={trafo} />
+          {otras.length > 0 && <HistorialTrafo trafo={equipo.trafo} ordenes={otras} />}
         </div>
         <EstadoYAcciones equipo={equipo} api={api} />
       </div>
@@ -171,32 +187,67 @@ function detalle(paso: Paso): string {
   }
 }
 
-/** Lo que identifica al equipo y lo principal de la chapa. Lo demás está en "Editar datos". */
-function Datos({ equipo, empresa }: { equipo: EquipoTaller; empresa: string }) {
-  const placa = equipo.placa;
+/** El transformador de la orden, con un enlace a su ficha: ahí están su chapa y todas sus O.T. */
+function TrafoDeLaOrden({ trafo, cuantas }: { trafo: Transformador; cuantas: number }) {
+  return (
+    <section aria-labelledby="trafo-orden" className="marco">
+      <TornillosMarco />
+      <div className="marco-cabecera">
+        <h2 id="trafo-orden" className="rotulo text-base">
+          Transformador
+        </h2>
+        <span className="etiqueta">{cuantas === 1 ? "1.ª O.T." : `${cuantas} O.T.`}</span>
+      </div>
+      <div className="marco-cuerpo flex flex-wrap items-center justify-between gap-x-8 gap-y-3">
+        <div>
+          <p className="font-cartel text-[1.75rem] font-bold leading-none">
+            {nombreTrafo(trafo)}
+            {trafo.provisorio && <MarcaTemporal />}
+          </p>
+          <p className="mt-1 text-[0.9375rem]">{resumenChapa(trafo)}</p>
+        </div>
+        <Link href={`/panel/transformador?id=${trafo.id}`} className={enlace}>
+          Ver el transformador {cuantas > 1 ? `y sus ${cuantas} O.T.` : "y su chapa"}
+        </Link>
+      </div>
+    </section>
+  );
+}
+
+/**
+ * Los datos de la orden, con el N.º T con el que ingresó (si hoy el transformador tiene otro, se dice). Lo
+ * demás del transformador está en su ficha.
+ */
+function Datos({ equipo, trafo }: { equipo: EquipoTaller; trafo: Transformador | undefined }) {
+  const cambioT = trafo && normalizarNumero(equipo.numeroTIngreso ?? "") !== normalizarNumero(trafo.numeroT ?? "");
   const filas: [string, string | undefined][] = [
-    ["Cliente", empresa || undefined],
-    ["Referencia del cliente", equipo.referencia],
-    ["N.º de orden (Punto Técnico)", equipo.numeroOrden],
-    ["N.º de trafo", equipo.numeroTrafo],
+    ["N.º de O.T.", equipo.numeroOrden && (equipo.numeroOrdenTemporal ? `${equipo.numeroOrden} (temporal)` : equipo.numeroOrden)],
+    [
+      "N.º T al ingresar",
+      cambioT
+        ? `${equipo.numeroTIngreso ?? "Sin N.º T"} (hoy el transformador ${trafo.numeroT ? `tiene el ${trafo.numeroT}` : "no tiene N.º T"})`
+        : equipo.numeroTIngreso,
+    ],
     ["Código de seguimiento", formatearCodigo(equipo.codigo)],
-    ["Equipo", equipo.equipo],
-    ["Fabricante", placa?.fabricante],
-    ["N.º de fabricación", equipo.serie],
-    ["Año de fabricación", placa?.anio ? String(placa.anio) : undefined],
-    ["Uso", equipo.uso ? NOMBRE_USOS[equipo.uso] : undefined],
+    ["Referencia del cliente", equipo.referencia],
+    ["Motivo del ingreso", equipo.motivo],
   ];
   return (
     <section aria-labelledby="datos-equipo" className="marco">
       <TornillosMarco />
       <div className="marco-cabecera">
         <h2 id="datos-equipo" className="rotulo text-base">
-          Datos del equipo
+          Datos de la orden
         </h2>
+        {!equipo.baja && (
+          <Link href={`/panel/editar?codigo=${equipo.codigo}`} className="rotulo text-[0.875rem] text-blanco underline decoration-2 underline-offset-4">
+            Editar
+          </Link>
+        )}
       </div>
       <dl className="marco-cuerpo grid gap-x-8 gap-y-4 sm:grid-cols-2">
         {filas.map(([nombre, valor]) => (
-          <div key={nombre}>
+          <div key={nombre} className={nombre === "Motivo del ingreso" ? "sm:col-span-2" : ""}>
             <dt className="rotulo text-[0.8125rem] text-grafito">{nombre}</dt>
             <dd className={`mt-0.5 ${valor ? "" : "text-grafito"} ${nombre === "Código de seguimiento" ? "tracking-[0.04em]" : ""}`}>
               {valor ?? "Sin cargar"}

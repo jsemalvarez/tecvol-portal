@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { PanelEditar } from "@/components/panel/equipo/PaginasEquipo";
 
 export const metadata: Metadata = {
-  title: "Datos del equipo · Panel · Tecvol",
+  title: "Datos de la O.T. · Panel · Tecvol",
   robots: { index: false, follow: false },
 };
 

@@ -7,7 +7,8 @@ import type {
   CuentaCliente,
   CuentaPersonal,
   DatosEmpresa,
-  DatosEquipo,
+  DatosOrden,
+  DatosTransformador,
   Empresa,
   EquipoTaller,
   PortalCliente,
@@ -16,6 +17,7 @@ import type {
   SeguimientoPublico,
   Sesion,
   Taller,
+  Transformador,
 } from "@/lib/dominio/tipos";
 import { firebaseConfigurado } from "./firebase/config";
 
@@ -53,17 +55,35 @@ export interface PortalRepositorio {
 
 export interface PanelRepositorio {
   /**
-   * Empresas y equipos, también los dados de baja. Solo para el personal. Las cuentas de clientes y del
-   * personal vienen solo si el rol puede administrarlas; si no, las listas quedan vacías.
+   * Empresas, transformadores y órdenes, también los dados de baja. Solo para el personal. Las cuentas de
+   * clientes y del personal vienen solo si el rol puede administrarlas; si no, las listas quedan vacías.
+   * Las órdenes cargadas antes de que existieran los transformadores reciben uno acá, una sola vez (ver
+   * `migrarTransformadores`).
    */
   obtenerTaller(rol: RolPersonal): Promise<Taller>;
   /** Cambia los límites de los avisos. Solo el administrador. */
   guardarAvisos(limites: LimitesAvisos): Promise<void>;
   /** Guarda el estado de un equipo con las fechas de sus etapas (ver `etapasConEstado`). */
   guardarEstado(codigo: string, estado: EstadoReparacion, etapas: Partial<Record<EstadoReparacion, Date>>): Promise<void>;
-  /** Registra un equipo nuevo con un código de seguimiento nuevo, en estado "ingresado". */
-  registrarEquipo(datos: DatosEquipo, ingreso: Date): Promise<EquipoTaller>;
-  editarEquipo(codigo: string, datos: DatosEquipo): Promise<void>;
+  /**
+   * Registra una orden de trabajo nueva, con un código de seguimiento nuevo, en estado "ingresado". Es de
+   * un transformador que ya pasó por el taller (su id) o de uno nuevo, que se da de alta con ella para
+   * `empresa`.
+   */
+  registrarEquipo(
+    datos: DatosOrden,
+    ingreso: Date,
+    trafo: string | { empresa: string; datos: DatosTransformador },
+  ): Promise<{ equipo: EquipoTaller; transformador: Transformador }>;
+  /** Da de alta un transformador de `empresa` sin O.T.: su primera O.T. se crea cuando llega al taller. */
+  crearTransformador(empresa: string, datos: DatosTransformador): Promise<Transformador>;
+  /** Reemplaza los datos de la orden: lo que no viene en `datos` se borra. */
+  editarEquipo(codigo: string, datos: DatosOrden): Promise<void>;
+  /**
+   * Reemplaza los datos y la chapa del transformador. Sus órdenes copian la descripción nueva, que es la
+   * que ve el cliente.
+   */
+  editarTransformador(id: string, datos: DatosTransformador): Promise<void>;
   /** Informe de diagnóstico de un equipo; `null` si todavía no tiene. */
   obtenerInforme(codigo: string): Promise<InformeGuardado | null>;
   /** Reemplaza el informe entero y anota quién lo guardó. */

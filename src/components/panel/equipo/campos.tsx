@@ -218,3 +218,23 @@ export function Grupo({ titulo, ayuda, primero, children }: { titulo: string; ay
     </section>
   );
 }
+
+/**
+ * Debajo de un número obligatorio que todavía no se tiene (el N.º de trafo o el de O.T.): pone uno
+ * temporal, que queda marcado para cambiarlo cuando llegue el verdadero.
+ */
+export function BotonTemporal({ onClick, cuando }: { onClick: () => void; cuando: string }) {
+  return (
+    <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+      <button type="button" onClick={onClick} className="placa-secundaria">
+        Usar N.º temporal
+      </button>
+      <span className="text-[0.9375rem] leading-snug text-grafito">{cuando}</span>
+    </div>
+  );
+}
+
+/** Al lado de un N.º de trafo o de O.T. temporal: falta cargar el verdadero. */
+export function MarcaTemporal({ className = "ml-2" }: { className?: string }) {
+  return <span className={`etiqueta align-middle ${className}`}>Temporal</span>;
+}

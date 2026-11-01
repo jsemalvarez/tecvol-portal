@@ -9,19 +9,22 @@ import { etapasConEstado, type EstadoReparacion } from "@/lib/dominio/estados";
 import { facturacionParaGuardar } from "@/lib/dominio/facturacion";
 import type { Informe, InformeGuardado } from "@/lib/dominio/informe";
 import { esPersonal } from "@/lib/dominio/roles";
+import { conCambioDeT } from "@/lib/dominio/trafo";
 import {
   conBaja,
-  conTodosLosCampos,
+  conTransformador,
   type CuentaCliente,
   type CuentaPersonal,
   type DatosEmpresa,
-  type DatosEquipo,
+  type DatosOrden,
+  type DatosTransformador,
   type Empresa,
   type EquipoTaller,
   type Registro,
   type RolPersonal,
   type Sesion,
   type Taller,
+  type Transformador,
 } from "@/lib/dominio/tipos";
 
 /** La sesión de quien usa el panel: siempre alguien del personal, con su rol. */
@@ -42,8 +45,12 @@ export interface AccionesPanel {
   /** Corrige las fechas de las etapas sin cambiar el estado. */
   corregirFechas(equipo: EquipoTaller, etapas: Partial<Record<EstadoReparacion, Date>>): Promise<EstadoAnterior>;
   restaurar(anterior: EstadoAnterior): Promise<void>;
-  registrar(datos: DatosEquipo, ingreso: Date): Promise<EquipoTaller>;
-  editar(codigo: string, datos: DatosEquipo): Promise<void>;
+  /** Una orden de trabajo nueva, de un transformador que ya pasó por el taller o de uno nuevo (ver `PanelRepositorio.registrarEquipo`). */
+  registrar(datos: DatosOrden, ingreso: Date, trafo: string | { empresa: string; datos: DatosTransformador }): Promise<EquipoTaller>;
+  /** Un transformador sin O.T. (ver `PanelRepositorio.crearTransformador`). */
+  crearTransformador(empresa: string, datos: DatosTransformador): Promise<Transformador>;
+  editar(codigo: string, datos: DatosOrden): Promise<void>;
+  editarTransformador(id: string, datos: DatosTransformador): Promise<void>;
   obtenerInforme(codigo: string): Promise<InformeGuardado | null>;
   /** Guarda el informe a nombre de quien tiene la sesión abierta. */
   guardarInforme(codigo: string, informe: Informe): Promise<void>;
@@ -125,14 +132,40 @@ export function usePanel() {
       await (await obtenerPanel()).guardarEstado(anterior.codigo, anterior.estado, anterior.etapas);
       reemplazarEquipo(anterior.codigo, { estado: anterior.estado, etapas: anterior.etapas, actualizado: new Date() });
     },
-    async registrar(datos, ingreso) {
-      const equipo = await (await obtenerPanel()).registrarEquipo(datos, ingreso);
-      actualizar((t) => ({ ...t, equipos: [...t.equipos, equipo] }));
+    async registrar(datos, ingreso, trafo) {
+      const { equipo, transformador } = await (await obtenerPanel()).registrarEquipo(datos, ingreso, trafo);
+      actualizar((t) => ({
+        ...t,
+        transformadores: t.transformadores.some((x) => x.id === transformador.id) ? t.transformadores : [...t.transformadores, transformador],
+        equipos: [...t.equipos, equipo],
+      }));
       return equipo;
+    },
+    async crearTransformador(empresa, datos) {
+      const transformador = await (await obtenerPanel()).crearTransformador(empresa, datos);
+      actualizar((t) => ({ ...t, transformadores: [...t.transformadores, transformador] }));
+      return transformador;
     },
     async editar(codigo, datos) {
       await (await obtenerPanel()).editarEquipo(codigo, datos);
-      reemplazarEquipo(codigo, { ...conTodosLosCampos(datos), actualizado: new Date() });
+      // Lo que se vació en el formulario se borra: los campos van siempre, aunque sea vacíos.
+      reemplazarEquipo(codigo, {
+        numeroOrden: datos.numeroOrden,
+        numeroOrdenTemporal: datos.numeroOrdenTemporal,
+        referencia: datos.referencia,
+        motivo: datos.motivo,
+        actualizado: new Date(),
+      });
+    },
+    async editarTransformador(id, datos) {
+      await (await obtenerPanel()).editarTransformador(id, datos);
+      actualizar((t) => {
+        const transformadores = t.transformadores.map(
+          (x): Transformador => (x.id === id ? { ...x, ...datos, cambiosT: conCambioDeT(x, datos.numeroT) } : x),
+        );
+        const editado = transformadores.find((x) => x.id === id);
+        return { ...t, transformadores, equipos: t.equipos.map((e) => (e.trafo === id ? conTransformador(e, editado) : e)) };
+      });
     },
     async obtenerInforme(codigo) {
       return (await obtenerPanel()).obtenerInforme(codigo);

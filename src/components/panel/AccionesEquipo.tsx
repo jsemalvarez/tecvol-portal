@@ -21,10 +21,11 @@ export interface AccionEquipo {
 export function accionesDe(equipo: EquipoTaller, api: ApiPanel, { conFicha = true }: { conFicha?: boolean } = {}): AccionEquipo[] {
   const codigo = equipo.codigo;
   return [
-    ...(conFicha ? [{ id: "ficha", texto: "Ficha del equipo", href: `/panel/equipo?codigo=${codigo}` }] : []),
-    { id: "editar", texto: "Editar datos", href: `/panel/editar?codigo=${codigo}` },
+    ...(conFicha ? [{ id: "ficha", texto: "Ver la O.T.", href: `/panel/equipo?codigo=${codigo}` }] : []),
+    { id: "editar", texto: "Editar datos de la O.T.", href: `/panel/editar?codigo=${codigo}` },
     { id: "informe", texto: "Informe de diagnóstico", href: `/panel/informe?codigo=${codigo}` },
     { id: "datos-taller", texto: "Datos del taller", href: `/panel/datos-taller?codigo=${codigo}` },
+    { id: "trafo", texto: "Ver el transformador", href: `/panel/transformador?id=${equipo.trafo}` },
     { id: "etiqueta", texto: "Etiqueta", alElegir: () => api.abrirEtiqueta(equipo) },
   ];
 }

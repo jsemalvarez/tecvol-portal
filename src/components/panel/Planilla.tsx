@@ -9,19 +9,24 @@ import { demorasDe, type Demora } from "@/lib/dominio/avisos";
 import { formatearCodigo } from "@/lib/dominio/codigo";
 import { DEFINICIONES } from "@/lib/dominio/estados";
 import { activos, type EquipoTaller } from "@/lib/dominio/tipos";
+import { nombreOrden, trafoDeOrden } from "@/lib/dominio/trafo";
 import { accionesDe, MenuAcciones } from "./AccionesEquipo";
+import { MarcaTemporal } from "./equipo/campos";
 import { BarraFiltros, useFiltros } from "./Filtros";
 import { PaginaPanel, type ApiPanel } from "./PaginaPanel";
 
 /**
- * Equipos del panel: todos en una tabla, con búsqueda, filtros y orden. De entrada, el que lleva más
- * tiempo en el taller va primero, con los días de cada uno y un aviso si pasó el límite.
+ * Órdenes de trabajo del panel: todas en una tabla, con búsqueda, filtros y orden. Cada fila es un ingreso
+ * al taller, con su transformador. De entrada, la que lleva más tiempo en el taller va primero, con los
+ * días de cada una y un aviso si pasó el límite.
  */
 export function PanelPlanilla() {
   return <PaginaPanel seccion="equipos">{(api) => <Planilla api={api} />}</PaginaPanel>;
 }
 
 const enlace = "cursor-pointer font-semibold underline decoration-naranja decoration-2 underline-offset-4";
+
+const vinculo = "block font-semibold leading-snug underline decoration-acero decoration-1 underline-offset-4 hover:decoration-naranja hover:decoration-2";
 
 export const dias = (n: number) => (n === 1 ? "1 día" : `${n} días`);
 
@@ -76,32 +81,32 @@ function Planilla({ api }: { api: ApiPanel }) {
       <div className="marco mt-6">
         <TornillosMarco />
         <div className="marco-cabecera">
-          <span className="rotulo text-base">{vistaBajas ? "Equipos dados de baja" : "Equipos"}</span>
+          <span className="rotulo text-base">{vistaBajas ? "Órdenes de trabajo dadas de baja" : "Órdenes de trabajo"}</span>
           <span className="rotulo text-base">{equipos.length}</span>
         </div>
         {vistaBajas && equipos.length === 0 ? (
-          <p className="marco-cuerpo">No hay equipos dados de baja{filtros.texto || filtros.empresa ? " que coincidan con la búsqueda" : ""}.</p>
+          <p className="marco-cuerpo">No hay órdenes de trabajo dadas de baja{filtros.texto || filtros.empresa ? " que coincidan con la búsqueda" : ""}.</p>
         ) : total === 0 && !vistaBajas ? (
-          <p className="marco-cuerpo">Todavía no hay equipos. Registre el primero con "Registrar equipo".</p>
+          <p className="marco-cuerpo">Todavía no hay órdenes de trabajo. Cree la primera con "+ Nueva O.T.".</p>
         ) : equipos.length === 0 ? (
-          <p className="marco-cuerpo">Ningún equipo coincide con la búsqueda.</p>
+          <p className="marco-cuerpo">Ninguna orden de trabajo coincide con la búsqueda.</p>
         ) : (
           <>
             <table className="hidden w-full text-left lg:table">
-              <caption className="sr-only">Equipos del taller</caption>
+              <caption className="sr-only">Órdenes de trabajo del taller</caption>
               <thead className="border-b-2 border-acero bg-esmalte">
                 <tr>
                   <th scope="col" className="rotulo py-3 pl-[var(--marco-px)] pr-4 text-[0.8125rem]">
                     Estado
                   </th>
                   <th scope="col" className="rotulo px-4 py-3 text-[0.8125rem]">
-                    Equipo
+                    O.T.
+                  </th>
+                  <th scope="col" className="rotulo px-4 py-3 text-[0.8125rem]">
+                    Transformador
                   </th>
                   <th scope="col" className="rotulo px-4 py-3 text-[0.8125rem]">
                     Empresa
-                  </th>
-                  <th scope="col" className="rotulo px-4 py-3 text-[0.8125rem]">
-                    Código
                   </th>
                   <th scope="col" className="py-3 pl-4 pr-[var(--marco-px)]">
                     <span className="sr-only">Acciones</span>
@@ -122,15 +127,22 @@ function Planilla({ api }: { api: ApiPanel }) {
                           </div>
                         </div>
                       </td>
+                      <td className="whitespace-nowrap px-4 py-3.5 align-middle">
+                        <span className="flex items-center gap-2">
+                          <Link href={`/panel/equipo?codigo=${equipo.codigo}`} className={`${vinculo} ${equipo.numeroOrden ? "" : "text-grafito"}`}>
+                            {nombreOrden(equipo)}
+                          </Link>
+                          {equipo.numeroOrdenTemporal && <MarcaTemporal className="" />}
+                        </span>
+                        <span className="block text-[0.9375rem] leading-snug tracking-[0.04em]">{formatearCodigo(equipo.codigo)}</span>
+                      </td>
                       <td className="px-4 py-3.5 align-middle">
-                        <Link href={`/panel/equipo?codigo=${equipo.codigo}`} className="block font-semibold leading-snug underline decoration-acero decoration-1 underline-offset-4 hover:decoration-naranja hover:decoration-2">{nombreDe(equipo)}</Link>
-                        {equipo.referencia && <span className="block text-[0.9375rem] leading-snug">{equipo.equipo}</span>}
+                        <Link href={`/panel/transformador?id=${equipo.trafo}`} className={vinculo}>
+                          {trafoDeOrden(equipo)}
+                        </Link>
+                        <span className="block text-[0.9375rem] leading-snug">{nombreDe(equipo)}</span>
                       </td>
                       <td className="px-4 py-3.5 align-middle text-[0.9375rem]">{api.empresaDe(equipo) || <span className="text-grafito">Sin empresa</span>}</td>
-                      <td className="whitespace-nowrap px-4 py-3.5 align-middle text-[0.9375rem]">
-                        <span className="block tracking-[0.04em]">{formatearCodigo(equipo.codigo)}</span>
-                        {equipo.numeroOrden && <span className="block text-grafito">Orden {equipo.numeroOrden}</span>}
-                      </td>
                       <td className="py-3.5 pl-4 pr-[var(--marco-px)] align-middle">
                         <Acciones api={api} equipo={equipo} />
                       </td>
@@ -148,14 +160,21 @@ function Planilla({ api }: { api: ApiPanel }) {
                     <div className="flex items-start gap-3">
                       <Senal forma={definicion.forma} pictograma={equipo.estado} simple className="size-10 shrink-0" />
                       <div className="min-w-0">
-                        <Link href={`/panel/equipo?codigo=${equipo.codigo}`} className="block font-semibold leading-snug underline decoration-acero decoration-1 underline-offset-4 hover:decoration-naranja hover:decoration-2">{nombreDe(equipo)}</Link>
+                        <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                          <Link href={`/panel/equipo?codigo=${equipo.codigo}`} className={`${vinculo} ${equipo.numeroOrden ? "" : "text-grafito"}`}>
+                            {nombreOrden(equipo)}
+                          </Link>
+                          {equipo.numeroOrdenTemporal && <MarcaTemporal className="" />}
+                        </span>
                         <div className="text-[0.9375rem] leading-snug">
                           <TextoEstado equipo={equipo} />
                           <TextoDemoras equipo={equipo} api={api} />
                         </div>
                         <p className="text-[0.9375rem] leading-snug">
-                          {api.empresaDe(equipo) || "Sin empresa"} · <span className="tracking-[0.04em]">{formatearCodigo(equipo.codigo)}</span>
-                          {equipo.numeroOrden && <> · Orden {equipo.numeroOrden}</>}
+                          <Link href={`/panel/transformador?id=${equipo.trafo}`} className="font-semibold">
+                            {trafoDeOrden(equipo)}
+                          </Link>{" "}
+                          · {api.empresaDe(equipo) || "Sin empresa"} · <span className="tracking-[0.04em]">{formatearCodigo(equipo.codigo)}</span>
                         </p>
                       </div>
                     </div>
