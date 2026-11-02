@@ -72,6 +72,8 @@ const MENSAJES: Record<MotivoErrorDePanel, string> = {
   permiso: "Su cuenta no tiene permiso para hacer este cambio.",
   intentos: "Se enviaron demasiados emails seguidos. Espere unos minutos e intente de nuevo.",
   conexion: "No se pudo conectar. Revise su conexión e intente de nuevo.",
+  "sin-almacen": "Falta configurar dónde se guardan los PDF (Supabase Storage). Vea el README.",
+  "archivo-perdido": "El PDF ya no está guardado. Súbalo de nuevo.",
   desconocido: "No se pudo guardar. Intente de nuevo en unos minutos.",
 };
 

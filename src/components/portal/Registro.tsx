@@ -8,6 +8,7 @@ import { PICTOGRAMA_DE_FORMA } from "@/components/senal/pictogramas";
 import { formatearCodigo } from "@/lib/dominio/codigo";
 import { DEFINICIONES, FORMAS } from "@/lib/dominio/estados";
 import type { EquipoCliente, PortalCliente } from "@/lib/dominio/tipos";
+import { ArchivosEquipo } from "./ArchivosEquipo";
 import { Compartir } from "./Compartir";
 import { PaginaPortal } from "./PaginaPortal";
 import { agrupar, LineaEtapas, nombreDe, TextoEstado } from "./piezas";
@@ -106,6 +107,7 @@ function Tabla({ id, titulo, equipos, empresa }: { id: string; titulo: string; e
                 <div className="mt-5">
                   <LineaEtapas equipo={equipo} />
                 </div>
+                <ArchivosEquipo equipo={equipo} />
                 <button type="button" onClick={() => setCompartido(equipo)} className="placa-secundaria mt-6">
                   Compartir seguimiento
                 </button>

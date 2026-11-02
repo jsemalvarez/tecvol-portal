@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 
 /** Avisa antes de salir de la página (enlaces, recarga o cierre) si hay datos sin guardar. */
-export function useAvisoAlSalir(activo: boolean) {
+export function useAvisoAlSalir(activo: boolean, pregunta = "Hay datos sin guardar. ¿Salir igual y perderlos?") {
   useEffect(() => {
     if (!activo) return;
     const antesDeDescargar = (evento: BeforeUnloadEvent) => {
@@ -14,7 +14,7 @@ export function useAvisoAlSalir(activo: boolean) {
     const alHacerClic = (evento: MouseEvent) => {
       const enlace = (evento.target as Element | null)?.closest?.("a[href]");
       if (!enlace || enlace.getAttribute("target") === "_blank") return;
-      if (!window.confirm("Hay datos sin guardar. ¿Salir igual y perderlos?")) {
+      if (!window.confirm(pregunta)) {
         evento.preventDefault();
         evento.stopPropagation();
       }
@@ -25,5 +25,5 @@ export function useAvisoAlSalir(activo: boolean) {
       window.removeEventListener("beforeunload", antesDeDescargar);
       document.removeEventListener("click", alHacerClic, true);
     };
-  }, [activo]);
+  }, [activo, pregunta]);
 }

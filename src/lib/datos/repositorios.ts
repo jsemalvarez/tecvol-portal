@@ -3,6 +3,7 @@ import type { DatosTaller, DatosTallerGuardados } from "@/lib/dominio/datos-tall
 import type { EstadoReparacion } from "@/lib/dominio/estados";
 import type { Informe, InformeGuardado } from "@/lib/dominio/informe";
 import type {
+  ArchivoOrden,
   ConsultaNueva,
   CuentaCliente,
   CuentaPersonal,
@@ -51,6 +52,8 @@ export interface AutenticacionRepositorio {
 export interface PortalRepositorio {
   /** Empresa y equipos de una cuenta de cliente. `null` si la cuenta no está asociada a una empresa. */
   obtenerPortal(uid: string): Promise<PortalCliente | null>;
+  /** Enlace temporal para abrir un PDF de una orden de la empresa. Si no se puede, lanza `ErrorDePanel`. */
+  enlaceArchivo(codigo: string, id: string): Promise<string>;
 }
 
 export interface PanelRepositorio {
@@ -92,6 +95,15 @@ export interface PanelRepositorio {
   obtenerDatosTaller(codigo: string): Promise<DatosTallerGuardados | null>;
   /** Reemplaza los datos del taller enteros y anota quién lo guardó. */
   guardarDatosTaller(codigo: string, datos: DatosTaller, por: string): Promise<void>;
+  /**
+   * Sube un PDF a la orden y lo anota en ella a nombre de `por`; desde ahí lo ve también el cliente.
+   * `alAvanzar` recibe cuánto se subió, de 0 a 1. Antes hay que revisarlo con `revisarPdf`.
+   */
+  subirArchivo(codigo: string, archivo: File, por: string, alAvanzar: (fraccion: number) => void): Promise<ArchivoOrden>;
+  /** Baja lógica de un PDF de la orden: el cliente deja de verlo y el archivo queda guardado. */
+  cambiarBajaArchivo(codigo: string, id: string, baja: boolean): Promise<void>;
+  /** Enlace temporal para abrir un PDF de la orden. */
+  enlaceArchivo(codigo: string, id: string): Promise<string>;
   crearEmpresa(datos: DatosEmpresa): Promise<Empresa>;
   /** Reemplaza el nombre y los datos de facturación: lo que no viene en `datos` se borra. */
   editarEmpresa(id: string, datos: DatosEmpresa): Promise<void>;
@@ -111,6 +123,10 @@ export interface PanelRepositorio {
   cambiarBaja(registro: Registro, id: string, baja: boolean): Promise<void>;
 }
 
+/**
+ * `sin-almacen`: el servidor no tiene configurado Supabase Storage, donde van los PDF. `archivo-perdido`: el
+ * PDF ya no está (pasa con los de prueba si se borran los datos del navegador).
+ */
 export type MotivoErrorDePanel =
   | "email-en-uso"
   | "email-invalido"
@@ -118,6 +134,8 @@ export type MotivoErrorDePanel =
   | "permiso"
   | "intentos"
   | "conexion"
+  | "sin-almacen"
+  | "archivo-perdido"
   | "desconocido";
 
 export class ErrorDePanel extends Error {

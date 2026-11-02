@@ -1,7 +1,9 @@
 import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
+import { archivosActivos } from "@/lib/dominio/archivos";
 import type { EquipoCliente, PortalCliente } from "@/lib/dominio/tipos";
 import type { PortalRepositorio } from "../repositorios";
 import { obtenerFirestore } from "./app";
+import { enlaceArchivo, leerArchivos } from "./archivos";
 import { SeguimientoFirestore } from "./seguimiento";
 
 const texto = (valor: unknown) => (typeof valor === "string" && valor.trim() ? valor.trim() : undefined);
@@ -31,7 +33,7 @@ export class PortalFirestore implements PortalRepositorio {
         const publico = await seguimiento.obtenerPorCodigo(orden.id);
         if (!publico) return null;
         const datos = orden.data();
-        return { ...publico, referencia: texto(datos.referencia), serie: texto(datos.serie) };
+        return { ...publico, referencia: texto(datos.referencia), serie: texto(datos.serie), archivos: archivosActivos(leerArchivos(datos.archivos)) };
       }),
     );
 
@@ -39,5 +41,9 @@ export class PortalFirestore implements PortalRepositorio {
       empresa: (datosEmpresa.exists() && texto(datosEmpresa.data().nombre)) || "",
       equipos: equipos.filter((e): e is EquipoCliente => e !== null),
     };
+  }
+
+  async enlaceArchivo(codigo: string, id: string): Promise<string> {
+    return enlaceArchivo(codigo, id);
   }
 }

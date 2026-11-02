@@ -8,6 +8,7 @@ import { puede } from "@/lib/dominio/roles";
 import {
   conBaja,
   conTransformador,
+  type ArchivoOrden,
   type CuentaCliente,
   type CuentaPersonal,
   type DatosEmpresa,
@@ -22,6 +23,7 @@ import {
 } from "@/lib/dominio/tipos";
 import { conCambioDeT, nuevoIdTrafo } from "@/lib/dominio/trafo";
 import { ErrorDePanel, type PanelRepositorio } from "../repositorios";
+import { enlaceArchivoLocal, guardarArchivo } from "./archivos";
 import { conTransformadores, esperar, guardarDatos, leerDatos } from "./datos";
 
 /**
@@ -142,6 +144,34 @@ export class PanelLocal implements PanelRepositorio {
     const datos = leerDatos();
     datos.datosTaller = { ...datos.datosTaller, [codigo]: { ...datosTallerParaGuardar(datosTaller), por, actualizado: new Date() } };
     guardarDatos(datos);
+  }
+
+  async subirArchivo(codigo: string, archivo: File, por: string, alAvanzar: (fraccion: number) => void): Promise<ArchivoOrden> {
+    // Una subida simulada, para ver la barra de avance.
+    for (const fraccion of [0.15, 0.4, 0.65, 0.9, 1]) {
+      await esperar(250);
+      alAvanzar(fraccion);
+    }
+    const nuevo: ArchivoOrden = { id: crypto.randomUUID(), nombre: archivo.name, tamano: archivo.size, subido: new Date(), por };
+    await guardarArchivo(nuevo.id, archivo);
+    const datos = leerDatos();
+    datos.equipos = datos.equipos.map((e) => (e.codigo === codigo ? { ...e, archivos: [...(e.archivos ?? []), nuevo] } : e));
+    guardarDatos(datos);
+    return nuevo;
+  }
+
+  async cambiarBajaArchivo(codigo: string, id: string, baja: boolean): Promise<void> {
+    await esperar(350);
+    const datos = leerDatos();
+    datos.equipos = datos.equipos.map((e) =>
+      e.codigo === codigo ? { ...e, archivos: e.archivos?.map((a) => (a.id === id ? { ...a, baja: baja ? new Date() : undefined } : a)) } : e,
+    );
+    guardarDatos(datos);
+  }
+
+  async enlaceArchivo(_codigo: string, id: string): Promise<string> {
+    await esperar(200);
+    return enlaceArchivoLocal(id);
   }
 
   async crearEmpresa({ nombre, facturacion }: DatosEmpresa): Promise<Empresa> {

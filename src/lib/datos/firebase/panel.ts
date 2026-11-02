@@ -2,12 +2,14 @@ import { FirebaseError, getApps, initializeApp } from "firebase/app";
 import { createUserWithEmailAndPassword, inMemoryPersistence, initializeAuth, sendPasswordResetEmail, signOut, type Auth } from "firebase/auth";
 import {
   addDoc,
+  arrayUnion,
   collection,
   deleteField,
   doc,
   getDoc,
   getDocs,
   query,
+  runTransaction,
   serverTimestamp,
   setDoc,
   Timestamp,
@@ -27,6 +29,7 @@ import { facturacionParaGuardar, leerFacturacion } from "@/lib/dominio/facturaci
 import { conCambioDeT, migrarTransformadores, nuevoIdTrafo, type OrdenAntigua } from "@/lib/dominio/trafo";
 import {
   conTransformador,
+  type ArchivoOrden,
   type CuentaCliente,
   type CuentaPersonal,
   type DatosEmpresa,
@@ -41,6 +44,7 @@ import {
 } from "@/lib/dominio/tipos";
 import { ErrorDePanel, type MotivoErrorDePanel, type PanelRepositorio } from "../repositorios";
 import { obtenerFirestore } from "./app";
+import { enlaceArchivo, enviarArchivo, leerArchivos, pedirSubida } from "./archivos";
 import { configuracionFirebase } from "./config";
 import { leerSeguimiento } from "./seguimiento";
 
@@ -159,6 +163,7 @@ export class PanelFirestore implements PanelRepositorio {
             motivo: texto(orden.motivo),
             // Las cargadas antes de que existieran los transformadores tienen el N.º T como `numeroTrafo`.
             numeroTIngreso: texto(orden.numeroTIngreso) ?? texto(orden.numeroTrafo),
+            archivos: leerArchivos(orden.archivos),
             baja,
           },
           trafo ? porId.get(trafo) : undefined,
@@ -351,6 +356,39 @@ export class PanelFirestore implements PanelRepositorio {
     await guardar(() =>
       setDoc(doc(obtenerFirestore(), "datosTaller", codigo), { ...datosTallerParaGuardar(datos), por, actualizado: serverTimestamp() }),
     );
+  }
+
+  async subirArchivo(codigo: string, archivo: File, por: string, alAvanzar: (fraccion: number) => void): Promise<ArchivoOrden> {
+    const { id, ruta, url } = await pedirSubida(codigo, archivo.name);
+    await enviarArchivo(url, archivo, alAvanzar);
+    // Dentro de una lista no se puede usar `serverTimestamp`: la fecha es la del navegador.
+    const subido = Timestamp.now();
+    const anotado = { id, nombre: archivo.name, ruta, tamano: archivo.size, subido, por };
+    // Si esto falla, el PDF queda en el bucket sin anotar: no se ve en ningún lado y se puede volver a subir.
+    await guardar(() => updateDoc(doc(obtenerFirestore(), "ordenes", codigo), { archivos: arrayUnion(anotado) }));
+    return { id, nombre: archivo.name, tamano: archivo.size, subido: subido.toDate(), por };
+  }
+
+  async cambiarBajaArchivo(codigo: string, id: string, baja: boolean): Promise<void> {
+    const db = obtenerFirestore();
+    const ref = doc(db, "ordenes", codigo);
+    await guardar(() =>
+      runTransaction(db, async (transaccion) => {
+        const orden = await transaccion.get(ref);
+        if (!orden.exists()) throw new ErrorDePanel("desconocido");
+        // Un elemento de una lista no se cambia solo: se reescribe la lista con la baja de ese archivo.
+        const archivos = (Array.isArray(orden.data().archivos) ? orden.data().archivos : []).map((a: DocumentData) => {
+          if (a?.id !== id) return a;
+          const { baja: _baja, ...resto } = a;
+          return baja ? { ...resto, baja: Timestamp.now() } : resto;
+        });
+        transaccion.update(ref, { archivos });
+      }),
+    );
+  }
+
+  async enlaceArchivo(codigo: string, id: string): Promise<string> {
+    return enlaceArchivo(codigo, id);
   }
 
   async crearEmpresa({ nombre, facturacion }: DatosEmpresa): Promise<Empresa> {

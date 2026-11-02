@@ -17,6 +17,7 @@ import { resumenChapa } from "../equipo/FormularioOT";
 import { HistorialTrafo } from "../equipo/HistorialTrafo";
 import { PaginaPanel, type ApiPanel } from "../PaginaPanel";
 import { dias, TextoDemoras } from "../Planilla";
+import { ArchivosOrden } from "./ArchivosOrden";
 
 const enlace = "font-semibold underline decoration-naranja decoration-2 underline-offset-4";
 
@@ -76,6 +77,7 @@ function Ficha({ api, codigo }: { api: ApiPanel; codigo: string }) {
           {trafo && <TrafoDeLaOrden trafo={trafo} cuantas={otras.length + 1} />}
           <Recorrido equipo={equipo} />
           <Datos equipo={equipo} trafo={trafo} />
+          <ArchivosOrden equipo={equipo} api={api} />
           {otras.length > 0 && <HistorialTrafo trafo={equipo.trafo} ordenes={otras} />}
         </div>
         <EstadoYAcciones equipo={equipo} api={api} />

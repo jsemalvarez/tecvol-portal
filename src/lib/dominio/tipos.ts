@@ -32,6 +32,25 @@ export interface EquipoCliente extends SeguimientoPublico {
   referencia?: string;
   /** N.º de fabricación de la chapa (en algunas, N.º de serie). */
   serie?: string;
+  /** Los PDF de la orden. En el portal llegan solo los que no están dados de baja. */
+  archivos?: ArchivoOrden[];
+}
+
+/**
+ * Un PDF de una orden de trabajo: un ensayo, un presupuesto, un informe… Lo sube el personal y lo ve también
+ * el cliente de la empresa en su portal. El archivo está en Supabase Storage; la orden guarda estos datos.
+ */
+export interface ArchivoOrden {
+  id: string;
+  /** El nombre que tenía en la computadora de quien lo subió. */
+  nombre: string;
+  /** En bytes. */
+  tamano: number;
+  subido: Date;
+  /** Email de quien lo subió. */
+  por: string;
+  /** Fecha de baja: se subió por error o ya no corresponde. El cliente deja de verlo; el archivo queda guardado. */
+  baja?: Date;
 }
 
 /** Lo que ve una cuenta de cliente en el portal: su empresa y sus equipos. */

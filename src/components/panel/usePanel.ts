@@ -13,6 +13,7 @@ import { conCambioDeT } from "@/lib/dominio/trafo";
 import {
   conBaja,
   conTransformador,
+  type ArchivoOrden,
   type CuentaCliente,
   type CuentaPersonal,
   type DatosEmpresa,
@@ -57,6 +58,10 @@ export interface AccionesPanel {
   obtenerDatosTaller(codigo: string): Promise<DatosTallerGuardados | null>;
   /** Guarda los datos del taller a nombre de quien tiene la sesión abierta. */
   guardarDatosTaller(codigo: string, datos: DatosTaller): Promise<void>;
+  /** Sube un PDF a la orden a nombre de quien tiene la sesión abierta (ver `PanelRepositorio.subirArchivo`). */
+  subirArchivo(codigo: string, archivo: File, alAvanzar: (fraccion: number) => void): Promise<ArchivoOrden>;
+  cambiarBajaArchivo(codigo: string, id: string, baja: boolean): Promise<void>;
+  enlaceArchivo(codigo: string, id: string): Promise<string>;
   crearEmpresa(datos: DatosEmpresa): Promise<Empresa>;
   editarEmpresa(id: string, datos: DatosEmpresa): Promise<void>;
   crearCuenta(email: string, empresa: string): Promise<CuentaCliente>;
@@ -178,6 +183,23 @@ export function usePanel() {
     },
     async guardarDatosTaller(codigo, datos) {
       await (await obtenerPanel()).guardarDatosTaller(codigo, datos, sesion?.email ?? "");
+    },
+    async subirArchivo(codigo, archivo, alAvanzar) {
+      const nuevo = await (await obtenerPanel()).subirArchivo(codigo, archivo, sesion?.email ?? "", alAvanzar);
+      // Se pueden estar subiendo varios: cada uno se suma a la lista que haya cuando termina.
+      actualizar((t) => ({ ...t, equipos: t.equipos.map((e) => (e.codigo === codigo ? { ...e, archivos: [...(e.archivos ?? []), nuevo] } : e)) }));
+      return nuevo;
+    },
+    async cambiarBajaArchivo(codigo, id, baja) {
+      await (await obtenerPanel()).cambiarBajaArchivo(codigo, id, baja);
+      const fecha = baja ? new Date() : undefined;
+      actualizar((t) => ({
+        ...t,
+        equipos: t.equipos.map((e) => (e.codigo === codigo ? { ...e, archivos: e.archivos?.map((a) => (a.id === id ? { ...a, baja: fecha } : a)) } : e)),
+      }));
+    },
+    async enlaceArchivo(codigo, id) {
+      return (await obtenerPanel()).enlaceArchivo(codigo, id);
     },
     async crearEmpresa(datos) {
       const empresa = await (await obtenerPanel()).crearEmpresa(datos);

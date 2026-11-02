@@ -174,13 +174,21 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // Datos privados de cada orden (empresa, referencia del cliente, serie, chapa). Un cliente lee solo
+    // PDF de la orden: cada uno con su id, nombre, tamaño, quién lo subió, su ruta en Supabase Storage y su
+    // baja. Los archivos no están en Firebase: los sube y los abre la ruta /api/archivos, que lee esta orden
+    // con el token del usuario, así decide esta misma regla de lectura.
+    function archivosValidos(d) {
+      return !('archivos' in d) || (d.archivos is list && d.archivos.size() <= 200);
+    }
+
+    // Datos privados de cada orden (empresa, referencia del cliente, serie, chapa, PDF). Un cliente lee solo
     // las órdenes de su empresa; la consulta del portal filtra por empresa para que esto se cumpla, y la
-    // app no muestra las dadas de baja.
+    // app no muestra las dadas de baja. Los dos roles suben PDF y los dan de baja.
     match /ordenes/{codigo} {
       allow read: if esClienteDe(resource.data.empresa) || esPersonal();
       allow create: if esPersonal() && activo(request.resource.data);
-      allow update: if esPersonal() && bajaValida(request.resource.data) && (esAdministrador() || !cambiaLaBaja());
+      allow update: if esPersonal() && bajaValida(request.resource.data) && archivosValidos(request.resource.data)
+        && (esAdministrador() || !cambiaLaBaja());
       allow delete: if false;
     }
 

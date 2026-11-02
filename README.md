@@ -170,7 +170,7 @@ directamente: esa cuenta no tendría empresa ni sería personal, así que no ver
 | `personal/{uid}` | El administrador; cada uno, el suyo | El administrador (no el suyo) | `rol`, `email` y `baja` (opcional) |
 | `empresas/{id}` | El personal; cada cliente, la suya | El administrador | `nombre`: como lo ve el cliente en su portal; `baja` |
 | `clientes/{uid}` | El administrador; cada cliente, la suya | El administrador | `empresa` (el ID de `empresas`), `email` y `baja` |
-| `ordenes/{codigo}` | El personal; cada cliente, las de su empresa | El personal | `empresa`, `trafo`, `referencia`, `serie`, `numeroOrden`, `numeroOrdenTemporal`, `numeroTIngreso` (antes `numeroTrafo`), chapa… y `baja` |
+| `ordenes/{codigo}` | El personal; cada cliente, las de su empresa | El personal | `empresa`, `trafo`, `referencia`, `serie`, `numeroOrden`, `numeroOrdenTemporal`, `numeroTIngreso` (antes `numeroTrafo`), chapa, `archivos` (los PDF, ver abajo)… y `baja` |
 | `informes/{codigo}` | El personal | El personal | Informe de diagnóstico |
 | `datosTaller/{codigo}` | El personal | El personal | Datos del taller: bobinado (alambre, espiras, peso), prespan, derivaciones y materiales |
 | `ajustes/avisos` | El personal | El administrador | `ingreso` y `aprobacion`: días (enteros, de 1 a 365) antes del aviso de demora |
@@ -192,6 +192,31 @@ Si `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` tiene una clave de reCAPTCHA v3, la app inic
 la cuota gratuita de lecturas frente a bots. **Pendiente:** registrar la clave y activar la verificación
 obligatoria de Firestore en la consola. En localhost, `NEXT_PUBLIC_APPCHECK_DEBUG=true` imprime un token de
 depuración en la consola del navegador.
+
+## PDF de las órdenes (Supabase Storage)
+
+En la ficha de cada O.T., el personal (los dos roles) arrastra PDF a un recuadro o los elige; el cliente de
+la empresa los ve y los abre en su portal, dentro de la O.T. Hasta 50 MB cada uno, el máximo del plan gratis.
+Uno subido por error se da de baja: el cliente deja de verlo y el archivo queda guardado.
+
+Firebase Storage necesita el plan Blaze (con tarjeta), así que los archivos van al bucket privado `ordenes`
+del proyecto `tecvol-portal` de Supabase (São Paulo, plan Free: 1 GB en total). El bucket se crea con
+`supabase/migrations/20261101213900_bucket_ordenes.sql` y no tiene políticas: nadie llega con la clave
+pública. Las rutas `/api/archivos/subida` y `/api/archivos/enlace` (`src/lib/servidor/archivos.ts`) leen la
+orden de Firestore con el token del usuario, así deciden las mismas reglas, y con la clave secreta entregan un
+enlace firmado: el navegador sube y abre el PDF directo en Supabase. La orden guarda en `archivos` el id, el
+nombre, el tamaño, quién lo subió, la fecha, la ruta en el bucket (`{codigo}/{id}/{nombre}.pdf`) y la baja.
+
+Variables, solo del servidor (en Vercel, en Production; en local, en `.env.local`):
+
+- `SUPABASE_URL`: Supabase → Project Settings → Data API → Project URL.
+- `SUPABASE_SECRET_KEY`: Supabase → Project Settings → API Keys → Secret keys. Nunca con `NEXT_PUBLIC_`.
+
+Cuidados del plan Free: el proyecto se pausa si pasa una semana casi sin actividad (Supabase avisa por email
+una semana antes; se reactiva desde el panel de Supabase) y la cuenta admite dos proyectos activos gratis. Si
+algún día se activa la verificación obligatoria de App Check en Firestore, las rutas dejan de poder leer las
+órdenes: habría que mandarles también el token de App Check. Con datos de prueba, los PDF quedan en IndexedDB
+de ese navegador.
 
 ## Acceso a datos
 
