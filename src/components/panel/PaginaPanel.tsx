@@ -7,7 +7,6 @@ import { EsqueletoAcceso } from "@/components/ingreso/piezas";
 import { nombreDe } from "@/components/portal/piezas";
 import { CLAVE_CUENTAS_NUEVAS, reiniciarDatos } from "@/lib/datos/local/datos";
 import { modoDatos } from "@/lib/datos/repositorios";
-import { conAviso } from "@/lib/dominio/avisos";
 import { formatearCodigo } from "@/lib/dominio/codigo";
 import { DEFINICIONES, type EstadoReparacion } from "@/lib/dominio/estados";
 import { ordenParaEtiqueta } from "@/lib/dominio/trafo";
@@ -222,11 +221,6 @@ export function PaginaPanel({
   }
 
   // Lo dado de baja no cuenta: sigue guardado, pero ya no es parte del trabajo del taller.
-  const equipos = activos(taller?.equipos ?? []);
-  const enTaller = equipos.filter((e) => e.estado !== "entregado");
-  const esperanCliente = enTaller.filter((e) => ["obligacion", "seguridad"].includes(DEFINICIONES[e.estado].forma));
-  const hoy = new Date();
-  const demorados = taller ? enTaller.filter((e) => conAviso(e, taller.avisos, hoy)) : [];
   const empresas = activos(taller?.empresas ?? []);
   const cuentas = activos(taller?.cuentas ?? []);
   const personal = activos(taller?.personal ?? []);
@@ -336,30 +330,6 @@ export function PaginaPanel({
             </button>
           )}
         </div>
-        {conEncabezado && seccion === "equipos" && (
-          <p className="mt-4 text-lg">
-            {enTaller.length} en el taller
-            {esperanCliente.length > 0 && (
-              <>
-                {" · "}
-                <strong className="font-semibold">
-                  {esperanCliente.length} {esperanCliente.length === 1 ? "espera" : "esperan"} al cliente
-                </strong>
-              </>
-            )}
-            {demorados.length > 0 && (
-              <>
-                {" · "}
-                <strong className="inline-flex items-baseline gap-1.5 font-semibold text-rojo">
-                  <Alerta className="size-[1.0625rem] shrink-0 self-center" />
-                  {demorados.length} con aviso de demora
-                </strong>
-              </>
-            )}
-            {" · "}
-            {equipos.length - enTaller.length} entregados
-          </p>
-        )}
         {conEncabezado && seccion === "empresas" && (
           <p className="mt-4 text-lg">
             {empresas.length} {empresas.length === 1 ? "empresa" : "empresas"} · {cuentas.length}{" "}

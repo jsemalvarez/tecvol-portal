@@ -3,22 +3,22 @@
 import { useId, useMemo, useState } from "react";
 import { conAviso, type LimitesAvisos } from "@/lib/dominio/avisos";
 import { normalizarCodigo } from "@/lib/dominio/codigo";
-import { DEFINICIONES, ESTADOS, esEstado, indiceEstado, type EstadoReparacion } from "@/lib/dominio/estados";
+import { DEFINICIONES, ESTADOS, esEstado, esperaALaEmpresa, indiceEstado, type EstadoReparacion } from "@/lib/dominio/estados";
 import type { Empresa, EquipoTaller } from "@/lib/dominio/tipos";
 
 /**
  * `baja`: solo los equipos dados de baja. Las demás vistas no los muestran. `con-aviso`: los que pasaron
- * los días de los avisos (ver `conAviso`).
+ * los días de los avisos (ver `conAviso`). `esperan`: los que esperan algo de la empresa.
  */
-export type FiltroEstado = "en-taller" | "con-aviso" | "todos" | "baja" | EstadoReparacion;
+export type FiltroEstado = "en-taller" | "con-aviso" | "esperan" | "todos" | "baja" | EstadoReparacion;
 
 /** Cómo se ordena la lista: lo último que cambió, o lo que lleva más tiempo, para llevar el orden de los trabajos. */
 export type Orden = "antiguedad" | "aprobacion" | "reciente";
 
 const NOMBRES_ORDEN: Record<Orden, string> = {
-  antiguedad: "Ingreso, el más antiguo primero",
-  aprobacion: "Aprobación, la más antigua primero",
-  reciente: "Último cambio primero",
+  antiguedad: "Ingreso más antiguo",
+  aprobacion: "Aprobación más antigua",
+  reciente: "Último cambio",
 };
 
 const sinAcentos = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
@@ -61,6 +61,7 @@ export function useFiltros(equipos: EquipoTaller[], empresas: Empresa[], limites
         if (empresa && e.empresa !== empresa) return false;
         if (estado === "en-taller" && e.estado === "entregado") return false;
         if (estado === "con-aviso" && !conAviso(e, limites, hoy)) return false;
+        if (estado === "esperan" && !esperaALaEmpresa(e.estado)) return false;
         if (esEstado(estado) && e.estado !== estado) return false;
         if (!buscado) return true;
         if (codigo.length >= 2 && e.codigo.includes(codigo)) return true;
@@ -94,9 +95,9 @@ export function BarraFiltros({
   const id = useId();
   return (
     <div role="search" aria-label="Buscar órdenes de trabajo">
-      <div className="grid gap-x-6 gap-y-4 md:grid-cols-3 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
+      <div className="grid grid-cols-2 gap-x-6 gap-y-4 md:grid-cols-3 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
         {/* La búsqueda ocupa la fila entera en pantallas medianas; en las grandes, las cuatro van en fila. */}
-        <div className="md:col-span-3 xl:col-span-1">
+        <div className="col-span-2 md:col-span-3 xl:col-span-1">
           <label htmlFor={`${id}-texto`} className="rotulo block text-[0.8125rem]">
             Buscar
           </label>
@@ -105,6 +106,7 @@ export function BarraFiltros({
             type="search"
             value={filtros.texto}
             onChange={(e) => filtros.setTexto(e.target.value)}
+            placeholder="O.T., trafo, N.º T, código o empresa"
             autoComplete="off"
             spellCheck={false}
             className="renglon mt-0.5 text-base"
@@ -137,6 +139,7 @@ export function BarraFiltros({
             <optgroup label="Vista">
               <option value="en-taller">En el taller</option>
               <option value="con-aviso">Con aviso de demora</option>
+              <option value="esperan">Esperan a la empresa</option>
               <option value="todos">Todos, también los entregados</option>
               {conBajas && <option value="baja">Dados de baja</option>}
             </optgroup>
@@ -149,7 +152,7 @@ export function BarraFiltros({
             </optgroup>
           </select>
         </div>
-        <div>
+        <div className="col-span-2 md:col-span-1">
           <label htmlFor={`${id}-orden`} className="rotulo block text-[0.8125rem]">
             Ordenar por
           </label>
@@ -162,7 +165,7 @@ export function BarraFiltros({
           </select>
         </div>
       </div>
-      <p aria-live="polite" className="mt-3 text-[0.9375rem] text-grafito">
+      <p aria-live="polite" className="mt-3 text-[0.9375rem] text-grafito max-lg:sr-only">
         {filtros.estado === "baja"
           ? `${filtros.filtrados.length} ${filtros.filtrados.length === 1 ? "dado" : "dados"} de baja`
           : filtros.filtrados.length === total
