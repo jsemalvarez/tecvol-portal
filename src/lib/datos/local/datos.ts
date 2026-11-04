@@ -355,7 +355,8 @@ export function leerDatos(): DatosLocales {
       // Los guardados antes de que existieran los transformadores los reciben ahora, como en Firestore.
       const existentes = datos.transformadores ?? [];
       const { transformadores: nuevos, asignados } = migrarTransformadores(
-        datos.equipos.map((e) => ({ ...(e as EquipoTaller & { numeroTrafo?: string }), trafo: e.trafo || undefined, ingreso: e.etapas.ingresado })),
+        // Las que esperan su transformador no son antiguas: lo recibe cada una en su paso 2.
+        datos.equipos.filter((e) => !e.faltaTrafo).map((e) => ({ ...(e as EquipoTaller & { numeroTrafo?: string }), trafo: e.trafo || undefined, ingreso: e.etapas.ingresado })),
         existentes,
       );
       const transformadores = [...existentes, ...nuevos];

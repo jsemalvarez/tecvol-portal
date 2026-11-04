@@ -4,14 +4,13 @@ import Link from "next/link";
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { TornillosMarco } from "@/components/inicio/TornillosMarco";
 import { fechaParaCampo } from "@/lib/dominio/fechas";
-import { activos, type Taller, type Transformador } from "@/lib/dominio/tipos";
+import { activos, type Empresa, type Taller, type Transformador } from "@/lib/dominio/tipos";
 import { conMismoNumero, conNumeroT, nombreTrafo, siguienteProvisorio } from "@/lib/dominio/trafo";
 import { ErrorFormulario, MensajeCampo, mensajeDeError } from "../Dialogo";
-import { MarcaTemporal } from "../equipo/campos";
+import { MarcaTemporal, NoEstaLaEmpresa } from "../equipo/campos";
 import { ChapaTransformador, errorNumeroTOcupado, IdentidadTransformador, liberarNumeroT, type Reemplazo } from "../equipo/CamposTransformador";
-import { datosTransformador } from "../equipo/FormularioOT";
 import { useAvisoAlSalir } from "../equipo/useAvisoAlSalir";
-import { revisar, valoresDe, type Errores, type Valores } from "../equipo/valores";
+import { datosTransformador, revisar, valoresDe, type Errores, type Valores } from "../equipo/valores";
 import type { AccionesPanel } from "../usePanel";
 
 const enlace = "font-semibold underline decoration-naranja decoration-2 underline-offset-4";
@@ -26,15 +25,15 @@ export function FormularioTransformador({
   taller,
   acciones,
   trafo,
-  crearEmpresas = false,
+  nuevaEmpresa,
   puedeDarDeBaja,
   onGuardado,
 }: {
   taller: Taller;
   acciones: AccionesPanel;
   trafo?: Transformador;
-  /** Al dar de alta: si puede dar de alta una empresa (en "Empresas y cuentas"), para la ayuda del cliente. */
-  crearEmpresas?: boolean;
+  /** Al dar de alta: abre la ventana para crear una empresa. Falta si la cuenta no tiene permiso. */
+  nuevaEmpresa?: (onCreada: (empresa: Empresa) => void) => void;
   puedeDarDeBaja: boolean;
   /** Con el transformador como quedó guardado. */
   onGuardado: (guardado: Transformador) => void;
@@ -143,17 +142,17 @@ export function FormularioTransformador({
                 </select>
                 <MensajeCampo id={`${campoEmpresa}-error`} texto={errorEmpresa} />
                 <p id={`${campoEmpresa}-ayuda`} className="mt-2 text-[0.9375rem] leading-snug text-grafito">
-                  {crearEmpresas ? (
-                    <>
-                      Dar de alta en{" "}
-                      <Link href="/panel/empresas" className={enlace}>
-                        Empresas y cuentas
-                      </Link>
-                      .
-                    </>
-                  ) : (
-                    "¿No está? Pídale a un administrador que la dé de alta."
-                  )}
+                  <NoEstaLaEmpresa
+                    onCrear={
+                      nuevaEmpresa &&
+                      (() =>
+                        nuevaEmpresa((creada) => {
+                          setEmpresa(creada.id);
+                          setErrorEmpresa(undefined);
+                          setReemplazo("");
+                        }))
+                    }
+                  />
                 </p>
               </div>
             )}

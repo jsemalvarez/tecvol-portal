@@ -5,9 +5,8 @@ import { useId, useMemo, useState } from "react";
 import { TornillosMarco } from "@/components/inicio/TornillosMarco";
 import { formatearFecha } from "@/lib/dominio/fechas";
 import { activos } from "@/lib/dominio/tipos";
-import { nombreOrden, nombreTrafo, normalizarNumero, numerosTAnteriores, ordenesDelTrafo } from "@/lib/dominio/trafo";
+import { nombreOrden, nombreTrafo, normalizarNumero, numerosTAnteriores, ordenesDelTrafo, resumenChapa } from "@/lib/dominio/trafo";
 import { MarcaTemporal } from "../equipo/campos";
-import { resumenChapa } from "../equipo/FormularioOT";
 import { PaginaPanel, type ApiPanel } from "../PaginaPanel";
 
 const vinculo = "font-semibold leading-snug underline decoration-acero decoration-1 underline-offset-4 hover:decoration-naranja hover:decoration-2";

@@ -1,43 +1,267 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { Alerta, Flecha } from "@/components/iconos";
 import { TornillosMarco } from "@/components/inicio/TornillosMarco";
-import { nombreDe, TextoEstado } from "@/components/portal/piezas";
+import { TextoEstado } from "@/components/portal/piezas";
 import { Senal } from "@/components/senal/Senal";
+import { ErrorDePanel } from "@/lib/datos/repositorios";
 import { diasEntre } from "@/lib/dominio/avisos";
 import { formatearCodigo, normalizarCodigo } from "@/lib/dominio/codigo";
+import { datosTallerVacios, type DatosTallerGuardados } from "@/lib/dominio/datos-taller";
 import { DEFINICIONES, ESTADOS, indiceEstado, type EstadoReparacion } from "@/lib/dominio/estados";
 import { formatearFecha } from "@/lib/dominio/fechas";
-import type { EquipoTaller, Transformador } from "@/lib/dominio/tipos";
-import { nombreOrden, nombreTrafo, normalizarNumero, ordenesDelTrafo } from "@/lib/dominio/trafo";
-import { accionesDe } from "../AccionesEquipo";
+import type { InformeGuardado } from "@/lib/dominio/informe";
+import { esPaso, faltaCorta, faltaPara, pasoCompleto, pasoSalteado, PASOS, proximoPaso, rotuloSalteado, situacionPaso, textoPaso, type DatosHoja, type NumeroPaso } from "@/lib/dominio/pasos";
+import type { EquipoTaller } from "@/lib/dominio/tipos";
+import { nombreOrden, ordenesDelTrafo, resumenChapa, trafoDeOrden } from "@/lib/dominio/trafo";
+import { Dialogo, ErrorFormulario, mensajeDeError } from "../Dialogo";
 import { MarcaTemporal } from "../equipo/campos";
-import { resumenChapa } from "../equipo/FormularioOT";
 import { HistorialTrafo } from "../equipo/HistorialTrafo";
-import { PaginaPanel, type ApiPanel } from "../PaginaPanel";
+import { useAvisoAlSalir } from "../equipo/useAvisoAlSalir";
+import { dejarAviso, PaginaPanel, type ApiPanel } from "../PaginaPanel";
 import { dias, TextoDemoras } from "../Planilla";
 import { ArchivosOrden } from "./ArchivosOrden";
+import { PasoDiagnostico } from "./PasoDiagnostico";
+import { PasoOrden } from "./PasoOrden";
+import { PasoReparacion, type DatosTallerAnteriores } from "./PasoReparacion";
+import { PasoEnsayos, PasoEntrega, PasoPresupuesto } from "./PasosConFechas";
+import { PasoTransformador } from "./PasoTransformador";
+import { Paso, VaDespues } from "./piezas";
 
 const enlace = "font-semibold underline decoration-naranja decoration-2 underline-offset-4";
 
+const NOTA = (
+  <>
+    <strong className="font-semibold">Lo que se carga acá lo ve la empresa</strong> en su portal: el estado, las fechas y los archivos de cada O.T. El
+    diagnóstico y los datos del taller los ve solo el personal.
+  </>
+);
+
+/** El título de la página: el N.º de la O.T., que sale de los datos. */
+const tituloDe = (codigo: string) => (api: ApiPanel | null) => {
+  const equipo = api?.taller.equipos.find((e) => e.codigo === codigo);
+  if (!equipo) return "Orden de trabajo";
+  return (
+    <>
+      {nombreOrden(equipo)}
+      {equipo.numeroOrdenTemporal && <MarcaTemporal className="ml-3" />}
+    </>
+  );
+};
+
 /**
- * Una orden de trabajo: todo lo de un ingreso al taller en un solo lugar. Su transformador, el recorrido
- * desde el ingreso hasta hoy (cada etapa con su fecha y cuánto duró), sus datos, las demás O.T. del mismo
- * transformador y todas las acciones. El cliente ve su propia línea de etapas.
+ * Una orden de trabajo: todo lo de un ingreso al taller en una sola página, en el orden de carga. `?paso=` abre
+ * uno en particular. Cada paso se despliega, se guarda por su cuenta y lleva al que sigue.
  */
 export function PanelFicha() {
-  const codigo = normalizarCodigo(useSearchParams().get("codigo") ?? "");
+  const parametros = useSearchParams();
+  const codigo = normalizarCodigo(parametros.get("codigo") ?? "");
+  const paso = Number(parametros.get("paso"));
   return (
-    <PaginaPanel seccion="equipos" titulo="Orden de trabajo">
-      {(api) => <Ficha api={api} codigo={codigo} />}
+    <PaginaPanel seccion="equipos" titulo={tituloDe(codigo)} nota={NOTA} conBarraAbajo>
+      {(api) => <Hoja key={codigo} api={api} codigo={codigo} pasoInicial={esPaso(paso) ? paso : undefined} />}
     </PaginaPanel>
   );
 }
 
-function Ficha({ api, codigo }: { api: ApiPanel; codigo: string }) {
-  const equipo = api.taller.equipos.find((e) => e.codigo === codigo);
-  if (!equipo) {
+/**
+ * Una orden de trabajo nueva: la misma hoja, vacía. Al guardar el paso 1 ya existe, y la dirección pasa a ser la
+ * suya sin volver a cargar la página. Desde la ficha de un transformador llega elegido (`?trafo=`).
+ */
+export function PanelRegistrar() {
+  const parametros = useSearchParams();
+  // Al guardar el paso 1 cambia la dirección: el transformador se lee una sola vez.
+  const [trafo] = useState(() => parametros.get("trafo") ?? undefined);
+  // Con "Atrás", el navegador vuelve a esta página con la dirección de la O.T. ya guardada: es esa, no una nueva.
+  const [codigo, setCodigo] = useState(() => normalizarCodigo(parametros.get("codigo") ?? "") || undefined);
+  const [recienGuardada, setRecienGuardada] = useState(false);
+
+  useEffect(() => {
+    if (codigo) document.title = "Orden de trabajo · Panel · Tecvol";
+  }, [codigo]);
+
+  return (
+    <PaginaPanel seccion="equipos" titulo={codigo ? tituloDe(codigo) : "Nueva O.T."} nota={NOTA} conBarraAbajo>
+      {(api) => (
+        <Hoja
+          key={codigo ?? "nueva"}
+          api={api}
+          codigo={codigo}
+          trafoInicial={trafo}
+          pasoInicial={recienGuardada ? 2 : undefined}
+          onCreada={(equipo) => {
+            window.history.replaceState(null, "", `/panel/equipo?codigo=${equipo.codigo}`);
+            setRecienGuardada(true);
+            setCodigo(equipo.codigo);
+          }}
+        />
+      )}
+    </PaginaPanel>
+  );
+}
+
+type Carga = { informe: InformeGuardado | null; datosTaller: DatosTallerGuardados | null; anterior: DatosTallerAnteriores | null };
+
+const SIN_CARGAR: Carga = { informe: null, datosTaller: null, anterior: null };
+
+/** El informe y los datos del taller de la O.T., que están aparte. Una O.T. sin transformador todavía no tiene. */
+function useCarga(api: ApiPanel, equipo: EquipoTaller | undefined) {
+  const [carga, setCarga] = useState<Carga | "error" | "permiso" | null>(null);
+  const [intento, setIntento] = useState(0);
+  const { obtenerInforme, obtenerDatosTaller } = api.acciones;
+  const conTrafo = !!equipo && !equipo.faltaTrafo;
+  // Otras órdenes del mismo transformador, de la más nueva a la más vieja.
+  const anteriores = conTrafo ? ordenesDelTrafo(api.taller.equipos, equipo.trafo, { excepto: equipo.codigo }) : [];
+  const claveAnteriores = anteriores.map((e) => e.codigo).join(",");
+
+  useEffect(() => {
+    if (!conTrafo) return;
+    let activo = true;
+    Promise.all([obtenerInforme(equipo.codigo), obtenerDatosTaller(equipo.codigo), Promise.all(anteriores.map((e) => obtenerDatosTaller(e.codigo)))])
+      .then(([informe, datosTaller, previos]) => {
+        // La reparación anterior más nueva que tenga algo cargado.
+        const i = previos.findIndex((d) => d && !datosTallerVacios(d));
+        if (activo) setCarga({ informe, datosTaller, anterior: i >= 0 ? { equipo: anteriores[i], datos: previos[i]! } : null });
+      })
+      .catch((e) => activo && setCarga(e instanceof ErrorDePanel && e.motivo === "permiso" ? "permiso" : "error"));
+    return () => {
+      activo = false;
+    };
+    // Las acciones y `anteriores` cambian en cada render del panel; alcanza con los códigos y los reintentos.
+  }, [equipo?.codigo, conTrafo, claveAnteriores, intento]);
+
+  return {
+    carga: conTrafo ? carga : SIN_CARGAR,
+    setCarga,
+    reintentar() {
+      setCarga(null);
+      setIntento((n) => n + 1);
+    },
+  };
+}
+
+/** El título de la página ya no se ve: se subió más allá de él. */
+function useTituloFuera() {
+  const [fuera, setFuera] = useState(false);
+  useEffect(() => {
+    const titulo = document.getElementById("titulo-panel");
+    if (!titulo) return;
+    const observador = new IntersectionObserver(([entrada]) => setFuera(!entrada.isIntersecting));
+    observador.observe(titulo);
+    return () => observador.disconnect();
+  }, []);
+  return fuera;
+}
+
+/**
+ * De qué transformador es la O.T., siempre a la vista: los formularios son largos y hay que saber en cuál se está
+ * cargando. Cuando el título queda fuera de la pantalla, suma el N.º de O.T. y la vuelta a la lista.
+ */
+function Identidad({ equipo }: { equipo: EquipoTaller }) {
+  const fuera = useTituloFuera();
+  return (
+    <div className={`sticky top-0 z-30 mt-1 flex min-h-11 items-center gap-2 border-b-2 bg-esmalte py-1 ${fuera ? "border-acero" : "border-transparent"}`}>
+      {fuera && (
+        <Link href="/panel" aria-label="Volver a órdenes de trabajo" className="-ml-2 flex size-9 shrink-0 items-center justify-center hover:text-grafito">
+          <Flecha className="size-5 rotate-180" />
+        </Link>
+      )}
+      <p className="min-w-0 truncate text-lg">
+        {fuera && <strong className="font-semibold">{nombreOrden(equipo)} · </strong>}
+        {equipo.faltaTrafo ? (
+          <strong className="font-semibold">Falta el transformador</strong>
+        ) : (
+          <>
+            <strong className="font-semibold">{trafoDeOrden(equipo)}</strong> · {resumenChapa(equipo)}
+            {equipo.referencia && ` · ${equipo.referencia}`}
+          </>
+        )}
+      </p>
+    </div>
+  );
+}
+
+function irAlPaso(n: NumeroPaso) {
+  const paso = document.getElementById(`paso-${n}`);
+  const reducido = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  paso?.scrollIntoView({ block: "start", behavior: reducido ? "auto" : "smooth" });
+  paso?.querySelector("button")?.focus({ preventScroll: true });
+}
+
+function Hoja({
+  api,
+  codigo,
+  trafoInicial,
+  pasoInicial,
+  onCreada,
+}: {
+  api: ApiPanel;
+  /** `undefined`: una O.T. nueva, que todavía no se guardó. */
+  codigo?: string;
+  trafoInicial?: string;
+  pasoInicial?: NumeroPaso;
+  onCreada?: (equipo: EquipoTaller) => void;
+}) {
+  const equipo = codigo === undefined ? undefined : api.taller.equipos.find((e) => e.codigo === codigo);
+  const { carga, setCarga, reintentar } = useCarga(api, equipo);
+  const lista = carga && carga !== "error" && carga !== "permiso" ? carga : null;
+  const datos: DatosHoja = { equipo, informe: lista?.informe ?? null, datosTaller: lista?.datosTaller ?? null, sinLeer: !lista };
+
+  // Hasta que se termina de leer no se sabe cuál abrir. Después, el primero que queda por hacer (ver `yaLlego`).
+  const [abierto, setAbierto] = useState<NumeroPaso | null | undefined>(pasoInicial);
+  const [aviso, setAviso] = useState<NumeroPaso | null>(null);
+  const [seguirDesde, setSeguirDesde] = useState<NumeroPaso | null>(null);
+  const [irA, setIrA] = useState<NumeroPaso | null>(pasoInicial ?? null);
+  const [sucios, setSucios] = useState<ReadonlySet<NumeroPaso>>(new Set());
+  const enPantalla = abierto !== undefined ? abierto : lista ? proximoPaso(datos) : null;
+  useAvisoAlSalir(sucios.size > 0);
+
+  const marcarSucio = useCallback((n: NumeroPaso, sucio: boolean) => {
+    setSucios((actuales) => {
+      if (actuales.has(n) === sucio) return actuales;
+      const nuevos = new Set(actuales);
+      if (sucio) nuevos.add(n);
+      else nuevos.delete(n);
+      return nuevos;
+    });
+  }, []);
+
+  // Después de abrirlo, con la página ya acomodada: el paso queda arriba y con el foco.
+  useEffect(() => {
+    if (!irA) return;
+    irAlPaso(irA);
+    setIrA(null);
+  }, [irA]);
+
+  // Al llegar a una O.T. ya empezada, con todo leído: si el paso en el que se sigue quedó lejos, baja hasta ahí. Si
+  // la página ya no está arriba (volvió con "Atrás" al lugar donde estaba), no la mueve.
+  const yaLlego = useRef(codigo === undefined || pasoInicial !== undefined);
+  useEffect(() => {
+    if (yaLlego.current || !lista) return;
+    yaLlego.current = true;
+    const paso = proximoPaso(datos);
+    // Queda fijo: al guardar sin seguir, el paso sigue abierto aunque ya no sea el próximo.
+    setAbierto(paso);
+    if (!paso || equipo?.baja || window.scrollY > 40) return;
+    const altura = document.getElementById(`paso-${paso}`)?.getBoundingClientRect().top ?? 0;
+    if (altura > window.innerHeight * 0.4) irAlPaso(paso);
+    // Se mira una sola vez, cuando terminan de leerse los datos.
+  }, [lista]);
+
+  // Después de guardar: con los datos ya al día, se abre el próximo paso sin completar.
+  useEffect(() => {
+    if (seguirDesde === null) return;
+    const siguiente = proximoPaso(datos, seguirDesde);
+    setSeguirDesde(null);
+    setAbierto(siguiente);
+    setIrA(siguiente);
+    // `datos` cambia en cada render: alcanza con el pedido de seguir.
+  }, [seguirDesde]);
+
+  if (codigo !== undefined && !equipo) {
     return (
       <p className="mt-6 max-w-[56ch] text-lg">
         No se encontró la orden de trabajo{codigo ? ` ${formatearCodigo(codigo)}` : ""}.{" "}
@@ -49,46 +273,308 @@ function Ficha({ api, codigo }: { api: ApiPanel; codigo: string }) {
     );
   }
 
-  const empresa = api.empresaDe(equipo);
-  const trafo = api.taller.transformadores.find((t) => t.id === equipo.trafo);
-  const otras = ordenesDelTrafo(api.taller.equipos, equipo.trafo, { excepto: equipo.codigo });
+  const empresa = equipo ? api.empresaDe(equipo) : "";
+  const trafoElegido = trafoInicial ? api.taller.transformadores.find((t) => t.id === trafoInicial && !t.baja) : undefined;
+  const pendiente = proximoPaso(datos);
+
+  function abrir(n: NumeroPaso) {
+    setAbierto(n);
+    setAviso(null);
+    setIrA(n);
+  }
+
+  /** Lo que comparten los pasos con una O.T. ya guardada. */
+  const deLaOrden = (n: NumeroPaso, orden: EquipoTaller) => ({
+    api,
+    equipo: orden,
+    onSeguir: () => setSeguirDesde(n),
+    onSucio: (sucio: boolean) => marcarSucio(n, sucio),
+  });
+
+  /** El aviso de un paso que por el orden del taller va más adelante. */
+  const nota = (n: NumeroPaso, texto: string) => (situacionPaso(n, datos) === "despues" ? <VaDespues>{texto}</VaDespues> : undefined);
+
+  function cuerpo(n: NumeroPaso): ReactNode {
+    if (n === 1) {
+      return <PasoOrden api={api} equipo={equipo} trafoInicial={trafoElegido} onCreada={(creada) => onCreada?.(creada)} onSeguir={() => setSeguirDesde(1)} onSucio={(sucio) => marcarSucio(1, sucio)} />;
+    }
+    if (!equipo) return null;
+    const comun = deLaOrden(n, equipo);
+    switch (n) {
+      case 2:
+        // Un transformador elegido era de la empresa anterior: con otra empresa se vuelve a buscar.
+        return <PasoTransformador key={equipo.empresa} {...comun} trafoInicial={trafoElegido} />;
+      case 3:
+      case 5:
+        if (carga === "error" || carga === "permiso") {
+          return (
+            <div className="marco-cuerpo flex flex-col items-start gap-5">
+              <p role="alert" className="flex max-w-[52ch] items-start gap-2 text-lg font-medium text-rojo">
+                <Alerta className="mt-1 size-5 shrink-0" />
+                {carga === "permiso"
+                  ? "Su cuenta no tiene permiso para ver estos datos. Avise a quien administra el sistema."
+                  : "No se pudieron cargar estos datos. Revise su conexión e intente de nuevo."}
+              </p>
+              <button type="button" onClick={reintentar} className="placa-secundaria">
+                Reintentar
+              </button>
+            </div>
+          );
+        }
+        if (!lista) {
+          return (
+            <p role="status" className="marco-cuerpo text-lg">
+              Cargando…
+            </p>
+          );
+        }
+        if (n === 3) return <PasoDiagnostico {...comun} guardado={lista.informe} onGuardado={(informe) => setCarga({ ...lista, informe })} />;
+        return (
+          <PasoReparacion
+            {...comun}
+            guardado={lista.datosTaller}
+            anterior={lista.anterior}
+            vaDespues={nota(5, "El taller lo carga con el presupuesto aprobado, pero puede cargarlo igual.")}
+            onGuardado={(datosTaller) => setCarga({ ...lista, datosTaller })}
+          />
+        );
+      case 4:
+        return <PasoPresupuesto {...comun} informe={lista?.informe ?? null} vaDespues={nota(4, "Normalmente se anota con el diagnóstico terminado, pero puede cargarlo igual.")} />;
+      case 6:
+        return <PasoEnsayos {...comun} vaDespues={nota(6, "Los ensayos van después de la reparación, pero puede cargarlos igual.")} />;
+      case 7:
+        return <PasoEntrega {...comun} vaDespues={nota(7, "La entrega va después de los ensayos, pero puede cargarla igual.")} />;
+    }
+  }
+
+  const otras = equipo && !equipo.faltaTrafo ? ordenesDelTrafo(api.taller.equipos, equipo.trafo, { excepto: equipo.codigo }) : [];
 
   return (
     <>
-      <p className="mt-4 font-cartel text-[2.5rem] font-bold leading-none">
-        {nombreOrden(equipo)}
-        {equipo.numeroOrdenTemporal && <MarcaTemporal className="ml-3" />}
+      {equipo && <Identidad equipo={equipo} />}
+      <p className={`${equipo ? "mt-1" : "mt-3"} max-w-[70ch] text-lg`}>
+        {equipo ? (
+          <>
+            {empresa || "Sin empresa"} · código <span className="tracking-[0.04em]">{formatearCodigo(equipo.codigo)}</span>
+            {equipo.etapas.ingresado && <> · ingresó el {formatearFecha(equipo.etapas.ingresado)}</>}
+          </>
+        ) : (
+          "Se completa en orden y cada paso se guarda al seguir. Con el transformador cargado se habilita lo demás."
+        )}
       </p>
-      <p className="mt-2 max-w-[70ch] text-lg">
-        {empresa || "Sin cliente"} · código <span className="tracking-[0.04em]">{formatearCodigo(equipo.codigo)}</span>
-        {equipo.etapas.ingresado && <> · ingresó el {formatearFecha(equipo.etapas.ingresado)}</>}
-      </p>
-      {!equipo.baja && (equipo.numeroOrdenTemporal || !equipo.numeroOrden) && (
-        <p className="mt-4 max-w-[64ch] font-medium">
+      {equipo && !equipo.baja && (equipo.numeroOrdenTemporal || !equipo.numeroOrden) && (
+        <p className="mt-3 max-w-[64ch] font-medium">
           {equipo.numeroOrdenTemporal ? "El N.º de O.T. es temporal." : "Falta el N.º de O.T."} Cuando tenga el del sistema de gestión,{" "}
-          <Link href={`/panel/editar?codigo=${equipo.codigo}`} className={enlace}>
+          <button type="button" onClick={() => abrir(1)} className={`${enlace} cursor-pointer`}>
             cárguelo
-          </Link>
+          </button>
           .
         </p>
       )}
-      <div className="mt-10 grid gap-10 lg:grid-cols-12 lg:gap-12">
-        <div className="flex flex-col gap-10 lg:col-span-8">
-          {trafo && <TrafoDeLaOrden trafo={trafo} cuantas={otras.length + 1} />}
-          <Recorrido equipo={equipo} />
-          <Datos equipo={equipo} trafo={trafo} />
-          <ArchivosOrden equipo={equipo} api={api} />
-          {otras.length > 0 && <HistorialTrafo trafo={equipo.trafo} ordenes={otras} />}
+      <div className="mt-9 grid gap-10 lg:grid-cols-12 lg:gap-12">
+        <div className="flex min-w-0 flex-col gap-5 lg:col-span-8">
+          {PASOS.map((n) => {
+            const situacion = situacionPaso(n, datos);
+            const { texto, cargado } = textoPaso(n, datos, empresa);
+            return (
+              <Paso
+                key={n}
+                n={n}
+                situacion={situacion}
+                abierto={enPantalla === n}
+                texto={texto}
+                cargado={cargado}
+                salteado={situacion === "salteado" ? rotuloSalteado(n, datos) : undefined}
+                sinGuardar={sucios.has(n)}
+                soloLectura={!!equipo?.baja}
+                aviso={aviso === n}
+                falta={faltaPara(n)}
+                faltaCorta={faltaCorta(n)}
+                irA={pendiente === 1 ? "Empezar por el paso 1" : `Ir al paso ${pendiente ?? 1}`}
+                onAlternar={() => {
+                  if (situacion === "bloqueado") {
+                    setAviso(aviso === n ? null : n);
+                    return;
+                  }
+                  setAviso(null);
+                  setAbierto(enPantalla === n ? null : n);
+                }}
+                onIr={() => abrir(pendiente ?? 1)}
+              >
+                {cuerpo(n)}
+              </Paso>
+            );
+          })}
+
+          <div className="mt-3 flex flex-col gap-10">
+            {equipo && !equipo.faltaTrafo ? (
+              <ArchivosOrden equipo={equipo} api={api} />
+            ) : (
+              <section aria-label="Archivos para la empresa" className="marco border-dashed bg-esmalte shadow-none">
+                <TornillosMarco />
+                <div className="marco-cuerpo py-5 sm:py-5">
+                  <p className="font-cartel text-[1.375rem] font-bold uppercase leading-tight tracking-[0.04em] text-grafito">Archivos para la empresa</p>
+                  <p className="mt-0.5 leading-snug text-grafito">Se habilitan con el transformador cargado.</p>
+                </div>
+              </section>
+            )}
+            {equipo && !equipo.faltaTrafo && <Recorrido equipo={equipo} />}
+            {equipo && otras.length > 0 && <HistorialTrafo trafo={equipo.trafo} ordenes={otras} />}
+            {equipo && !equipo.baja && api.puede("baja-equipos") && <BajaEquipo equipo={equipo} api={api} />}
+          </div>
         </div>
-        <EstadoYAcciones equipo={equipo} api={api} />
+        <Costado api={api} equipo={equipo} datos={datos} abierto={enPantalla} />
       </div>
     </>
   );
 }
 
+/**
+ * Al costado (arriba, en la tablet): dónde está la O.T. y cuánto lleva, cuánto falta cargar y lo que se hace con
+ * ella sin cargar nada. El estado sale de las fechas de cada paso: acá solo se muestra.
+ */
+function Costado({ api, equipo, datos, abierto }: { api: ApiPanel; equipo?: EquipoTaller; datos: DatosHoja; abierto: NumeroPaso | null }) {
+  const hechos = PASOS.filter((n) => pasoCompleto(n, datos)).length;
+  const sinCargar = PASOS.filter((n) => pasoSalteado(n, datos)).length;
+  const conTrafo = !!equipo && !equipo.faltaTrafo;
+  const definicion = conTrafo ? DEFINICIONES[equipo.estado] : null;
+  return (
+    <aside className="order-first grid content-start gap-x-8 gap-y-7 sm:grid-cols-2 lg:sticky lg:top-16 lg:order-none lg:col-span-4 lg:flex lg:flex-col lg:self-start">
+      <div className="border-t-[3px] border-acero pt-4">
+        <h2 className="rotulo text-base">Estado</h2>
+        <div className="mt-3 flex items-center gap-4">
+          {definicion && equipo ? (
+            <Senal forma={definicion.forma} pictograma={equipo.estado} simple className="size-14 shrink-0" />
+          ) : (
+            <span aria-hidden="true" className="block size-14 shrink-0 rounded-[var(--radius-placa)] border-2 border-dashed border-acero" />
+          )}
+          <div className="min-w-0 leading-snug">
+            {conTrafo && equipo ? (
+              <>
+                <p className="text-lg font-semibold">
+                  <TextoEstado equipo={equipo} />
+                </p>
+                <div className="text-[0.9375rem]">
+                  <TextoDemoras equipo={equipo} api={api} />
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-lg font-semibold">{equipo ? "Falta el transformador" : "Todavía no se guardó"}</p>
+                <p className="text-[0.9375rem] text-grafito">
+                  {equipo
+                    ? "La O.T. ya está guardada en el panel. La empresa la ve cuando cargue el transformador en el paso 2."
+                    : "Se guarda al terminar el paso 1. La empresa la ve cuando tenga el transformador."}
+                </p>
+              </>
+            )}
+          </div>
+        </div>
+        {equipo?.baja && (
+          <p className="mt-5 max-w-[44ch]">
+            <strong className="font-semibold">Está dada de baja</strong> desde el {formatearFecha(equipo.baja)}: la empresa no la ve y no se edita.
+            {api.puede("baja-equipos") && (
+              <>
+                {" "}
+                <button type="button" onClick={() => api.reactivar("equipo", equipo.codigo, nombreOrden(equipo))} className={`${enlace} cursor-pointer`}>
+                  Reactivar
+                </button>
+              </>
+            )}
+          </p>
+        )}
+      </div>
+
+      <div className="border-t-[3px] border-acero pt-4">
+        <h2 className="rotulo text-base">Avance</h2>
+        <p className="mt-2">
+          {hechos === 0 ? "Ningún paso completo todavía." : hechos === PASOS.length ? "Los 7 pasos completos." : `${hechos} de ${PASOS.length} pasos completos.`}
+          {sinCargar > 0 && ` ${sinCargar === 1 ? "1 quedó" : `${sinCargar} quedaron`} sin completar.`}
+        </p>
+        <div aria-hidden="true" className="mt-2.5 grid grid-cols-7 gap-1">
+          {PASOS.map((n) => (
+            <span key={n} className={`block h-1.5 rounded-[0.0625rem] ${pasoCompleto(n, datos) ? "bg-tinta" : abierto === n ? "bg-naranja" : pasoSalteado(n, datos) ? "bg-acero" : "bg-acero/30"}`} />
+          ))}
+        </div>
+      </div>
+
+      {conTrafo && equipo && (
+        <div className="border-t-[3px] border-acero pt-4 sm:col-span-2 lg:col-span-1">
+          <h2 className="rotulo text-base">Esta O.T.</h2>
+          <ul className="mt-1">
+            <li className="border-b border-acero">
+              <button type="button" onClick={() => api.abrirEtiqueta(equipo)} className="flex w-full cursor-pointer items-center justify-between gap-3 py-3 text-left font-semibold hover:text-naranja">
+                Imprimir etiqueta
+                <span aria-hidden="true">→</span>
+              </button>
+            </li>
+            <li>
+              <Link href={`/panel/transformador?id=${equipo.trafo}`} className="flex items-center justify-between gap-3 py-3 font-semibold no-underline hover:text-naranja">
+                Ver el transformador y sus O.T.
+                <span aria-hidden="true">→</span>
+              </Link>
+            </li>
+          </ul>
+        </div>
+      )}
+    </aside>
+  );
+}
+
+/**
+ * Dar de baja una orden, con confirmación: la empresa deja de verla y el código deja de funcionar. Nada se
+ * borra: queda en la vista "Dados de baja" de la lista, desde donde se reactiva.
+ */
+function BajaEquipo({ equipo, api }: { equipo: EquipoTaller; api: ApiPanel }) {
+  const router = useRouter();
+  const [confirmando, setConfirmando] = useState(false);
+  const [guardando, setGuardando] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function confirmar() {
+    setGuardando(true);
+    setError(null);
+    try {
+      await api.acciones.darDeBaja("equipo", equipo.codigo);
+      dejarAviso(`Se dio de baja la ${nombreOrden(equipo)}. Para reactivarla, elija la vista "Dados de baja".`);
+      router.push("/panel");
+    } catch (e) {
+      setError(mensajeDeError(e));
+      setGuardando(false);
+    }
+  }
+
+  return (
+    <section aria-labelledby="baja-equipo" className="max-w-[60ch] border-t-[3px] border-acero pt-6">
+      <h2 id="baja-equipo" className="rotulo text-base">
+        Dar de baja
+      </h2>
+      <p className="mt-2">
+        Para una O.T. cargada por error o que ya no corresponde seguir. La empresa deja de verla en su portal y el código deja de
+        funcionar en la consulta pública. Nada se borra: se puede reactivar.
+      </p>
+      <button type="button" onClick={() => setConfirmando(true)} className="placa-secundaria mt-4">
+        Dar de baja la O.T.
+      </button>
+      <Dialogo abierto={confirmando} titulo="Dar de baja la O.T." onCerrar={() => setConfirmando(false)}>
+        <div className="flex flex-col gap-5">
+          <p className="max-w-[56ch]">
+            ¿Dar de baja la <strong className="font-semibold">{nombreOrden(equipo)}</strong> ({formatearCodigo(equipo.codigo)})? Los cambios sin guardar de esta
+            página se pierden.
+          </p>
+          <ErrorFormulario texto={error} />
+          <button type="button" onClick={confirmar} className="placa self-start" disabled={guardando}>
+            {guardando ? "Dando de baja…" : "Sí, dar de baja"}
+          </button>
+        </div>
+      </Dialogo>
+    </section>
+  );
+}
+
 type Situacion = "pasada" | "actual" | "salteada" | "pendiente";
 
-interface Paso {
+interface EtapaRecorrida {
   estado: EstadoReparacion;
   situacion: Situacion;
   fecha?: Date;
@@ -97,7 +583,7 @@ interface Paso {
 }
 
 /** Cada etapa con su fecha y su duración. Una etapa sin fecha antes de la actual se salteó. */
-function pasosDe(equipo: EquipoTaller, hoy: Date): Paso[] {
+function recorridoDe(equipo: EquipoTaller, hoy: Date): EtapaRecorrida[] {
   const actual = indiceEstado(equipo.estado);
   return ESTADOS.map((estado, i) => {
     const fecha = equipo.etapas[estado];
@@ -113,7 +599,7 @@ function pasosDe(equipo: EquipoTaller, hoy: Date): Paso[] {
 
 function Recorrido({ equipo }: { equipo: EquipoTaller }) {
   const hoy = new Date();
-  const pasos = pasosDe(equipo, hoy);
+  const etapas = recorridoDe(equipo, hoy);
   const ingreso = equipo.etapas.ingresado;
   const entrega = equipo.estado === "entregado" ? equipo.etapas.entregado : undefined;
   const total = ingreso ? diasEntre(ingreso, entrega ?? hoy) : undefined;
@@ -137,33 +623,33 @@ function Recorrido({ equipo }: { equipo: EquipoTaller }) {
               : `Ingresó el ${formatearFecha(ingreso)}: lleva ${dias(total!)} en el taller.`}
       </p>
       <ol aria-label="Etapas de la reparación" className="px-[var(--marco-px)] pb-6">
-        {pasos.map((paso, i) => {
-          const definicion = DEFINICIONES[paso.estado];
-          const ultimo = i === pasos.length - 1;
+        {etapas.map((etapa, i) => {
+          const definicion = DEFINICIONES[etapa.estado];
+          const ultimo = i === etapas.length - 1;
           return (
-            <li key={paso.estado} aria-current={paso.situacion === "actual" ? "step" : undefined} className="relative flex gap-4 pb-5 last:pb-0">
+            <li key={etapa.estado} aria-current={etapa.situacion === "actual" ? "step" : undefined} className="relative flex gap-4 pb-5 last:pb-0">
               {/* La línea que une las etapas: llena en lo recorrido, punteada en lo que falta. */}
               {!ultimo && (
                 <span
                   aria-hidden="true"
                   className={`absolute left-[1.0625rem] top-10 bottom-0 w-0 border-l-2 ${
-                    paso.situacion === "pendiente" || paso.situacion === "actual" ? "border-dashed border-acero/60" : "border-acero"
+                    etapa.situacion === "pendiente" || etapa.situacion === "actual" ? "border-dashed border-acero/60" : "border-acero"
                   }`}
                 />
               )}
               <Senal
                 forma={definicion.forma}
-                pictograma={paso.estado}
-                variante={paso.situacion === "actual" ? "activa" : paso.situacion === "pendiente" || paso.situacion === "salteada" ? "futura" : "pasada"}
+                pictograma={etapa.estado}
+                variante={etapa.situacion === "actual" ? "activa" : etapa.situacion === "pendiente" || etapa.situacion === "salteada" ? "futura" : "pasada"}
                 simple
                 className="relative size-9 shrink-0 bg-blanco"
               />
               <div className="min-w-0 pt-1 leading-snug">
-                <p className={paso.situacion === "actual" ? "font-bold" : paso.situacion === "pasada" ? "font-semibold" : "text-grafito"}>
+                <p className={etapa.situacion === "actual" ? "font-bold" : etapa.situacion === "pasada" ? "font-semibold" : "text-grafito"}>
                   {definicion.nombre}
-                  {paso.situacion === "actual" && <span className="font-normal text-grafito"> · actual</span>}
+                  {etapa.situacion === "actual" && <span className="font-normal text-grafito"> · actual</span>}
                 </p>
-                <p className="text-[0.9375rem] text-grafito">{detalle(paso)}</p>
+                <p className="text-[0.9375rem] text-grafito">{detalle(etapa)}</p>
               </div>
             </li>
           );
@@ -173,155 +659,18 @@ function Recorrido({ equipo }: { equipo: EquipoTaller }) {
   );
 }
 
-function detalle(paso: Paso): string {
-  switch (paso.situacion) {
+function detalle(etapa: EtapaRecorrida): string {
+  switch (etapa.situacion) {
     case "pendiente":
       return "Pendiente";
     case "salteada":
       return "Sin fecha: se salteó";
     case "actual":
-      if (!paso.fecha) return "Sin fecha";
-      if (paso.dias === undefined) return `El ${formatearFecha(paso.fecha)}`;
-      return `Desde el ${formatearFecha(paso.fecha)} · ${paso.dias === 0 ? "empezó hoy" : `lleva ${dias(paso.dias)}`}`;
+      if (!etapa.fecha) return "Sin fecha";
+      if (etapa.dias === undefined) return `El ${formatearFecha(etapa.fecha)}`;
+      return `Desde el ${formatearFecha(etapa.fecha)} · ${etapa.dias === 0 ? "empezó hoy" : `lleva ${dias(etapa.dias)}`}`;
     case "pasada":
-      if (paso.dias === undefined) return `El ${formatearFecha(paso.fecha!)}`;
-      return `Desde el ${formatearFecha(paso.fecha!)} · ${paso.dias === 0 ? "menos de 1 día" : dias(paso.dias)}`;
+      if (etapa.dias === undefined) return `El ${formatearFecha(etapa.fecha!)}`;
+      return `Desde el ${formatearFecha(etapa.fecha!)} · ${etapa.dias === 0 ? "menos de 1 día" : dias(etapa.dias)}`;
   }
-}
-
-/** El transformador de la orden, con un enlace a su ficha: ahí están su chapa y todas sus O.T. */
-function TrafoDeLaOrden({ trafo, cuantas }: { trafo: Transformador; cuantas: number }) {
-  return (
-    <section aria-labelledby="trafo-orden" className="marco">
-      <TornillosMarco />
-      <div className="marco-cabecera">
-        <h2 id="trafo-orden" className="rotulo text-base">
-          Transformador
-        </h2>
-        <span className="etiqueta">{cuantas === 1 ? "1.ª O.T." : `${cuantas} O.T.`}</span>
-      </div>
-      <div className="marco-cuerpo flex flex-wrap items-center justify-between gap-x-8 gap-y-3">
-        <div>
-          <p className="font-cartel text-[1.75rem] font-bold leading-none">
-            {nombreTrafo(trafo)}
-            {trafo.provisorio && <MarcaTemporal />}
-          </p>
-          <p className="mt-1 text-[0.9375rem]">{resumenChapa(trafo)}</p>
-        </div>
-        <Link href={`/panel/transformador?id=${trafo.id}`} className={enlace}>
-          Ver el transformador {cuantas > 1 ? `y sus ${cuantas} O.T.` : "y su chapa"}
-        </Link>
-      </div>
-    </section>
-  );
-}
-
-/**
- * Los datos de la orden, con el N.º T con el que ingresó (si hoy el transformador tiene otro, se dice). Lo
- * demás del transformador está en su ficha.
- */
-function Datos({ equipo, trafo }: { equipo: EquipoTaller; trafo: Transformador | undefined }) {
-  const cambioT = trafo && normalizarNumero(equipo.numeroTIngreso ?? "") !== normalizarNumero(trafo.numeroT ?? "");
-  const filas: [string, string | undefined][] = [
-    ["N.º de O.T.", equipo.numeroOrden && (equipo.numeroOrdenTemporal ? `${equipo.numeroOrden} (temporal)` : equipo.numeroOrden)],
-    [
-      "N.º T al ingresar",
-      cambioT
-        ? `${equipo.numeroTIngreso ?? "Sin N.º T"} (hoy el transformador ${trafo.numeroT ? `tiene el ${trafo.numeroT}` : "no tiene N.º T"})`
-        : equipo.numeroTIngreso,
-    ],
-    ["Código de seguimiento", formatearCodigo(equipo.codigo)],
-    ["Referencia del cliente", equipo.referencia],
-    ["Motivo del ingreso", equipo.motivo],
-  ];
-  return (
-    <section aria-labelledby="datos-equipo" className="marco">
-      <TornillosMarco />
-      <div className="marco-cabecera">
-        <h2 id="datos-equipo" className="rotulo text-base">
-          Datos de la orden
-        </h2>
-        {!equipo.baja && (
-          <Link href={`/panel/editar?codigo=${equipo.codigo}`} className="rotulo text-[0.875rem] text-blanco underline decoration-2 underline-offset-4">
-            Editar
-          </Link>
-        )}
-      </div>
-      <dl className="marco-cuerpo grid gap-x-8 gap-y-4 sm:grid-cols-2">
-        {filas.map(([nombre, valor]) => (
-          <div key={nombre} className={nombre === "Motivo del ingreso" ? "sm:col-span-2" : ""}>
-            <dt className="rotulo text-[0.8125rem] text-grafito">{nombre}</dt>
-            <dd className={`mt-0.5 ${valor ? "" : "text-grafito"} ${nombre === "Código de seguimiento" ? "tracking-[0.04em]" : ""}`}>
-              {valor ?? "Sin cargar"}
-            </dd>
-          </div>
-        ))}
-      </dl>
-    </section>
-  );
-}
-
-/** Al costado: dónde está el equipo, cuánto lleva y todo lo que se puede hacer con él. */
-function EstadoYAcciones({ equipo, api }: { equipo: EquipoTaller; api: ApiPanel }) {
-  const definicion = DEFINICIONES[equipo.estado];
-  const nombre = nombreDe(equipo);
-  return (
-    <aside aria-labelledby="estado-equipo" className="border-t-[3px] border-acero pt-5 lg:sticky lg:top-8 lg:col-span-4 lg:self-start">
-      <h2 id="estado-equipo" className="rotulo text-base">
-        Estado
-      </h2>
-      <div className="mt-3 flex items-center gap-4">
-        <Senal forma={definicion.forma} pictograma={equipo.estado} simple className="size-14 shrink-0" />
-        <div className="text-lg leading-snug">
-          <p className="font-semibold">
-            <TextoEstado equipo={equipo} />
-          </p>
-          <div className="text-[0.9375rem]">
-            <TextoDemoras equipo={equipo} api={api} />
-          </div>
-        </div>
-      </div>
-
-      {equipo.baja ? (
-        <p className="mt-5 max-w-[44ch]">
-          <strong className="font-semibold">Está dado de baja</strong> desde el {formatearFecha(equipo.baja)}: el cliente no lo ve.
-          {api.puede("baja-equipos") && (
-            <>
-              {" "}
-              <button type="button" onClick={() => api.reactivar("equipo", equipo.codigo, nombre)} className={`${enlace} cursor-pointer`}>
-                Reactivar
-              </button>
-            </>
-          )}
-        </p>
-      ) : (
-        <button type="button" onClick={() => api.abrirEstado(equipo)} className="placa mt-5">
-          Cambiar estado
-        </button>
-      )}
-
-      <h2 className="rotulo mt-8 border-t border-acero pt-5 text-base">Acciones</h2>
-      <ul className="mt-2">
-        {accionesDe(equipo, api, { conFicha: false }).map((accion) => (
-          <li key={accion.id} className="border-b border-acero last:border-b-0">
-            {accion.href ? (
-              <Link href={accion.href} className="flex items-center justify-between gap-3 py-3 font-semibold no-underline hover:text-naranja">
-                {accion.texto}
-                <span aria-hidden="true">→</span>
-              </Link>
-            ) : (
-              <button
-                type="button"
-                onClick={accion.alElegir}
-                className="flex w-full cursor-pointer items-center justify-between gap-3 py-3 text-left font-semibold hover:text-naranja"
-              >
-                {accion.texto}
-                <span aria-hidden="true">→</span>
-              </button>
-            )}
-          </li>
-        ))}
-      </ul>
-    </aside>
-  );
 }

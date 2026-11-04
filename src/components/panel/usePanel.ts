@@ -5,7 +5,7 @@ import { useSesionDe } from "@/components/ingreso/useSesionDe";
 import { obtenerPanel } from "@/lib/datos/repositorios";
 import type { LimitesAvisos } from "@/lib/dominio/avisos";
 import type { DatosTaller, DatosTallerGuardados } from "@/lib/dominio/datos-taller";
-import { etapasConEstado, type EstadoReparacion } from "@/lib/dominio/estados";
+import { estadoDeEtapas, etapasConEstado, type EstadoReparacion } from "@/lib/dominio/estados";
 import { facturacionParaGuardar } from "@/lib/dominio/facturacion";
 import type { Informe, InformeGuardado } from "@/lib/dominio/informe";
 import { esPersonal } from "@/lib/dominio/roles";
@@ -45,9 +45,14 @@ export interface AccionesPanel {
   cambiarEstado(equipo: EquipoTaller, estado: EstadoReparacion, fecha: Date): Promise<EstadoAnterior>;
   /** Corrige las fechas de las etapas sin cambiar el estado. */
   corregirFechas(equipo: EquipoTaller, etapas: Partial<Record<EstadoReparacion, Date>>): Promise<EstadoAnterior>;
+  /** Guarda las fechas cargadas en un paso de la O.T.: el estado pasa a ser la última etapa con fecha. */
+  guardarEtapas(equipo: EquipoTaller, etapas: Partial<Record<EstadoReparacion, Date>>): Promise<EstadoAnterior>;
   restaurar(anterior: EstadoAnterior): Promise<void>;
-  /** Una orden de trabajo nueva, de un transformador que ya pasó por el taller o de uno nuevo (ver `PanelRepositorio.registrarEquipo`). */
-  registrar(datos: DatosOrden, ingreso: Date, trafo: string | { empresa: string; datos: DatosTransformador }): Promise<EquipoTaller>;
+  /** Una orden de trabajo nueva, todavía sin transformador (ver `PanelRepositorio.crearOrden`). */
+  crearOrden(datos: DatosOrden, empresa: string, ingreso: Date): Promise<EquipoTaller>;
+  corregirOrdenSinTrafo(codigo: string, empresa: string, ingreso: Date): Promise<void>;
+  /** Le asigna a la orden un transformador que ya pasó por el taller o uno nuevo (ver `PanelRepositorio.asignarTrafo`). */
+  asignarTrafo(orden: EquipoTaller, trafo: string | { empresa: string; datos: DatosTransformador }): Promise<EquipoTaller>;
   /** Un transformador sin O.T. (ver `PanelRepositorio.crearTransformador`). */
   crearTransformador(empresa: string, datos: DatosTransformador): Promise<Transformador>;
   editar(codigo: string, datos: DatosOrden): Promise<void>;
@@ -133,16 +138,31 @@ export function usePanel() {
       reemplazarEquipo(equipo.codigo, { etapas, actualizado: new Date() });
       return { codigo: equipo.codigo, estado: equipo.estado, etapas: equipo.etapas };
     },
+    async guardarEtapas(equipo, etapas) {
+      const estado = estadoDeEtapas(etapas);
+      await (await obtenerPanel()).guardarEstado(equipo.codigo, estado, etapas);
+      reemplazarEquipo(equipo.codigo, { estado, etapas, actualizado: new Date() });
+      return { codigo: equipo.codigo, estado: equipo.estado, etapas: equipo.etapas };
+    },
     async restaurar(anterior) {
       await (await obtenerPanel()).guardarEstado(anterior.codigo, anterior.estado, anterior.etapas);
       reemplazarEquipo(anterior.codigo, { estado: anterior.estado, etapas: anterior.etapas, actualizado: new Date() });
     },
-    async registrar(datos, ingreso, trafo) {
-      const { equipo, transformador } = await (await obtenerPanel()).registrarEquipo(datos, ingreso, trafo);
+    async crearOrden(datos, empresa, ingreso) {
+      const equipo = await (await obtenerPanel()).crearOrden(datos, empresa, ingreso);
+      actualizar((t) => ({ ...t, equipos: [...t.equipos, equipo] }));
+      return equipo;
+    },
+    async corregirOrdenSinTrafo(codigo, empresa, ingreso) {
+      await (await obtenerPanel()).corregirOrdenSinTrafo(codigo, empresa, ingreso);
+      reemplazarEquipo(codigo, { empresa, etapas: { ingresado: ingreso }, actualizado: new Date() });
+    },
+    async asignarTrafo(orden, trafo) {
+      const { equipo, transformador } = await (await obtenerPanel()).asignarTrafo(orden, trafo);
       actualizar((t) => ({
         ...t,
         transformadores: t.transformadores.some((x) => x.id === transformador.id) ? t.transformadores : [...t.transformadores, transformador],
-        equipos: [...t.equipos, equipo],
+        equipos: t.equipos.map((e) => (e.codigo === orden.codigo ? equipo : e)),
       }));
       return equipo;
     },

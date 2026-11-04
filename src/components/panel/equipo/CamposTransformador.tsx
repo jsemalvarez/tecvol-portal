@@ -226,12 +226,25 @@ export function IdentidadTransformador(
   );
 }
 
-/**
- * La chapa del transformador, de arriba hacia abajo en el mismo orden en que la trae: identificación,
- * características, tensiones, conmutador, aceite y masa.
- */
+/** La chapa del transformador en su propia placa. */
 export function ChapaTransformador(props: PropsCampos & { transformadores: Transformador[] }) {
-  const { id, valores, setValores, errores, quitarError, nuevo, transformadores } = props;
+  return (
+    <div className="marco">
+      <TornillosMarco />
+      <div className="marco-cabecera">
+        <h2 className="rotulo text-base">Placa de características</h2>
+      </div>
+      <GruposChapa {...props} />
+    </div>
+  );
+}
+
+/**
+ * Los datos de la chapa, de arriba hacia abajo en el mismo orden en que la trae: identificación,
+ * características, tensiones, conmutador, aceite y masa. `primero`: va al principio de su placa.
+ */
+export function GruposChapa(props: PropsCampos & { transformadores: Transformador[]; primero?: boolean }) {
+  const { id, valores, setValores, errores, quitarError, nuevo, transformadores, primero = true } = props;
   const cambiar = cambiador(props);
   const campoId = (campo: string) => `${id}-${campo}`;
   const lista = (campo: CampoSugerido) => `${id}-sugerencias-${campo}`;
@@ -260,13 +273,8 @@ export function ChapaTransformador(props: PropsCampos & { transformadores: Trans
   const conmutadorVacio = valores.conmutador.every((p) => !p.trim());
 
   return (
-    <div className="marco">
-      <TornillosMarco />
-      <div className="marco-cabecera">
-        <h2 className="rotulo text-base">Placa de características</h2>
-      </div>
-
-      <Grupo titulo="Identificación" primero ayuda="Datos de placa">
+    <>
+      <Grupo titulo="Identificación" primero={primero} ayuda="Datos de placa">
         <div className="grid gap-x-8 gap-y-7 sm:grid-cols-6">
           <CampoTexto {...comun("fabricante")} etiqueta="Fabricante" lista={lista("fabricante")} className="sm:col-span-4" />
           <CampoTexto {...comun("anio")} etiqueta="Año de fabricación" numerico maxLength={4} className="sm:col-span-2" ancho="max-w-[8rem]" />
@@ -392,6 +400,6 @@ export function ChapaTransformador(props: PropsCampos & { transformadores: Trans
       {(Object.keys(sugerencias) as CampoSugerido[]).map((campo) => (
         <Sugerencias key={campo} id={lista(campo)} valores={sugerencias[campo]} />
       ))}
-    </div>
+    </>
   );
 }

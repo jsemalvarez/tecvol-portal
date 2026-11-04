@@ -133,6 +133,14 @@ export function etapasConEstado(
   return nuevas;
 }
 
+/** El estado que corresponde a las fechas cargadas: la última etapa que tiene una. */
+export function estadoDeEtapas(etapas: Partial<Record<EstadoReparacion, Date>>): EstadoReparacion {
+  return [...ESTADOS].reverse().find((e) => etapas[e]) ?? "ingresado";
+}
+
+/** La O.T. espera algo de la empresa: que apruebe el presupuesto o que retire el transformador. */
+export const esperaALaEmpresa = (estado: EstadoReparacion) => ["obligacion", "seguridad"].includes(DEFINICIONES[estado].forma);
+
 /**
  * La primera etapa con fecha anterior a la de una etapa previa, junto con esa etapa previa; `null` si las
  * fechas siguen el orden del taller. Se comparan días, no horas: dos etapas pueden empezar el mismo día.

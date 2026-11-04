@@ -45,7 +45,8 @@ export interface ApiPanel {
 
 export type Ventana =
   | { tipo: "estado" | "etiqueta"; codigo: string }
-  | { tipo: "empresa" }
+  /** Con `onCreada`, se abrió desde un formulario, para elegirla ahí apenas se crea. */
+  | { tipo: "empresa"; onCreada?: (empresa: Empresa) => void }
   | { tipo: "editar-empresa"; empresa: Empresa }
   | { tipo: "cuenta"; empresa: Empresa }
   | { tipo: "editar-cuenta"; cuenta: CuentaCliente }
@@ -99,12 +100,16 @@ export function PaginaPanel({
   seccion,
   titulo,
   nota,
+  conBarraAbajo = false,
   children,
 }: {
   seccion: Seccion;
-  titulo?: string;
-  /** Qué ve el cliente de lo que se carga en esta página, si no es lo de siempre. Va en la banda de abajo. */
+  /** Con una función, sale de los datos: `api` falta mientras cargan. */
+  titulo?: ReactNode | ((api: ApiPanel | null) => ReactNode);
+  /** Qué ve la empresa de lo que se carga en esta página, si no es lo de siempre. Va en la banda de abajo. */
   nota?: ReactNode;
+  /** La página tiene una barra fija abajo: los avisos van más arriba para no taparla. */
+  conBarraAbajo?: boolean;
   children: (api: ApiPanel) => ReactNode;
 }) {
   const { estado, acciones, reintentar, salir } = usePanel();
@@ -304,7 +309,7 @@ export function PaginaPanel({
               <p className="rotulo text-[0.9375rem] text-grafito">Panel del taller</p>
             )}
             <h1 id="titulo-panel" className="mt-2 font-cartel text-[3rem] font-bold leading-[0.92] sm:text-[4rem]">
-              {titulo ?? actual.nombre}
+              {(typeof titulo === "function" ? titulo(api) : titulo) ?? actual.nombre}
             </h1>
           </div>
           {conEncabezado && seccion === "equipos" && (
@@ -426,7 +431,8 @@ export function PaginaPanel({
               <FormularioEmpresa
                 acciones={acciones}
                 onGuardada={(empresa) => {
-                  avisar(`Se creó ${empresa.nombre}. Ahora puede agregarle cuentas.`);
+                  ventana.onCreada?.(empresa);
+                  avisar(ventana.onCreada ? `Se creó ${empresa.nombre} y quedó elegida.` : `Se creó ${empresa.nombre}. Ahora puede agregarle cuentas.`);
                   cerrar();
                 }}
               />
@@ -492,7 +498,7 @@ export function PaginaPanel({
         </>
       )}
 
-      <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-5 z-40 flex justify-center px-4">
+      <div aria-live="polite" className={`pointer-events-none fixed inset-x-0 z-40 flex justify-center px-4 ${conBarraAbajo ? "bottom-24" : "bottom-5"}`}>
         {aviso && (
           <div className="sobre-tinta pointer-events-auto flex max-w-[40rem] flex-wrap items-center gap-x-5 gap-y-2 rounded-[0.25rem] bg-tinta px-5 py-3.5 text-esmalte shadow-placa">
             <p>{aviso.texto}</p>

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { PanelRegistrar } from "@/components/panel/equipo/PaginasEquipo";
+import { PanelRegistrar } from "@/components/panel/ficha/PaginaFicha";
 
 export const metadata: Metadata = {
   title: "Nueva O.T. · Panel · Tecvol",

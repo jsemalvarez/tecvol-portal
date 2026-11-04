@@ -158,8 +158,13 @@ export interface DatosOrden {
  * transformador (el cliente, los números, la descripción y la chapa), copiado al leerla (ver `conTransformador`).
  */
 export interface EquipoTaller extends EquipoCliente {
-  /** El transformador de esta orden: lo comparten todas sus órdenes (ver `ordenesDelTrafo`). */
+  /** El transformador de esta orden: lo comparten todas sus órdenes (ver `ordenesDelTrafo`). Vacío mientras `faltaTrafo`. */
   trafo: string;
+  /**
+   * Se guardó la orden y todavía no tiene transformador: está solo en el panel, con su código. Hasta que lo
+   * tenga, el cliente no la ve y el código no sirve en la consulta pública.
+   */
+  faltaTrafo?: boolean;
   empresa: string;
   /** Las cargadas antes de que fuera obligatorio pueden no tenerlo. */
   numeroOrden?: string;

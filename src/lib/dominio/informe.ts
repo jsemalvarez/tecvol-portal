@@ -82,6 +82,25 @@ export interface InformeGuardado extends Informe {
   por?: string;
 }
 
+/** Lo que sirve para cotizar: cuántos ítems se revisaron y los que no están bien, agrupados por lo que hay que hacer. */
+export function paraCotizar(inspeccion: Partial<Record<IdItem, { estado?: EstadoItem | ""; accion?: AccionItem | "" }>>) {
+  const revisados = ITEMS_INSPECCION.filter((item) => inspeccion[item.id]?.estado);
+  const conProblema = revisados.filter((item) => inspeccion[item.id]?.estado !== "ok");
+  const conAccion = (accion: AccionItem) => conProblema.filter((item) => inspeccion[item.id]?.accion === accion).map((item) => item.nombre);
+  const sinAccion = conProblema
+    .filter((item) => !inspeccion[item.id]?.accion)
+    .map((item) => `${item.nombre} (${NOMBRE_ESTADO_ITEM[inspeccion[item.id]?.estado as EstadoItem]})`);
+  return {
+    revisados: revisados.length,
+    sinRevisar: ITEMS_INSPECCION.length - revisados.length,
+    grupos: [
+      { titulo: "Cambiar", items: conAccion("cambiar") },
+      { titulo: "Reparar", items: conAccion("reparar") },
+      { titulo: "Sin acción indicada", items: sinAccion },
+    ].filter((g) => g.items.length),
+  };
+}
+
 const esNumero = (valor: unknown): valor is number => typeof valor === "number" && Number.isFinite(valor) && valor >= 0;
 const texto = (valor: unknown) => (typeof valor === "string" && valor.trim() ? valor.trim() : undefined);
 

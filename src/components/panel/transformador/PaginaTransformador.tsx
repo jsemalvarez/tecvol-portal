@@ -7,10 +7,9 @@ import { TornillosMarco } from "@/components/inicio/TornillosMarco";
 import { formatearFecha } from "@/lib/dominio/fechas";
 import { formatearNumero, NOMBRE_FASES, NOMBRE_USOS } from "@/lib/dominio/placa";
 import type { Transformador } from "@/lib/dominio/tipos";
-import { historialNumeroT, nombreOrden, nombreTrafo, numerosTAnteriores, ordenesDelTrafo } from "@/lib/dominio/trafo";
+import { historialNumeroT, nombreOrden, nombreTrafo, numerosTAnteriores, ordenesDelTrafo, resumenChapa } from "@/lib/dominio/trafo";
 import { Dialogo, ErrorFormulario, mensajeDeError } from "../Dialogo";
 import { MarcaTemporal } from "../equipo/campos";
-import { resumenChapa } from "../equipo/FormularioOT";
 import { ListaOrdenes } from "../equipo/HistorialTrafo";
 import { dejarAviso, PaginaPanel, type ApiPanel } from "../PaginaPanel";
 import { FormularioTransformador } from "./FormularioTransformador";
@@ -347,7 +346,7 @@ export function PanelNuevoTransformador() {
           <FormularioTransformador
             taller={api.taller}
             acciones={api.acciones}
-            crearEmpresas={api.puede("empresas")}
+            nuevaEmpresa={api.puede("empresas") ? (onCreada) => api.abrir({ tipo: "empresa", onCreada }) : undefined}
             puedeDarDeBaja={api.puede("baja-transformadores")}
             onGuardado={(trafo) => {
               dejarAviso(`Se dio de alta el transformador ${nombreTrafo(trafo)}.`);

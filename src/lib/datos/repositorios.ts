@@ -69,13 +69,18 @@ export interface PanelRepositorio {
   /** Guarda el estado de un equipo con las fechas de sus etapas (ver `etapasConEstado`). */
   guardarEstado(codigo: string, estado: EstadoReparacion, etapas: Partial<Record<EstadoReparacion, Date>>): Promise<void>;
   /**
-   * Registra una orden de trabajo nueva, con un código de seguimiento nuevo, en estado "ingresado". Es de
-   * un transformador que ya pasó por el taller (su id) o de uno nuevo, que se da de alta con ella para
-   * `empresa`.
+   * Guarda una orden de trabajo nueva, con su código de seguimiento, todavía sin transformador
+   * (`faltaTrafo`): queda solo en el panel. El cliente la ve cuando se le asigna uno.
    */
-  registrarEquipo(
-    datos: DatosOrden,
-    ingreso: Date,
+  crearOrden(datos: DatosOrden, empresa: string, ingreso: Date): Promise<EquipoTaller>;
+  /** Mientras no tiene transformador, la orden puede cambiar de cliente y de fecha de recepción. */
+  corregirOrdenSinTrafo(codigo: string, empresa: string, ingreso: Date): Promise<void>;
+  /**
+   * Le asigna a una orden su transformador: uno que ya pasó por el taller (su id) o uno nuevo, que se da de
+   * alta con ella. Desde acá entra como "ingresado": el cliente la ve y el código sirve en la consulta pública.
+   */
+  asignarTrafo(
+    orden: EquipoTaller,
     trafo: string | { empresa: string; datos: DatosTransformador },
   ): Promise<{ equipo: EquipoTaller; transformador: Transformador }>;
   /** Da de alta un transformador de `empresa` sin O.T.: su primera O.T. se crea cuando llega al taller. */

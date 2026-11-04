@@ -29,7 +29,8 @@ export class PortalFirestore implements PortalRepositorio {
     const seguimiento = new SeguimientoFirestore();
     const equipos = await Promise.all(
       // Los equipos dados de baja no se muestran (ni se pide su seguimiento: las reglas no lo dejan leer).
-      ordenes.docs.filter((orden) => !orden.data().baja).map(async (orden): Promise<EquipoCliente | null> => {
+      // Los que todavía no tienen transformador tampoco: no tienen seguimiento.
+      ordenes.docs.filter((orden) => !orden.data().baja && !orden.data().faltaTrafo).map(async (orden): Promise<EquipoCliente | null> => {
         const publico = await seguimiento.obtenerPorCodigo(orden.id);
         if (!publico) return null;
         const datos = orden.data();

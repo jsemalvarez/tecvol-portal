@@ -12,7 +12,7 @@ export class PortalLocal implements PortalRepositorio {
     const cuenta = datos.cuentas.find((c) => c.uid === uid);
     if (!cuenta || cuenta.baja) return null;
     const equipos: EquipoCliente[] = datos.equipos
-      .filter((e) => e.empresa === cuenta.empresa && !e.baja)
+      .filter((e) => e.empresa === cuenta.empresa && !e.baja && !e.faltaTrafo)
       .map(({ empresa: _empresa, baja: _baja, archivos, ...equipo }) => ({ ...equipo, archivos: archivosActivos(archivos) }));
     return { empresa: datos.empresas.find((e) => e.id === cuenta.empresa)?.nombre ?? "", equipos };
   }

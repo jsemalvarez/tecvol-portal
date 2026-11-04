@@ -54,9 +54,26 @@ export class PanelLocal implements PanelRepositorio {
     guardarDatos(datos);
   }
 
-  async registrarEquipo(
-    nuevos: DatosOrden,
-    ingreso: Date,
+  async crearOrden(nuevos: DatosOrden, empresa: string, ingreso: Date): Promise<EquipoTaller> {
+    await esperar(450);
+    const datos = leerDatos();
+    let codigo = generarCodigo();
+    while (datos.equipos.some((e) => e.codigo === codigo)) codigo = generarCodigo();
+    const equipo: EquipoTaller = { codigo, trafo: "", faltaTrafo: true, empresa, estado: "ingresado", equipo: "", etapas: { ingresado: ingreso }, actualizado: new Date(), ...nuevos };
+    datos.equipos.push(equipo);
+    guardarDatos(datos);
+    return equipo;
+  }
+
+  async corregirOrdenSinTrafo(codigo: string, empresa: string, ingreso: Date): Promise<void> {
+    await esperar(350);
+    const datos = leerDatos();
+    datos.equipos = datos.equipos.map((e) => (e.codigo === codigo ? { ...e, empresa, etapas: { ingresado: ingreso }, actualizado: new Date() } : e));
+    guardarDatos(datos);
+  }
+
+  async asignarTrafo(
+    orden: EquipoTaller,
     trafo: string | { empresa: string; datos: DatosTransformador },
   ): Promise<{ equipo: EquipoTaller; transformador: Transformador }> {
     await esperar(450);
@@ -69,23 +86,21 @@ export class PanelLocal implements PanelRepositorio {
       transformador = { id: nuevoIdTrafo(), empresa: trafo.empresa, ...trafo.datos };
       datos.transformadores.push(transformador);
     }
-    let codigo = generarCodigo();
-    while (datos.equipos.some((e) => e.codigo === codigo)) codigo = generarCodigo();
+    const { faltaTrafo: _faltaTrafo, ...resto } = orden;
     const equipo = conTransformador(
       {
-        codigo,
+        ...resto,
         trafo: transformador.id,
         empresa: transformador.empresa,
         estado: "ingresado",
-        etapas: { ingresado: ingreso },
+        etapas: { ingresado: orden.etapas.ingresado ?? new Date() },
         actualizado: new Date(),
         equipo: transformador.equipo,
-        ...nuevos,
         numeroTIngreso: transformador.numeroT,
       },
       transformador,
     );
-    datos.equipos.push(equipo);
+    datos.equipos = datos.equipos.map((e) => (e.codigo === orden.codigo ? equipo : e));
     guardarDatos(datos);
     return { equipo, transformador };
   }

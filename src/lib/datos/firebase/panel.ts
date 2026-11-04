@@ -170,6 +170,26 @@ export class PanelFirestore implements PanelRepositorio {
         ),
       );
     }
+    // Las que todavía no tienen transformador no tienen seguimiento: solo su orden.
+    for (const [codigo, orden] of privados) {
+      if (orden.faltaTrafo !== true || publicos.has(codigo)) continue;
+      const ingreso = fecha(orden.ingreso);
+      equipos.push({
+        codigo,
+        trafo: "",
+        faltaTrafo: true,
+        empresa: texto(orden.empresa) ?? "",
+        estado: "ingresado",
+        equipo: "",
+        etapas: ingreso ? { ingresado: ingreso } : {},
+        actualizado: fecha(orden.creada) ?? null,
+        referencia: texto(orden.referencia),
+        numeroOrden: texto(orden.numeroOrden),
+        ...(orden.numeroOrdenTemporal === true ? { numeroOrdenTemporal: true } : {}),
+        motivo: texto(orden.motivo),
+        baja: fecha(orden.baja),
+      });
+    }
 
     return {
       empresas: empresas.docs
@@ -207,9 +227,36 @@ export class PanelFirestore implements PanelRepositorio {
     );
   }
 
-  async registrarEquipo(
-    datos: DatosOrden,
-    ingreso: Date,
+  async crearOrden(datos: DatosOrden, empresa: string, ingreso: Date): Promise<EquipoTaller> {
+    const db = obtenerFirestore();
+    return guardar(async () => {
+      // El código es aleatorio: se descarta si ya existe, algo muy improbable.
+      let codigo = generarCodigo();
+      for (let intento = 0; (await getDoc(doc(db, "seguimiento", codigo))).exists(); intento++) {
+        if (intento >= 4) throw new ErrorDePanel("desconocido");
+        codigo = generarCodigo();
+      }
+      // Sin seguimiento: el código todavía no existe para el cliente ni para la consulta pública.
+      await setDoc(doc(db, "ordenes", codigo), {
+        faltaTrafo: true,
+        empresa,
+        ingreso: Timestamp.fromDate(ingreso),
+        numeroOrden: datos.numeroOrden,
+        ...(datos.numeroOrdenTemporal ? { numeroOrdenTemporal: true } : {}),
+        ...(datos.referencia ? { referencia: datos.referencia } : {}),
+        ...(datos.motivo ? { motivo: datos.motivo } : {}),
+        creada: serverTimestamp(),
+      });
+      return { codigo, trafo: "", faltaTrafo: true, empresa, estado: "ingresado", equipo: "", etapas: { ingresado: ingreso }, actualizado: new Date(), ...datos };
+    });
+  }
+
+  async corregirOrdenSinTrafo(codigo: string, empresa: string, ingreso: Date): Promise<void> {
+    await guardar(() => updateDoc(doc(obtenerFirestore(), "ordenes", codigo), { empresa, ingreso: Timestamp.fromDate(ingreso) }));
+  }
+
+  async asignarTrafo(
+    orden: EquipoTaller,
     trafo: string | { empresa: string; datos: DatosTransformador },
   ): Promise<{ equipo: EquipoTaller; transformador: Transformador }> {
     const db = obtenerFirestore();
@@ -222,17 +269,12 @@ export class PanelFirestore implements PanelRepositorio {
       } else {
         transformador = { id: doc(collection(db, "transformadores")).id, empresa: trafo.empresa, ...trafo.datos };
       }
-      // El código es aleatorio: se descarta si ya existe, algo muy improbable.
-      let codigo = generarCodigo();
-      for (let intento = 0; (await getDoc(doc(db, "seguimiento", codigo))).exists(); intento++) {
-        if (intento >= 4) throw new ErrorDePanel("desconocido");
-        codigo = generarCodigo();
-      }
+      const ingreso = orden.etapas.ingresado ?? new Date();
       const lote = writeBatch(db);
       if (typeof trafo !== "string") {
         lote.set(doc(db, "transformadores", transformador.id), { ...transformadorParaGuardar(transformador), creado: serverTimestamp() });
       }
-      lote.set(doc(db, "seguimiento", codigo), {
+      lote.set(doc(db, "seguimiento", orden.codigo), {
         estado: "ingresado",
         equipo: transformador.equipo,
         etapas: { ingresado: Timestamp.fromDate(ingreso) },
@@ -240,28 +282,25 @@ export class PanelFirestore implements PanelRepositorio {
       });
       // La empresa y el N.º de trafo se copian en la orden: el portal del cliente lee solo las órdenes. El
       // N.º T queda como estaba al ingresar, aunque después se lo cambien al transformador.
-      lote.set(doc(db, "ordenes", codigo), {
+      lote.update(doc(db, "ordenes", orden.codigo), {
         trafo: transformador.id,
         empresa: transformador.empresa,
         serie: transformador.numero,
         ...(transformador.numeroT ? { numeroTIngreso: transformador.numeroT } : {}),
-        numeroOrden: datos.numeroOrden,
-        ...(datos.numeroOrdenTemporal ? { numeroOrdenTemporal: true } : {}),
-        ...(datos.referencia ? { referencia: datos.referencia } : {}),
-        ...(datos.motivo ? { motivo: datos.motivo } : {}),
-        creada: serverTimestamp(),
+        faltaTrafo: deleteField(),
+        ingreso: deleteField(),
       });
       await lote.commit();
+      const { faltaTrafo: _faltaTrafo, ...resto } = orden;
       const equipo = conTransformador(
         {
-          codigo,
+          ...resto,
           trafo: transformador.id,
           empresa: transformador.empresa,
           estado: "ingresado",
           etapas: { ingresado: ingreso },
           actualizado: new Date(),
           equipo: transformador.equipo,
-          ...datos,
           numeroTIngreso: transformador.numeroT,
         },
         transformador,
@@ -438,8 +477,10 @@ export class PanelFirestore implements PanelRepositorio {
     await guardar(async () => {
       if (registro !== "equipo") return updateDoc(doc(db, COLECCIONES[registro], id), valor);
       // El seguimiento esconde el código de la consulta pública; la orden, el equipo del portal del cliente.
+      // Una orden sin transformador todavía no tiene seguimiento.
+      const seguimiento = await getDoc(doc(db, "seguimiento", id));
       const lote = writeBatch(db);
-      lote.update(doc(db, "seguimiento", id), valor);
+      if (seguimiento.exists()) lote.update(seguimiento.ref, valor);
       lote.update(doc(db, "ordenes", id), valor);
       await lote.commit();
     });
@@ -494,7 +535,9 @@ async function migrar(
   publicos: Map<string, { publico: { equipo: string; etapas: { ingresado?: Date } } }>,
   existentes: Transformador[],
 ): Promise<{ nuevos: Transformador[]; asignados: Map<string, string> }> {
-  const ordenes: OrdenAntigua[] = [...privados].map(([codigo, datos]) => ({
+  // Las que esperan su transformador no son antiguas: lo recibe cada una en su paso 2.
+  const antiguas = [...privados].filter(([, datos]) => datos.faltaTrafo !== true);
+  const ordenes: OrdenAntigua[] = antiguas.map(([codigo, datos]) => ({
     codigo,
     trafo: texto(datos.trafo),
     empresa: texto(datos.empresa) ?? "",

@@ -204,7 +204,7 @@ export function Sugerencias({ id, valores }: { id: string; valores: string[] }) 
  * Un grupo de datos dentro de la placa, como los recuadros de la chapa: una banda esmaltada con el
  * nombre del grupo y, debajo, sus renglones.
  */
-export function Grupo({ titulo, ayuda, primero, children }: { titulo: string; ayuda?: ReactNode; primero?: boolean; children: ReactNode }) {
+export function Grupo({ titulo, ayuda, primero, plano, children }: { titulo: string; ayuda?: ReactNode; primero?: boolean; /** Filas de borde a borde: sin el margen de los renglones. */ plano?: boolean; children: ReactNode }) {
   const id = useId();
   return (
     <section aria-labelledby={id} className={primero ? "" : "border-t-2 border-acero"}>
@@ -214,7 +214,7 @@ export function Grupo({ titulo, ayuda, primero, children }: { titulo: string; ay
         </h3>
         {ayuda && <p className="text-[0.9375rem] leading-snug text-grafito">{ayuda}</p>}
       </div>
-      <div className="px-[var(--marco-px)] pb-7 pt-6">{children}</div>
+      <div className={plano ? "" : "px-[var(--marco-px)] pb-7 pt-6"}>{children}</div>
     </section>
   );
 }
@@ -231,6 +231,25 @@ export function BotonTemporal({ onClick, cuando }: { onClick: () => void; cuando
       </button>
       <span className="text-[0.9375rem] leading-snug text-grafito">{cuando}</span>
     </div>
+  );
+}
+
+/**
+ * Debajo del selector de empresa, para cuando no está en la lista: con `onCrear`, se crea en una ventana sin
+ * salir de la página, y lo cargado queda; sin permiso para crearla, se le pide a un administrador.
+ */
+export function NoEstaLaEmpresa({ onCrear }: { onCrear?: () => void }) {
+  return (
+    <>
+      ¿No está?{" "}
+      {onCrear ? (
+        <button type="button" onClick={onCrear} className="cursor-pointer font-semibold text-tinta underline decoration-naranja decoration-2 underline-offset-4">
+          Crear una empresa nueva
+        </button>
+      ) : (
+        "Pídale a un administrador que la dé de alta."
+      )}
+    </>
   );
 }
 

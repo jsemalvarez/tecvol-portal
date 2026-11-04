@@ -29,7 +29,7 @@ const RECHAZOS: Record<MotivoArchivoRechazado, (archivo: File) => string> = {
 
 /**
  * Los PDF de la orden: ensayos, presupuestos, informes… Se arrastran al recuadro o se eligen, y se suben de a
- * uno con su barra de avance. Los ve también el cliente en su portal; uno subido por error se da de baja.
+ * uno con su barra de avance. Los ve también la empresa en su portal; uno subido por error se da de baja.
  */
 export function ArchivosOrden({ equipo, api }: { equipo: EquipoTaller; api: ApiPanel }) {
   const [subidas, setSubidas] = useState<Subida[]>([]);
@@ -69,7 +69,7 @@ export function ArchivosOrden({ equipo, api }: { equipo: EquipoTaller; api: ApiP
       try {
         await api.acciones.subirArchivo(equipo.codigo, archivo, (fraccion) => cambiar(subida.clave, { fraccion }));
         setSubidas((actuales) => actuales.filter((s) => s.clave !== subida.clave));
-        api.avisar(`Se subió ${archivo.name}. El cliente ya lo ve en su portal.`);
+        api.avisar(`Se subió ${archivo.name}. La empresa ya lo ve en su portal.`);
       } catch (error) {
         cambiar(subida.clave, { error: mensajeDeError(error) });
       }
@@ -95,7 +95,7 @@ export function ArchivosOrden({ equipo, api }: { equipo: EquipoTaller; api: ApiP
     const deshacer = () => api.acciones.cambiarBajaArchivo(equipo.codigo, archivo.id, !baja);
     try {
       await api.acciones.cambiarBajaArchivo(equipo.codigo, archivo.id, baja);
-      api.avisar(baja ? `Se dio de baja ${archivo.nombre}: el cliente ya no lo ve.` : `Se reactivó ${archivo.nombre}.`, deshacer);
+      api.avisar(baja ? `Se dio de baja ${archivo.nombre}: la empresa ya no lo ve.` : `Se reactivó ${archivo.nombre}.`, deshacer);
     } catch (error) {
       api.avisar(mensajeDeError(error));
     }
@@ -106,7 +106,7 @@ export function ArchivosOrden({ equipo, api }: { equipo: EquipoTaller; api: ApiP
       <TornillosMarco />
       <div className="marco-cabecera">
         <h2 id="archivos-orden" className="rotulo text-base">
-          Archivos PDF
+          Archivos para la empresa
         </h2>
         {activos.length > 0 && <span className="rotulo text-base">{activos.length}</span>}
       </div>
@@ -136,7 +136,7 @@ export function ArchivosOrden({ equipo, api }: { equipo: EquipoTaller; api: ApiP
               </button>
             </div>
             <p className="mx-auto mt-3 max-w-[48ch] text-[0.9375rem] text-grafito">
-              Hasta {formatearTamano(TAMANO_MAXIMO)} cada uno. Los ve también el cliente en su portal.
+              Hasta {formatearTamano(TAMANO_MAXIMO)} cada uno. Los ve también la empresa en su portal.
             </p>
             <input
               ref={entrada}

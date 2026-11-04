@@ -237,6 +237,12 @@
     opacity: 1;
   }
 
+  .renglon:disabled {
+    color: var(--color-grafito);
+    border-bottom-style: dashed;
+    cursor: not-allowed;
+  }
+
   /* Desplegable con forma de renglón: la flecha va dibujada al final de la línea. */
   select.renglon {
     padding-right: 1.75rem;

@@ -58,10 +58,10 @@ export function ListaOrdenes({ ordenes }: { ordenes: EquipoTaller[] }) {
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-              <Link href={`/panel/informe?codigo=${r.codigo}`} className={enlace}>
+              <Link href={`/panel/equipo?codigo=${r.codigo}&paso=3`} className={enlace}>
                 Informe<span className="sr-only"> de la {nombre}</span>
               </Link>
-              <Link href={`/panel/datos-taller?codigo=${r.codigo}`} className={enlace}>
+              <Link href={`/panel/equipo?codigo=${r.codigo}&paso=5`} className={enlace}>
                 Datos del taller<span className="sr-only"> de la {nombre}</span>
               </Link>
             </div>

@@ -1,5 +1,5 @@
 import { activos, type CambioT, type EquipoTaller, type Taller, type Transformador } from "./tipos";
-import type { Placa, Uso } from "./placa";
+import { describirEquipo, type Placa, type Uso } from "./placa";
 
 /**
  * Un número escrito a mano, para comparar: "ot 1234", "OT-1234" y "OT1234" son el mismo. Sin
@@ -30,6 +30,12 @@ export function ordenesDelTrafo(
 /** "T-0457 · PRUEBA-3150-21": cómo se nombra un transformador en las listas. */
 export function nombreTrafo(trafo: Pick<Transformador, "numero" | "numeroT">) {
   return trafo.numeroT ? `${trafo.numeroT} · ${trafo.numero}` : trafo.numero;
+}
+
+/** "Trifásico 315 kVA · 13,2/0,4 kV": lo principal de la chapa, en una línea. */
+export function resumenChapa(trafo: Pick<Transformador, "placa" | "equipo">) {
+  const resumen = (describirEquipo(trafo.placa) ?? trafo.equipo).replace(/^Transformador /, "");
+  return resumen.charAt(0).toUpperCase() + resumen.slice(1);
 }
 
 const mismoNumero = (a: string | undefined, b: string | undefined) => !!a && !!b && normalizarNumero(a) === normalizarNumero(b);

@@ -1,4 +1,6 @@
+import { fechaParaCampo } from "@/lib/dominio/fechas";
 import {
+  describirEquipo,
   leerNumero,
   numeroParaCampo,
   placaSinVacios,
@@ -7,12 +9,11 @@ import {
   type Placa,
   type Uso,
 } from "@/lib/dominio/placa";
-import type { EquipoTaller, Transformador } from "@/lib/dominio/tipos";
+import type { DatosTransformador, EquipoTaller, Transformador } from "@/lib/dominio/tipos";
 
 /** Lo que hay escrito en cada campo de la orden de trabajo, tal cual. */
 export interface ValoresOrden {
   empresa: string;
-  nombreEmpresa: string;
   ingreso: string;
   numeroOrden: string;
   /** El N.º de O.T. es uno temporal (`TEMP-0001`): todavía no llegó el del sistema de gestión. */
@@ -70,14 +71,11 @@ const NUMEROS: Record<CampoNumerico, { puntoDeMiles: boolean; ejemplo: string }>
 
 const TEXTOS = ["fabricante", "tipo", "norma", "servicio", "enfriamiento", "grupoConexion", "materialBobinados"] as const;
 
-export const NUEVA_EMPRESA = "__nueva";
-
 /** Los valores iniciales de la orden: vacíos para una nueva o los guardados. */
 export function valoresOrdenDe(equipo: EquipoTaller | undefined, hoy: string, empresaInicial: string): ValoresOrden {
   return {
     empresa: equipo?.empresa ?? empresaInicial,
-    nombreEmpresa: "",
-    ingreso: hoy,
+    ingreso: equipo?.etapas.ingresado ? fechaParaCampo(equipo.etapas.ingresado) : hoy,
     numeroOrden: equipo?.numeroOrden ?? "",
     numeroOrdenTemporal: !!equipo?.numeroOrdenTemporal,
     referencia: equipo?.referencia ?? "",
@@ -133,16 +131,28 @@ export function placaDe(valores: Valores): Placa {
   return placaSinVacios(placa) ?? {};
 }
 
-export const FALTA_NUMERO_ORDEN = "Escriba el N.º de O.T. Si todavía no lo tiene, use uno temporal.";
+/** Los datos de un transformador para guardar. La descripción que ve la empresa se arma con la chapa. */
+export function datosTransformador(valores: Valores): DatosTransformador {
+  const placa = placaDe(valores);
+  return {
+    numero: valores.numero.trim(),
+    provisorio: valores.provisorio || undefined,
+    numeroT: valores.numeroT.trim() || undefined,
+    equipo: describirEquipo(placa) ?? "Transformador",
+    uso: valores.uso || undefined,
+    placa: Object.keys(placa).length ? placa : undefined,
+  };
+}
+
+const FALTA_NUMERO_ORDEN = "Escriba el N.º de O.T. Si todavía no lo tiene, use uno temporal.";
 
 /**
- * Revisa la orden antes de guardar: el cliente, el N.º de O.T. (o uno temporal) y, al registrar, una fecha
+ * Revisa la orden antes de guardar: la empresa, el N.º de O.T. (o uno temporal) y, al registrar, una fecha
  * de recepción de hoy o anterior.
  */
 export function revisarOrden(valores: ValoresOrden, { nuevo, hoy }: { nuevo: boolean; hoy: string }): ErroresOrden {
   const errores: ErroresOrden = {};
-  if (!valores.empresa) errores.empresa = "Elija el cliente dueño del transformador.";
-  if (valores.empresa === NUEVA_EMPRESA && !valores.nombreEmpresa.trim()) errores.nombreEmpresa = "Escriba el nombre del cliente nuevo.";
+  if (!valores.empresa) errores.empresa = "Elija la empresa dueña del transformador.";
   if (!valores.numeroOrden.trim()) errores.numeroOrden = FALTA_NUMERO_ORDEN;
   if (nuevo && (!/^\d{4}-\d{2}-\d{2}$/.test(valores.ingreso) || valores.ingreso > hoy)) {
     errores.ingreso = "Elija una fecha de recepción de hoy o anterior.";
