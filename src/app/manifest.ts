@@ -1,14 +1,16 @@
 import type { MetadataRoute } from "next";
+import { enPruebas } from "@/lib/ambiente";
 
 /*
  * Manifiesto de instalación. Los íconos son los mismos de Monitoreo Tecvol: la empresa
  * tiene una sola marca de app. El nombre corto, debajo del ícono, dice cuál de los servicios es
- * (Android corta a unos 12 caracteres: "Tecvol" no entraría).
+ * (Android corta a unos 12 caracteres: "Tecvol" no entraría). En stage dice "Pruebas", para
+ * distinguirla si alguien instala las dos.
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Tecvol · Reparación de transformadores",
-    short_name: "Transformadores",
+    name: enPruebas ? "Tecvol · Ambiente de pruebas" : "Tecvol · Reparación de transformadores",
+    short_name: enPruebas ? "Pruebas" : "Transformadores",
     description:
       "Consulte el estado de su transformador en reparación con el código de seguimiento, o envíe una consulta al taller de Tecvol.",
     start_url: "/",

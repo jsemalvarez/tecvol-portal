@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, type ReactNode } from "react";
+import { enPruebas } from "@/lib/ambiente";
 import { useInstalacion } from "@/lib/instalacion";
 
 /*
@@ -16,7 +17,7 @@ function Identificacion() {
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src="/icons/android-chrome-192x192.png" alt="" width={44} height={44} className="size-11 rounded-full" />
       <div>
-        <p className="rotulo text-lg">Tecvol Transformadores</p>
+        <p className="rotulo text-lg">{enPruebas ? "Tecvol Pruebas" : "Tecvol Transformadores"}</p>
         <p className="text-sm text-grafito">Pantalla de inicio</p>
       </div>
     </div>

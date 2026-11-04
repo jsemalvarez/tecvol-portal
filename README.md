@@ -213,7 +213,7 @@ la empresa los ve y los abre en su portal, dentro de la O.T. Hasta 50 MB cada un
 Uno subido por error se da de baja: el cliente deja de verlo y el archivo queda guardado.
 
 Firebase Storage necesita el plan Blaze (con tarjeta), así que los archivos van al bucket privado `ordenes`
-del proyecto `tecvol-portal` de Supabase (São Paulo, plan Free: 1 GB en total). El bucket se crea con
+del proyecto `tecvol-transformadores` de Supabase (São Paulo, plan Free: 1 GB en total). El bucket se crea con
 `supabase/migrations/20261101213900_bucket_ordenes.sql` y no tiene políticas: nadie llega con la clave
 pública. Las rutas `/api/archivos/subida` y `/api/archivos/enlace` (`src/lib/servidor/archivos.ts`) leen la
 orden de Firestore con el token del usuario, así deciden las mismas reglas, y con la clave secreta entregan un
@@ -230,6 +230,41 @@ una semana antes; se reactiva desde el panel de Supabase) y la cuenta admite dos
 algún día se activa la verificación obligatoria de App Check en Firestore, las rutas dejan de poder leer las
 órdenes: habría que mandarles también el token de App Check. Con datos de prueba, los PDF quedan en IndexedDB
 de ese navegador.
+
+## Ambiente de pruebas (stage)
+
+Para que el cliente pruebe antes de pasar a producción, con datos y cuentas propios. Se ve igual que el sitio
+real, salvo por el cartel de `NEXT_PUBLIC_AMBIENTE=stage`.
+
+| Pieza | Producción | Stage |
+|---|---|---|
+| Código | rama `main` | rama `stage` |
+| Sitio | Vercel `tecvol-transformadores` | Vercel `tecvol-transformadores-stage` |
+| Datos y cuentas | Firebase `tecvol-portal` | Firebase `tecvol-transformadores-stage` |
+| PDF | Supabase, bucket `ordenes` | el mismo proyecto, bucket `ordenes-stage` |
+
+El ID del proyecto de Firebase de producción sigue siendo `tecvol-portal`: Firebase no deja cambiarlo.
+
+**Cómo se trabaja.** Los cambios van a `stage`; cada push ahí publica en el sitio de pruebas. Un push a `main`
+publica directo en producción, así que `main` recibe solo lo que el cliente ya aprobó. Para pasar a producción:
+
+1. Si cambió `firestore.rules`, publicarlas primero en producción: `firebase deploy --only firestore:rules --project default`.
+2. Unir `stage` a `main` y subir `main`.
+
+En stage las reglas se publican con `firebase deploy --only firestore:rules --project stage`.
+
+**Variables en Vercel** (proyecto de stage, en Production, porque ahí `stage` es la rama de producción): las seis
+`NEXT_PUBLIC_FIREBASE_*` del proyecto de stage, `SUPABASE_URL` y `SUPABASE_SECRET_KEY` (las mismas de producción,
+no hay otro proyecto gratis disponible), `SUPABASE_BUCKET=ordenes-stage` y `NEXT_PUBLIC_AMBIENTE=stage`. Cada
+proyecto de Vercel saltea el build de la rama del otro (Settings → Git → Ignored Build Step).
+
+**Lo que se configura a mano en la consola de Firebase de stage**, porque no se copia de producción: activar
+**Correo electrónico/contraseña**, crear el primer administrador (ver [Personal del taller y roles](#personal-del-taller-y-roles))
+y poner la URL de acción de los emails en `https://<dominio de stage>/ingresar/clave`.
+
+Los datos no se copian de producción: stage arranca vacío y lo carga quien prueba. Las etiquetas y los enlaces
+para compartir usan el dominio donde se generan, así que una etiqueta impresa en stage lleva a stage: no hay que
+pegarla en un transformador real. En local, `.env.local` apunta a stage, para no escribir datos reales.
 
 ## Acceso a datos
 

@@ -4,13 +4,14 @@ import { esRolPersonal } from "@/lib/dominio/roles";
 /**
  * Lo que comparten las rutas de los PDF (`/api/archivos/…`). Corre solo en el servidor.
  *
- * Los archivos están en el bucket privado `ordenes` de Supabase Storage, al que llega solo la clave secreta de
- * este servidor. Cada ruta revisa la sesión de Firebase leyendo Firestore con el token del usuario, así deciden
- * las mismas reglas que en el navegador, y entrega un enlace firmado y temporal. El navegador sube y abre el
- * PDF directo en Supabase: el archivo no pasa por acá (Vercel corta los pedidos de más de 4,5 MB).
+ * Los archivos están en el bucket privado `ordenes` de Supabase Storage (`ordenes-stage` en el ambiente de
+ * pruebas), al que llega solo la clave secreta de este servidor. Cada ruta revisa la sesión de Firebase leyendo
+ * Firestore con el token del usuario, así deciden las mismas reglas que en el navegador, y entrega un enlace
+ * firmado y temporal. El navegador sube y abre el PDF directo en Supabase: el archivo no pasa por acá (Vercel
+ * corta los pedidos de más de 4,5 MB).
  */
 
-const BUCKET = "ordenes";
+const BUCKET = process.env.SUPABASE_BUCKET || "ordenes";
 
 /** Lo que una ruta le explica al navegador: los mismos motivos que `ErrorDePanel`. */
 export type MotivoRuta = "permiso" | "conexion" | "sin-almacen" | "archivo-perdido" | "desconocido";

@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { Barlow, Barlow_Condensed } from "next/font/google";
+import { CartelPruebas } from "@/components/CartelPruebas";
 import { Instalar } from "@/components/Instalar";
+import { enPruebas } from "@/lib/ambiente";
 import "./globals.css";
 
 const barlow = Barlow({
@@ -19,10 +21,12 @@ const barlowCondensed = Barlow_Condensed({
 });
 
 export const metadata: Metadata = {
-  title: "Tecvol · Reparación de transformadores",
+  title: enPruebas ? "Pruebas · Tecvol" : "Tecvol · Reparación de transformadores",
   description:
     "Consulte el estado de su transformador en reparación con el código de seguimiento, o envíe una consulta al taller de Tecvol.",
-  applicationName: "Tecvol Transformadores",
+  applicationName: enPruebas ? "Tecvol Pruebas" : "Tecvol Transformadores",
+  /* Stage no tiene que aparecer en los buscadores. */
+  ...(enPruebas && { robots: { index: false, follow: false } }),
   /* Mismo logo que Monitoreo Tecvol, en la pestaña y en la app instalada. */
   icons: {
     icon: [{ url: "/icons/favicon-96x96.png", sizes: "96x96", type: "image/png" }],
@@ -31,7 +35,7 @@ export const metadata: Metadata = {
   /* iOS no lee el manifiesto: la app instalada desde Safari se configura acá. */
   appleWebApp: {
     capable: true,
-    title: "Transformadores",
+    title: enPruebas ? "Pruebas" : "Transformadores",
     statusBarStyle: "black",
   },
 };
@@ -44,6 +48,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="es-AR" className={`${barlow.variable} ${barlowCondensed.variable}`}>
       <body>
+        <CartelPruebas />
         {children}
         <Instalar />
       </body>
