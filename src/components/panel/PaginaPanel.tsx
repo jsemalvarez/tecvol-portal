@@ -246,7 +246,7 @@ export function PaginaPanel({
           <p className="max-w-[60ch] text-[0.9375rem]">
             {nota ?? (
               <>
-                <strong className="font-semibold">Lo que se carga acá lo ve el cliente</strong> en su portal, y cualquiera con el
+                <strong className="font-semibold">Lo que se carga acá lo ve la empresa</strong> en su portal, y cualquiera con el
                 código en la consulta pública: el estado, las fechas y la descripción del equipo.
               </>
             )}
@@ -333,7 +333,7 @@ export function PaginaPanel({
         {conEncabezado && seccion === "empresas" && (
           <p className="mt-4 text-lg">
             {empresas.length} {empresas.length === 1 ? "empresa" : "empresas"} · {cuentas.length}{" "}
-            {cuentas.length === 1 ? "cuenta" : "cuentas"} de clientes
+            {cuentas.length === 1 ? "cuenta" : "cuentas"}
           </p>
         )}
         {conEncabezado && seccion === "personal" && (
@@ -409,7 +409,7 @@ export function PaginaPanel({
             )}
           </Dialogo>
 
-          <Dialogo abierto={ventana?.tipo === "cuenta"} titulo="Nueva cuenta de cliente" onCerrar={cerrar}>
+          <Dialogo abierto={ventana?.tipo === "cuenta"} titulo="Nueva cuenta de empresa" onCerrar={cerrar}>
             {ventana?.tipo === "cuenta" && (
               <FormularioCuenta
                 empresa={ventana.empresa}

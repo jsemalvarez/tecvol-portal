@@ -74,7 +74,7 @@ export async function liberarNumeroT(acciones: AccionesPanel, trafo: Transformad
 }
 
 /** El error del N.º T si lo tiene otro transformador activo y no se dijo qué pasó con aquel. */
-export const errorNumeroTOcupado = "Ese N.º T ya lo tiene otro transformador activo del cliente: corríjalo o diga qué pasó con aquel.";
+export const errorNumeroTOcupado = "Ese N.º T ya lo tiene otro transformador activo de la empresa: corríjalo o diga qué pasó con aquel.";
 
 /**
  * El N.º T del cliente. Si ya lo tiene otro transformador activo del cliente, se pregunta qué pasó: el
@@ -86,7 +86,7 @@ export function CampoNumeroT({
   valor,
   onCambio,
   error,
-  ayuda = "El número interno que le pone el cliente. No todos lo usan.",
+  ayuda = "El número interno que le pone la empresa. No todos lo usan.",
   ocupadoPor,
   reemplazo,
   onReemplazo,
@@ -136,7 +136,7 @@ export function CampoNumeroT({
           <legend className="font-medium">
             El {valor.trim()} ya lo tiene el transformador {ocupadoPor.numero}, que sigue activo. ¿Qué pasó?
           </legend>
-          {opcion("quitar", <>El cliente se lo cambió: pasárselo a este. El {ocupadoPor.numero} sigue activo y queda sin N.º T.</>)}
+          {opcion("quitar", <>La empresa se lo cambió: pasárselo a este. El {ocupadoPor.numero} sigue activo y queda sin N.º T.</>)}
           {puedeDarDeBaja
             ? opcion("baja", <>El {ocupadoPor.numero} se destruyó o ya no lo tienen: darlo de baja y pasarle el número a este.</>)
             : <p className="mt-2">Si aquel se destruyó, pídale a un administrador que lo dé de baja.</p>}

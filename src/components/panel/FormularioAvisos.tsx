@@ -54,7 +54,7 @@ export function FormularioAvisos({
   return (
     <form onSubmit={guardar} noValidate className="flex flex-col gap-6">
       <p className="max-w-[56ch]">
-        El panel marca los equipos que pasan estos días, para que no se queden atrás. Vale para todo el personal; el cliente no lo ve.
+        El panel marca los equipos que pasan estos días, para que no se queden atrás. Vale para todo el personal; la empresa no lo ve.
       </p>
       <ErrorFormulario texto={error} />
       <CampoTexto

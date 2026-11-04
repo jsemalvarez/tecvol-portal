@@ -33,8 +33,7 @@ function Empresas({ api }: { api: ApiPanel }) {
     <div className="mt-10">
       {sinEmpresa > 0 && (
         <p className="mb-8 max-w-[64ch] text-[0.9375rem]">
-          <strong className="font-semibold">{sinEmpresa === 1 ? "Un equipo no tiene" : `${sinEmpresa} equipos no tienen`} empresa.</strong> Asígnela
-          desde "Editar" en la lista de equipos, para que su cliente lo vea en el portal.
+          <strong className="font-semibold">{sinEmpresa === 1 ? "Un equipo no tiene" : `${sinEmpresa} equipos no tienen`} empresa.</strong> En el portal solo se ve lo que tiene empresa.
         </p>
       )}
       {vigentes.length === 0 ? (

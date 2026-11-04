@@ -255,5 +255,5 @@ export function NoEstaLaEmpresa({ onCrear }: { onCrear?: () => void }) {
 
 /** Al lado de un N.º de trafo o de O.T. temporal: falta cargar el verdadero. */
 export function MarcaTemporal({ className = "ml-2" }: { className?: string }) {
-  return <span className={`etiqueta align-middle ${className}`}>Temporal</span>;
+  return <span className={`etiqueta align-middle ${className}`}>N.º temporal</span>;
 }

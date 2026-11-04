@@ -88,7 +88,7 @@ export function FormularioEmpresa({
           aria-describedby={falta ? `${id}-nombre-error` : undefined}
           className="renglon mt-1"
         />
-        <p className="mt-2 text-[0.9375rem] text-grafito">Como la va a ver el cliente en su portal.</p>
+        <p className="mt-2 text-[0.9375rem] text-grafito">Como se va a ver en su portal.</p>
         <MensajeCampo id={`${id}-nombre-error`} texto={falta ? "Escriba el nombre de la empresa." : undefined} />
       </div>
       <fieldset className="flex flex-col gap-6 border-t-[3px] border-acero pt-5">

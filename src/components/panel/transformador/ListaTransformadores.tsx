@@ -67,16 +67,16 @@ function Lista({ api }: { api: ApiPanel }) {
             type="search"
             value={texto}
             onChange={(e) => setTexto(e.target.value)}
-            placeholder="N.º de trafo, N.º T, N.º de O.T., cliente o fabricante"
+            placeholder="N.º de trafo, N.º T, N.º de O.T., empresa o fabricante"
             className="renglon mt-1"
           />
         </div>
         <div className="min-w-[14rem] flex-[1_1_14rem]">
           <label htmlFor={`${id}-empresa`} className="rotulo block text-[0.8125rem]">
-            Cliente
+            Empresa
           </label>
           <select id={`${id}-empresa`} value={empresa} onChange={(e) => setEmpresa(e.target.value)} className="renglon mt-1">
-            <option value="">Todos</option>
+            <option value="">Todas</option>
             {activos(api.taller.empresas).map((e) => (
               <option key={e.id} value={e.id}>
                 {e.nombre}
@@ -111,7 +111,7 @@ function Lista({ api }: { api: ApiPanel }) {
                     Transformador
                   </th>
                   <th scope="col" className="rotulo px-4 py-3 text-[0.8125rem]">
-                    Cliente
+                    Empresa
                   </th>
                   <th scope="col" className="rotulo px-4 py-3 text-[0.8125rem]">
                     O.T.
@@ -137,7 +137,7 @@ function Lista({ api }: { api: ApiPanel }) {
                         </span>
                         {coincidencia && <span className="block text-[0.9375rem] font-medium leading-snug">{coincidencia}</span>}
                       </td>
-                      <td className="px-4 py-3.5 align-middle text-[0.9375rem]">{nombres.get(trafo.empresa) ?? "Sin cliente"}</td>
+                      <td className="px-4 py-3.5 align-middle text-[0.9375rem]">{nombres.get(trafo.empresa) ?? "Sin empresa"}</td>
                       <td className="px-4 py-3.5 align-middle text-[0.9375rem]">{ordenes.length}</td>
                       <td className="py-3.5 pl-4 pr-[var(--marco-px)] align-middle text-[0.9375rem]">
                         {ultima ? (

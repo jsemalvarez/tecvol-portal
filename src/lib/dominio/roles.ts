@@ -14,7 +14,7 @@ export const NOMBRES_ROL: Record<Rol, string> = {
 
 /** Qué puede hacer cada rol del personal, para elegirlo al crear una cuenta. */
 export const DESCRIPCIONES_ROL: Record<RolPersonal, string> = {
-  administrador: "Todo el panel: equipos, empresas, cuentas de clientes y cuentas del personal.",
+  administrador: "Todo el panel: equipos, empresas, cuentas de empresas y cuentas del personal.",
   "jefe-taller":
     "Registra equipos, cambia su estado, corrige sus datos, carga el informe, los datos del taller y los PDF, y da de baja transformadores. No da de baja O.T. ni maneja empresas o cuentas.",
 };

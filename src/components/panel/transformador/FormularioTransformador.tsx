@@ -19,7 +19,7 @@ const enlace = "font-semibold underline decoration-naranja decoration-2 underlin
  * Los datos de un transformador: el N.º de trafo (el de fábrica o uno temporal), el N.º T, el uso y la
  * chapa. Con `trafo`, se corrigen o completan los suyos y todas sus órdenes muestran lo nuevo (cada una
  * conserva el N.º T con el que ingresó). Sin `trafo`, se da de alta uno nuevo, sin O.T.: primero se elige
- * su cliente, que después no cambia.
+ * su empresa, que después no cambia.
  */
 export function FormularioTransformador({
   taller,
@@ -174,7 +174,7 @@ export function FormularioTransformador({
             />
             {repetido && (
               <p className="mt-6 max-w-[60ch] text-[0.9375rem] font-medium leading-snug">
-                El cliente ya tiene un transformador con ese N.º de trafo:{" "}
+                La empresa ya tiene un transformador con ese N.º de trafo:{" "}
                 <Link href={`/panel/transformador?id=${repetido.id}`} className={enlace}>
                   {nombreTrafo(repetido)}
                 </Link>
@@ -195,10 +195,10 @@ export function FormularioTransformador({
       </div>
 
       <aside className="border-t-[3px] border-acero pt-5 lg:sticky lg:top-8 lg:col-span-4 lg:self-start">
-        <h2 className="rotulo text-base">Así lo ve el cliente</h2>
+        <h2 className="rotulo text-base">Así lo ve la empresa</h2>
         <p className="mt-3 text-lg font-semibold leading-snug">{datos.equipo}</p>
         <p className="mt-3 max-w-[44ch] text-[0.9375rem] leading-snug text-grafito">
-          La descripción se arma sola con las fases, la potencia y las tensiones. La ven el cliente en su portal y cualquiera con el código
+          La descripción se arma sola con las fases, la potencia y las tensiones. La ven la empresa en su portal y cualquiera con el código
           de sus órdenes.
         </p>
         {nuevo && (

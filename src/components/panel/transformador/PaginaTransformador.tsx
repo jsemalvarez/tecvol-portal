@@ -47,7 +47,7 @@ function FichaTransformador({ api, id }: { api: ApiPanel; id: string }) {
 
   const ordenes = ordenesDelTrafo(api.taller.equipos, trafo.id, { conBajas: true });
   const abiertas = ordenes.filter((o) => !o.baja && o.estado !== "entregado");
-  const empresa = api.taller.empresas.find((e) => e.id === trafo.empresa)?.nombre ?? "Sin cliente";
+  const empresa = api.taller.empresas.find((e) => e.id === trafo.empresa)?.nombre ?? "Sin empresa";
   const anteriores = numerosTAnteriores(api.taller.equipos, trafo);
   const numerosT = trafo.numeroT ? [trafo.numeroT, ...anteriores] : anteriores;
 
@@ -117,7 +117,7 @@ function FichaTransformador({ api, id }: { api: ApiPanel; id: string }) {
                 </h2>
               </div>
               <p className="marco-cuerpo pb-2 text-[0.9375rem]">
-                El N.º T lo pone el cliente y puede pasar de un transformador a otro. Por cada número que tuvo este, los transformadores de{" "}
+                El N.º T lo pone la empresa y puede pasar de un transformador a otro. Por cada número que tuvo este, los transformadores de{" "}
                 {empresa} que lo tuvieron y las O.T. con las que ingresaron con él.
               </p>
               {numerosT.map((numero) => (
@@ -201,7 +201,7 @@ function Datos({ trafo, empresa, anteriores }: { trafo: Transformador; empresa: 
     ["N.º de trafo (de fábrica)", trafo.provisorio ? `${trafo.numero} (temporal)` : trafo.numero],
     ["N.º T", trafo.numeroT],
     ...(anteriores.length ? [["N.º T que tuvo antes", anteriores.join(", ")] as [string, string]] : []),
-    ["Cliente", empresa],
+    ["Empresa", empresa],
     ["Uso", trafo.uso ? NOMBRE_USOS[trafo.uso] : undefined],
     ["Fabricante", placa?.fabricante],
     ["Fases", placa?.fases ? NOMBRE_FASES[placa.fases] : undefined],
@@ -277,7 +277,7 @@ function Baja({ trafo, api }: { trafo: Transformador; api: ApiPanel }) {
         Dar de baja
       </h2>
       <p className="mt-2 text-[0.9375rem]">
-        Si se destruyó o el cliente ya no lo tiene. Sus O.T. quedan en el historial{trafo.numeroT ? " y el N.º T queda libre para otro transformador" : ""}.
+        Si se destruyó o la empresa ya no lo tiene. Sus O.T. quedan en el historial{trafo.numeroT ? " y el N.º T queda libre para otro transformador" : ""}.
       </p>
       <button type="button" onClick={() => setConfirmando(true)} className="placa-secundaria mt-4">
         Dar de baja
@@ -313,7 +313,7 @@ export function PanelEditarTransformador() {
               <Link href={`/panel/transformador?id=${trafo.id}`} className={enlace}>
                 {nombreTrafo(trafo)}
               </Link>{" "}
-              · {api.taller.empresas.find((e) => e.id === trafo.empresa)?.nombre ?? "Sin cliente"}. Lo que cambie acá se ve en todas sus O.T.
+              · {api.taller.empresas.find((e) => e.id === trafo.empresa)?.nombre ?? "Sin empresa"}. Lo que cambie acá se ve en todas sus O.T.
             </p>
             <FormularioTransformador
               taller={api.taller}
@@ -340,7 +340,7 @@ export function PanelNuevoTransformador() {
       {(api) => (
         <>
           <p className="mt-4 max-w-[62ch] text-lg">
-            Para cargar un transformador del cliente con los datos de su chapa. Si llegó al taller, mejor cree su O.T. con «Nueva O.T.»: el
+            Para cargar un transformador de una empresa con los datos de su chapa. Si llegó al taller, mejor cree su O.T. con «Nueva O.T.»: el
             transformador se da de alta con ella.
           </p>
           <FormularioTransformador
