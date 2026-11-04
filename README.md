@@ -100,16 +100,19 @@ En `/panel` el personal (los dos roles):
 - **Corrige las fechas** de cualquier etapa ya pasada, desde la misma ventana, sin cambiar el estado ni borrar
   las otras. Las etapas salteadas pueden quedar sin fecha; el ingreso y la etapa actual, no. Las fechas tienen
   que seguir el orden del taller (dos etapas pueden empezar el mismo día), también al cambiar el estado.
-- Crea **órdenes de trabajo** ("+ Nueva O.T."): cada ingreso al taller es una O.T. de un **transformador**, en
-  una sola pantalla. Arriba la orden: el cliente, el N.º de O.T. (obligatorio: lo genera el sistema de gestión
-  de la empresa y se usa para facturar; si todavía no llegó, el botón "Usar N.º temporal" pone uno, `TEMP-0001`,
-  que queda marcado como temporal hasta que se escribe el verdadero desde "Editar"; si ya está en otra O.T.
-  avisa pero deja seguir, porque varias se facturan juntas), la fecha, la referencia y el motivo del ingreso.
-  Abajo el transformador: se busca entre los del cliente por N.º de trafo o N.º T (también uno que tuvo antes);
-  si ya pasó por el taller se elige, y si llegó con otro N.º T se le cambia ahí mismo; si no, se da de alta con
-  su chapa. La app genera el código de seguimiento, crea `seguimiento/{codigo}` y `ordenes/{codigo}` y muestra
-  una **etiqueta para imprimir** con el código y un QR que abre `/seguimiento/{codigo}` (sin el N.º de O.T. si
-  es temporal).
+- Crea **órdenes de trabajo** ("+ Nueva O.T."): cada ingreso al taller es una O.T. de un **transformador**, y
+  se carga en la hoja de la O.T. (ver abajo), paso por paso. El paso 1 es la orden: el cliente, el N.º de O.T.
+  (obligatorio: lo genera el sistema de gestión de la empresa y se usa para facturar; si todavía no llegó, el
+  botón "Usar N.º temporal" pone uno, `TEMP-0001`, que queda marcado como temporal hasta que se escribe el
+  verdadero; si ya está en otra O.T. avisa pero deja seguir, porque varias se facturan juntas), la fecha, la
+  referencia y el motivo del ingreso. Al guardarlo se genera el código de seguimiento y se crea
+  `ordenes/{codigo}` con `faltaTrafo`: la O.T. queda en el panel como "Falta el transformador", el cliente no
+  la ve y el código no sirve en la consulta pública, porque todavía no existe `seguimiento/{codigo}`. El paso 2
+  es el transformador: se busca entre los del cliente por N.º de trafo o N.º T (también uno que tuvo antes); si
+  ya pasó por el taller se elige, y si llegó con otro N.º T se le cambia ahí mismo; si no, se da de alta con su
+  chapa. Al guardarlo se crea `seguimiento/{codigo}`, el cliente ve la O.T. como «Ingresado» y ya se puede
+  imprimir la **etiqueta** con el código y un QR que abre `/seguimiento/{codigo}` (sin el N.º de O.T. si es
+  temporal). Las que quedan sin transformador siguen en la lista hasta completarlas o darlas de baja.
 - Cada **transformador** (`transformadores/{id}`) es de un solo cliente y no cambia de dueño. Tiene su
   **N.º de trafo** (el de fábrica; obligatorio, y si no lo tiene o no se ve en la chapa, el botón "Usar N.º
   temporal" pone uno, `NT-0001`, marcado como temporal hasta que se corrige), su **N.º T** (el interno del
@@ -130,23 +133,33 @@ En `/panel` el personal (los dos roles):
   sus O.T. (cada una con el N.º T con el que ingresó, si era otro), la **trazabilidad de cada N.º T** que tuvo
   (qué transformadores lo tuvieron, hasta cuándo y con qué O.T. ingresaron con él), el botón para crear su O.T.
   nueva cuando vuelve al taller y la baja (los dos roles). Por ahora la ve solo el taller.
-- Abre cada **orden de trabajo** (`/panel/equipo`, tocando su N.º de O.T. en la lista): su transformador, el
-  **recorrido** desde el ingreso hasta hoy, con la fecha de cada etapa y cuántos días duró (o cuántos lleva la
-  actual), sus datos, las demás O.T. del transformador y todas las acciones.
-- En la lista, cada fila tiene **"Cambiar estado"**, lo de todos los días, y un menú **"Más"** con el resto: la
-  ficha, editar los datos, el informe, los datos del taller, la ficha del transformador y la etiqueta. Las acciones salen de un solo lugar
-  (`accionesDe`, en `AccionesEquipo.tsx`): una nueva aparece en el menú y en la ficha.
-- **Edita los datos** de un equipo y carga su **informe de diagnóstico**.
+- Abre cada **orden de trabajo** en una sola página, la **hoja de la O.T.** (`/panel/equipo`, tocando su N.º de
+  O.T. en la lista; `?paso=` abre uno en particular): siete pasos desplegables en el orden de carga (orden,
+  transformador, diagnóstico, presupuesto, reparación, ensayos finales y entrega). Cada uno se guarda por su cuenta
+  y "Guardar y seguir" abre el próximo sin completar (`lib/dominio/pasos.ts`). Al abrir una O.T. ya empezada, la página
+  baja sola hasta el paso en el que se sigue, y la barra con "Guardar" queda fija abajo de la pantalla. Un paso tiene
+  tilde solo con todos sus datos; si la O.T. ya pasó esa etapa sin ellos, dice "Sin cargar" o "A medias", no cuenta
+  en el avance y no frena nada. Se bloquea solo lo que no se puede
+  cargar: sin orden no hay transformador, sin transformador no hay lo demás; lo que simplemente va después avisa
+  pero deja cargarlo. **La fecha de cada etapa se carga en su paso** y el estado pasa a ser la última etapa con
+  fecha. Para saltear una etapa se carga la fecha de la que sigue; para volver atrás se borra la fecha. Abajo, los PDF, el **recorrido** con la duración
+  de cada etapa, las demás O.T. del transformador y la baja. `/panel/editar`, `/panel/informe` y
+  `/panel/datos-taller` redirigen a su paso.
+- En la lista, cada fila tiene **"Abrir O.T."**, que lleva a la hoja en el próximo paso pendiente ("Cargar
+  transformador", si le falta; "Reactivar", si está dada de baja). Debajo de 1024 px, cada O.T. es una tarjeta que se
+  toca entera. El resumen de arriba (en el taller, esperan a la empresa, con aviso, entregados) filtra la lista al tocarlo. La etiqueta se imprime desde la hoja. La ventana "Cambiar estado"
+  (`FormularioEstado.tsx`) quedó en el código sin ningún botón que la abra, mientras el cliente prueba sin ella.
+- **Edita los datos** de un equipo y carga su **informe de diagnóstico** en los pasos 1 y 3 de la hoja.
 - **Lleva el orden de los trabajos**: la lista muestra cuántos días lleva cada equipo en el taller (desde el
   ingreso, hasta que está listo) y desde la aprobación del presupuesto (el inicio de "Reparación", mientras está
   en reparación o en ensayos). Pasado el límite, lo marca en rojo y lo cuenta arriba ("con aviso de demora"); hay
   una vista con solo esos. De entrada ordena por ingreso, el más antiguo primero; también por aprobación o por
   último cambio. Los límites (30 y 15 días por defecto) los cambia el administrador desde la lista y se guardan
   en `ajustes/avisos`. Los avisos se ven solo en el panel: no hay emails.
-- Carga los **datos del taller** de cada reparación (`/panel/datos-taller`): lo que anota el taller y no va en
+- Carga los **datos del taller** de cada reparación (paso 5 de la hoja): lo que anota el taller y no va en
   el informe. Hoy, por bobina de alta y de baja, el material y la medida del alambre, las espiras y el peso del
   conductor; el aislamiento de prespan (medidas y peso), las derivaciones y los materiales. Si se suman otros
-  datos del taller, van en esta misma página. En un reingreso, puede copiar los de una orden anterior del mismo
+  datos del taller, van en este mismo paso. En un reingreso, puede copiar los de una orden anterior del mismo
   transformador. Como el informe, solo lo ve el personal.
 
 Solo el administrador:
