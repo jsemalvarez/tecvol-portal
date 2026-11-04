@@ -111,7 +111,8 @@ export function HeroPliego({ codigoInicial }: { codigoInicial?: string }) {
               <label htmlFor="codigo" className="rotulo block text-[0.9375rem]">
                 Código de seguimiento
               </label>
-              <div className="mt-1 flex flex-col gap-4 sm:flex-row sm:items-end">
+              {/* Con la columna angosta (de 1024 a unos 1440 px) el botón baja: si no, se mete en la columna del resultado. */}
+              <div className="mt-1 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
                 <input
                   ref={campo}
                   id="codigo"
