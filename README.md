@@ -125,7 +125,7 @@ En `/panel` el personal (los dos roles):
   transformador a otro. Las órdenes cargadas antes reciben su transformador al abrir el panel
   (`migrarTransformadores`): el N.º de fabricación pasa a ser el N.º de trafo y el N.º de trafo de antes
   (`numeroTrafo`), el N.º T y el N.º T con el que ingresaron.
-- La sección **Transformadores** (`/panel/transformadores`) los lista con su última O.T. y los busca también
+- La sección **Transformadores** (`/panel/transformadores`) los lista con su última O.T. y un botón **"Ver trafo"** (debajo de 1024 px, tarjetas que se tocan enteras) y los busca también
   por un N.º T que tuvieron antes o por el N.º de cualquiera de sus O.T. Su botón "Nuevo transformador"
   (`/panel/transformador/nuevo`) da de alta uno sin O.T.: el cliente, el N.º de trafo (o uno temporal), el N.º T
   y la chapa, con aviso si el cliente ya tiene uno con el mismo N.º de trafo. La **ficha del transformador**
@@ -145,7 +145,7 @@ En `/panel` el personal (los dos roles):
   fecha. Para saltear una etapa se carga la fecha de la que sigue; para volver atrás se borra la fecha. Abajo, los PDF, el **recorrido** con la duración
   de cada etapa, las demás O.T. del transformador y la baja. `/panel/editar`, `/panel/informe` y
   `/panel/datos-taller` redirigen a su paso.
-- En la lista, cada fila tiene **"Abrir O.T."**, que lleva a la hoja en el próximo paso pendiente ("Cargar
+- En la lista, cada fila tiene **"Ver O.T."**, que lleva a la hoja en el próximo paso pendiente ("Cargar
   transformador", si le falta; "Reactivar", si está dada de baja). Debajo de 1024 px, cada O.T. es una tarjeta que se
   toca entera. El resumen de arriba (en el taller, esperan a la empresa, con aviso, entregados) filtra la lista al tocarlo. La etiqueta se imprime desde la hoja. La ventana "Cambiar estado"
   (`FormularioEstado.tsx`) quedó en el código sin ningún botón que la abra, mientras el cliente prueba sin ella.

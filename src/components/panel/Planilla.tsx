@@ -226,7 +226,7 @@ function Planilla({ api }: { api: ApiPanel }) {
                             {/* Toda la tarjeta lleva a la hoja: el enlace se estira sobre ella. */}
                             <Link
                               href={`/panel/equipo?codigo=${equipo.codigo}`}
-                              aria-label={`Abrir ${nombre}`}
+                              aria-label={`Ver ${nombre}`}
                               className={`${vinculo} ${equipo.numeroOrden ? "" : "text-grafito"} after:absolute after:inset-0 focus-visible:outline-none focus-visible:after:outline-3 focus-visible:after:-outline-offset-3 focus-visible:after:outline-tinta`}
                             >
                               {nombreOrden(equipo)}
@@ -303,8 +303,8 @@ function Acciones({ api, equipo }: { api: ApiPanel; equipo: EquipoTaller }) {
           Cargar transformador
         </Link>
       ) : (
-        <Link href={`/panel/equipo?codigo=${equipo.codigo}`} className="placa-secundaria justify-center whitespace-nowrap" aria-label={`Abrir la O.T. de ${nombre}`}>
-          Abrir O.T.
+        <Link href={`/panel/equipo?codigo=${equipo.codigo}`} className="placa-secundaria justify-center whitespace-nowrap" aria-label={`Ver O.T. de ${nombre}`}>
+          Ver O.T.
         </Link>
       )}
     </div>
