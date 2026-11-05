@@ -157,7 +157,7 @@ En `/panel` el personal (los dos roles):
   el taller la numera de distintas maneras.
 - En la lista, cada fila tiene **"Ver O.T."**, que lleva a la hoja en el próximo paso pendiente ("Cargar
   transformador", si le falta; "Reactivar", si está dada de baja). Debajo de 1024 px, cada O.T. es una tarjeta que se
-  toca entera. El resumen de arriba (en el taller, esperan a la empresa, con aviso, entregados) filtra la lista al tocarlo. Las etiquetas se imprimen desde la franja fija de arriba de la hoja, siempre a la vista. La ventana "Cambiar estado"
+  toca entera. El resumen de arriba (en el taller, esperan a la empresa, con aviso, entregados) filtra la lista al tocarlo. Las etiquetas se imprimen desde la grilla de arriba de la hoja. La ventana "Cambiar estado"
   (`FormularioEstado.tsx`) quedó en el código sin ningún botón que la abra, mientras el cliente prueba sin ella.
 - **Edita los datos** de un equipo y carga su **informe de diagnóstico** en los pasos 1 y 3 de la hoja.
 - **Lleva el orden de los trabajos**: la lista muestra cuántos días lleva cada equipo en el taller (desde el

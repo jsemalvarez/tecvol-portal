@@ -164,55 +164,19 @@ function useCarga(api: ApiPanel, equipo: EquipoTaller | undefined) {
   };
 }
 
-/** El título de la página ya no se ve: se subió más allá de él. */
-function useTituloFuera() {
-  const [fuera, setFuera] = useState(false);
-  useEffect(() => {
-    const titulo = document.getElementById("titulo-panel");
-    if (!titulo) return;
-    const observador = new IntersectionObserver(([entrada]) => setFuera(!entrada.isIntersecting));
-    observador.observe(titulo);
-    return () => observador.disconnect();
-  }, []);
-  return fuera;
-}
-
-/**
- * De qué transformador es la O.T., siempre a la vista: los formularios son largos y hay que saber en cuál se está
- * cargando. Cuando el título queda fuera de la pantalla, suma el N.º de O.T. y la vuelta a la lista. Las etiquetas
- * van acá porque la hoja se abre en el paso pendiente: en cualquier otro lugar pueden quedar fuera de la pantalla.
- */
-function Identidad({ equipo, api }: { equipo: EquipoTaller; api: ApiPanel }) {
-  const fuera = useTituloFuera();
+/** De qué transformador es la O.T., debajo del título. */
+function Identidad({ equipo }: { equipo: EquipoTaller }) {
   return (
-    <div className={`sticky top-0 z-30 mt-1 flex min-h-11 items-center gap-2 border-b-2 bg-esmalte py-1 ${fuera ? "border-acero" : "border-transparent"}`}>
-      {fuera && (
-        <Link href="/panel" aria-label="Volver a órdenes de trabajo" className="-ml-2 flex size-9 shrink-0 items-center justify-center hover:text-grafito">
-          <Flecha className="size-5 rotate-180" />
-        </Link>
+    <p className="mt-3 max-w-[70ch] text-lg">
+      {equipo.faltaTrafo ? (
+        <strong className="font-semibold">Falta el transformador</strong>
+      ) : (
+        <>
+          <strong className="font-semibold">{trafoDeOrden(equipo)}</strong> · {resumenChapa(equipo)}
+          {equipo.referencia && ` · ${equipo.referencia}`}
+        </>
       )}
-      <p className="min-w-0 flex-1 truncate text-lg">
-        {fuera && <strong className="font-semibold">{nombreOrden(equipo)} · </strong>}
-        {equipo.faltaTrafo ? (
-          <strong className="font-semibold">Falta el transformador</strong>
-        ) : (
-          <>
-            <strong className="font-semibold">{trafoDeOrden(equipo)}</strong> · {resumenChapa(equipo)}
-            {equipo.referencia && ` · ${equipo.referencia}`}
-          </>
-        )}
-      </p>
-      {!equipo.faltaTrafo && (
-        <div className="flex shrink-0 items-center gap-2">
-          <span className="rotulo hidden text-[0.9375rem] text-grafito sm:inline">Etiqueta</span>
-          {(["externa", "interna"] as const).map((clase) => (
-            <button key={clase} type="button" aria-label={TITULO_ETIQUETA[clase]} onClick={() => api.abrirEtiqueta(equipo, clase)} className="placa-secundaria min-h-10 px-3">
-              {clase}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+    </p>
   );
 }
 
@@ -394,7 +358,7 @@ function Hoja({
 
   return (
     <>
-      {equipo && <Identidad equipo={equipo} api={api} />}
+      {equipo && <Identidad equipo={equipo} />}
       <p className={`${equipo ? "mt-1" : "mt-3"} max-w-[70ch] text-lg`}>
         {equipo ? (
           <>
@@ -414,8 +378,9 @@ function Hoja({
           .
         </p>
       )}
-      <div className="mt-9 grid gap-10 lg:grid-cols-12 lg:gap-12">
-        <div className="flex min-w-0 flex-col gap-5 lg:col-span-8">
+      <div className="mt-9 flex flex-col gap-10">
+        <Resumen api={api} equipo={equipo} datos={datos} abierto={enPantalla} />
+        <div className="flex min-w-0 flex-col gap-5">
           {PASOS.map((n) => {
             const situacion = situacionPaso(n, datos);
             const { texto, cargado } = textoPaso(n, datos, empresa);
@@ -461,30 +426,47 @@ function Hoja({
                 </div>
               </section>
             )}
-            {equipo && !equipo.faltaTrafo && <Recorrido equipo={equipo} />}
             {equipo && otras.length > 0 && <HistorialTrafo trafo={equipo.trafo} ordenes={otras} />}
             {equipo && !equipo.baja && api.puede("baja-equipos") && <BajaEquipo equipo={equipo} api={api} />}
           </div>
         </div>
-        <Costado api={api} equipo={equipo} datos={datos} abierto={enPantalla} />
       </div>
     </>
   );
 }
 
-/**
- * Al costado (arriba, en la tablet): dónde está la O.T. y cuánto lleva, cuánto falta cargar y lo que se hace con
- * ella sin cargar nada. El estado sale de las fechas de cada paso: acá solo se muestra.
- */
-function Costado({ api, equipo, datos, abierto }: { api: ApiPanel; equipo?: EquipoTaller; datos: DatosHoja; abierto: NumeroPaso | null }) {
+/** Cuántos pasos están completos, y cuántos quedaron atrás sin completar. */
+function textoAvance(datos: DatosHoja) {
   const hechos = PASOS.filter((n) => pasoCompleto(n, datos)).length;
   const sinCargar = PASOS.filter((n) => pasoSalteado(n, datos)).length;
+  const completos = hechos === 0 ? "Ningún paso completo todavía." : hechos === PASOS.length ? "Los 7 pasos completos." : `${hechos} de ${PASOS.length} pasos completos.`;
+  return sinCargar > 0 ? `${completos} ${sinCargar === 1 ? "1 quedó" : `${sinCargar} quedaron`} sin completar.` : completos;
+}
+
+/** Los siete pasos en una tira. Toma el color del texto para invertirse junto con el botón que la lleva. */
+function TiraPasos({ datos, abierto, className = "" }: { datos: DatosHoja; abierto: NumeroPaso | null; className?: string }) {
+  return (
+    <span aria-hidden="true" className={`grid grid-cols-7 gap-1 ${className}`}>
+      {PASOS.map((n) => (
+        <span key={n} className={`block h-1.5 rounded-[0.0625rem] ${pasoCompleto(n, datos) ? "bg-current" : abierto === n ? "bg-naranja" : pasoSalteado(n, datos) ? "bg-acero" : "bg-current opacity-30"}`} />
+      ))}
+    </span>
+  );
+}
+
+/**
+ * Arriba de los pasos: dónde está la O.T. y cuánto lleva, y lo que se hace con ella sin cargar nada. El estado sale
+ * de las fechas de cada paso: acá solo se muestra.
+ */
+function Resumen({ api, equipo, datos, abierto }: { api: ApiPanel; equipo?: EquipoTaller; datos: DatosHoja; abierto: NumeroPaso | null }) {
   const conTrafo = !!equipo && !equipo.faltaTrafo;
   const definicion = conTrafo ? DEFINICIONES[equipo.estado] : null;
   return (
-    <aside className="order-first grid content-start gap-x-8 gap-y-7 sm:grid-cols-2 lg:sticky lg:top-16 lg:order-none lg:col-span-4 lg:flex lg:flex-col lg:self-start">
-      <div className="border-t-[3px] border-acero pt-4">
-        <h2 className="rotulo text-base">Estado</h2>
+    <div className="grid items-start gap-x-8 gap-y-7 md:grid-cols-2">
+      <section aria-labelledby="estado-ot" className="border-t-[3px] border-acero pt-4">
+        <h2 id="estado-ot" className="rotulo text-base">
+          Estado
+        </h2>
         <div className="mt-3 flex items-center gap-4">
           {definicion && equipo ? (
             <Senal forma={definicion.forma} pictograma={equipo.estado} simple className="size-14 shrink-0" />
@@ -526,35 +508,78 @@ function Costado({ api, equipo, datos, abierto }: { api: ApiPanel; equipo?: Equi
             )}
           </p>
         )}
-      </div>
+      </section>
 
-      <div className="border-t-[3px] border-acero pt-4">
-        <h2 className="rotulo text-base">Avance</h2>
-        <p className="mt-2">
-          {hechos === 0 ? "Ningún paso completo todavía." : hechos === PASOS.length ? "Los 7 pasos completos." : `${hechos} de ${PASOS.length} pasos completos.`}
-          {sinCargar > 0 && ` ${sinCargar === 1 ? "1 quedó" : `${sinCargar} quedaron`} sin completar.`}
-        </p>
-        <div aria-hidden="true" className="mt-2.5 grid grid-cols-7 gap-1">
-          {PASOS.map((n) => (
-            <span key={n} className={`block h-1.5 rounded-[0.0625rem] ${pasoCompleto(n, datos) ? "bg-tinta" : abierto === n ? "bg-naranja" : pasoSalteado(n, datos) ? "bg-acero" : "bg-acero/30"}`} />
-          ))}
-        </div>
-      </div>
-
-      {conTrafo && equipo && (
-        <div className="border-t-[3px] border-acero pt-4 sm:col-span-2 lg:col-span-1">
-          <h2 className="rotulo text-base">Esta O.T.</h2>
-          <ul className="mt-1">
-            <li>
-              <Link href={`/panel/transformador?id=${equipo.trafo}`} className="flex items-center justify-between gap-3 py-3 font-semibold no-underline hover:text-naranja">
-                Ver el transformador y sus O.T.
-                <span aria-hidden="true">→</span>
-              </Link>
-            </li>
-          </ul>
-        </div>
+      {conTrafo && equipo ? (
+        <AccionesOrden api={api} equipo={equipo} datos={datos} abierto={abierto} />
+      ) : (
+        // Sin transformador no hay recorrido, ni etiquetas, ni a dónde ir: el avance se muestra y nada más.
+        <section aria-labelledby="avance-ot" className="border-t-[3px] border-acero pt-4">
+          <h2 id="avance-ot" className="rotulo text-base">
+            Avance
+          </h2>
+          <p className="mt-2">{textoAvance(datos)}</p>
+          <TiraPasos datos={datos} abierto={abierto} className="mt-2.5" />
+        </section>
       )}
-    </aside>
+    </div>
+  );
+}
+
+const CELDA = "placa-secundaria min-h-[3.25rem] w-full px-3 text-left leading-tight no-underline";
+const ETIQUETAS = ["interna", "externa"] as const;
+
+/**
+ * Lo que se hace con la O.T. sin cargar nada, en dos filas y dos columnas: a la izquierda el avance y el
+ * transformador, a la derecha las dos etiquetas. Se recorre por columnas, para que las etiquetas queden seguidas.
+ */
+function AccionesOrden({ api, equipo, datos, abierto }: { api: ApiPanel; equipo: EquipoTaller; datos: DatosHoja; abierto: NumeroPaso | null }) {
+  const [viendoAvance, setViendoAvance] = useState(false);
+  const hechos = PASOS.filter((n) => pasoCompleto(n, datos)).length;
+  return (
+    <section aria-labelledby="acciones-ot-titulo" className="border-t-[3px] border-acero pt-4">
+      <h2 id="acciones-ot-titulo" className="rotulo text-base">
+        Esta O.T.
+      </h2>
+      <div id="acciones-ot" className="mt-3 grid grid-flow-col grid-cols-2 grid-rows-2 gap-2.5">
+        <button
+          type="button"
+          onClick={() => setViendoAvance(true)}
+          aria-haspopup="dialog"
+          aria-label={`Avance: ${hechos} de ${PASOS.length} pasos completos. Ver el recorrido.`}
+          className={`${CELDA} flex-col items-stretch justify-center gap-1.5 py-1.5`}
+        >
+          <span className="flex items-baseline justify-between gap-2">
+            Avance
+            <span className="whitespace-nowrap font-sans font-medium normal-case tracking-normal">
+              {hechos} de {PASOS.length}
+            </span>
+          </span>
+          <TiraPasos datos={datos} abierto={abierto} />
+        </button>
+        <Link href={`/panel/transformador?id=${equipo.trafo}`} className={`${CELDA} justify-between gap-2`}>
+          Ver trafo
+          <Flecha className="size-5 shrink-0" />
+        </Link>
+        {ETIQUETAS.map((clase) => (
+          <button key={clase} type="button" aria-haspopup="dialog" onClick={() => api.abrirEtiqueta(equipo, clase)} className={CELDA}>
+            {TITULO_ETIQUETA[clase]}
+          </button>
+        ))}
+      </div>
+      <Dialogo abierto={viendoAvance} titulo="Avance" ancho="max-w-[36rem]" onCerrar={() => setViendoAvance(false)}>
+        <div className="flex flex-col gap-6">
+          <div>
+            <h3 className="rotulo text-base">Pasos</h3>
+            <p className="mt-2">{textoAvance(datos)}</p>
+            <TiraPasos datos={datos} abierto={abierto} className="mt-2.5" />
+          </div>
+          <div className="border-t-2 border-acero pt-6">
+            <Recorrido equipo={equipo} />
+          </div>
+        </div>
+      </Dialogo>
+    </section>
   );
 }
 
@@ -642,15 +667,12 @@ function Recorrido({ equipo }: { equipo: EquipoTaller }) {
   const total = ingreso ? diasEntre(ingreso, entrega ?? hoy) : undefined;
 
   return (
-    <section aria-labelledby="recorrido" className="marco">
-      <TornillosMarco />
-      <div className="marco-cabecera">
-        <h2 id="recorrido" className="rotulo text-base">
-          Recorrido
-        </h2>
+    <>
+      <div className="flex items-baseline justify-between gap-4">
+        <h3 className="rotulo text-base">Recorrido</h3>
         {total !== undefined && <span className="rotulo text-base">{dias(total)}</span>}
       </div>
-      <p className="marco-cuerpo pb-2 text-[0.9375rem]">
+      <p className="mt-2 text-[0.9375rem]">
         {!ingreso
           ? "No tiene fecha de ingreso."
           : entrega
@@ -659,7 +681,7 @@ function Recorrido({ equipo }: { equipo: EquipoTaller }) {
               ? "Ingresó hoy."
               : `Ingresó el ${formatearFecha(ingreso)}: lleva ${dias(total!)} en el taller.`}
       </p>
-      <ol aria-label="Etapas de la reparación" className="px-[var(--marco-px)] pb-6">
+      <ol aria-label="Etapas de la reparación" className="mt-5">
         {etapas.map((etapa, i) => {
           const definicion = DEFINICIONES[etapa.estado];
           const ultimo = i === etapas.length - 1;
@@ -692,7 +714,7 @@ function Recorrido({ equipo }: { equipo: EquipoTaller }) {
           );
         })}
       </ol>
-    </section>
+    </>
   );
 }
 

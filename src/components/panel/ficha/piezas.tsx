@@ -93,7 +93,7 @@ export function Paso({
     <section
       id={`paso-${n}`}
       aria-labelledby={`paso-${n}-titulo`}
-      className={`marco scroll-mt-16 overflow-clip [&>.marco-tornillo]:z-20 ${bloqueado ? "border-dashed bg-esmalte shadow-none" : cuerpo ? "border-tinta" : ""}`}
+      className={`marco scroll-mt-4 overflow-clip [&>.marco-tornillo]:z-20 ${bloqueado ? "border-dashed bg-esmalte shadow-none" : cuerpo ? "border-tinta" : ""}`}
     >
       <TornillosMarco />
       <h2>
@@ -143,8 +143,8 @@ export function Paso({
           </button>
         </div>
       )}
-      {/* Un campo que recibe el foco no queda tapado por lo que está fijo arriba y abajo de la pantalla. */}
-      <div id={`paso-${n}-cuerpo`} hidden={!cuerpo} className="border-t-2 border-acero [&_:is(input,select,textarea)]:scroll-mb-28 [&_:is(input,select,textarea)]:scroll-mt-16">
+      {/* Un campo que recibe el foco no queda tapado por la barra de guardar, fija abajo de la pantalla. */}
+      <div id={`paso-${n}-cuerpo`} hidden={!cuerpo} className="border-t-2 border-acero [&_:is(input,select,textarea)]:scroll-mb-28">
         {!bloqueado && (
           <ContextoPaso value={{ sinGuardar, soloLectura }}>
             <fieldset disabled={soloLectura} className="contents">
