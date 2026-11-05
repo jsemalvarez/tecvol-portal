@@ -1,5 +1,5 @@
 import { jsPDF } from "jspdf";
-import { calcularProtocolo, mostrarCalculo, mostrarCarga, type Celda, type CeldaCalculada, type Celdas } from "@/lib/dominio/protocolo";
+import { calcularProtocolo, extremoCalculado, mostrarCalculo, mostrarCarga, type Celda, type CeldaCalculada, type Celdas, type Posiciones } from "@/lib/dominio/protocolo";
 
 /**
  * El protocolo de ensayo en PDF: la hoja del Excel, con sus colores, sus celdas combinadas y su logo, en una hoja A4.
@@ -11,6 +11,7 @@ import { calcularProtocolo, mostrarCalculo, mostrarCarga, type Celda, type Celda
 export interface DatosPdfProtocolo {
   codigo: string;
   celdas: Celdas;
+  posiciones: Posiciones;
 }
 
 const COLUMNAS = "BCDEFGHIJ";
@@ -38,10 +39,10 @@ interface Opciones {
   sinBorde?: boolean;
 }
 
-export async function descargarPdfProtocolo({ codigo, celdas }: DatosPdfProtocolo): Promise<void> {
+export async function descargarPdfProtocolo({ codigo, celdas, posiciones }: DatosPdfProtocolo): Promise<void> {
   const doc = new jsPDF({ unit: "mm", format: "a4", compress: true });
   doc.setProperties({ title: `Protocolo de ensayo eléctrico ${codigo}`, author: "Tecvol SRL" });
-  dibujar(doc, celdas, await cargarLogo());
+  dibujar(doc, celdas, posiciones, await cargarLogo());
   doc.save(`protocolo-ensayo-${codigo}.pdf`);
 }
 
@@ -61,8 +62,8 @@ async function cargarLogo(): Promise<string | null> {
   }
 }
 
-function dibujar(doc: jsPDF, celdas: Celdas, logo: string | null) {
-  const calculo = calcularProtocolo(celdas);
+function dibujar(doc: jsPDF, celdas: Celdas, posiciones: Posiciones, logo: string | null) {
+  const calculo = calcularProtocolo(celdas, posiciones);
 
   const totalAncho = ANCHOS_EXCEL.reduce((a, b) => a + b, 0);
   const anchos = ANCHOS_EXCEL.map((a) => (a / totalAncho) * ANCHO);
@@ -161,7 +162,10 @@ function dibujar(doc: jsPDF, celdas: Celdas, logo: string | null) {
   // Valores nominales.
   banda("B6:J6", "VALORES NOMINALES");
   fuerte("B7", "A.T. (V)");
-  for (const c of ["C7", "D7", "E7", "F7", "G7"]) carga(c);
+  for (const c of ["C7", "D7", "E7", "F7", "G7"]) {
+    if (extremoCalculado(c, posiciones)) cuenta(c);
+    else carga(c);
+  }
   celda("H7", "( V)");
   fuerte("I7", "B.T ( V )");
   carga("J7");
@@ -181,7 +185,7 @@ function dibujar(doc: jsPDF, celdas: Celdas, logo: string | null) {
     doc.addImage(logo, "PNG", x0 + (w - ancho) / 2, y0 + 1, ancho, alto, "logo", "FAST");
   }
   rotulo("B11", "POSICION", { negrita: true });
-  ["C", "D", "E", "F", "G"].forEach((columna, i) => fuerte(`${columna}11`, String(i + 1)));
+  for (const columna of "CDEFG") carga(`${columna}11`, { negrita: true });
   rotulo("B12", "TEORICA");
   cuenta("C12");
   cuenta("D12");

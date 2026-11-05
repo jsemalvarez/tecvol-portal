@@ -148,7 +148,10 @@ En `/panel` el personal (los dos roles):
 - Carga el **protocolo de ensayo eléctrico** en el paso 6: es el Excel del taller (`referencias/taller/Giorno 315KVA.xlsx`)
   tal cual, con las mismas celdas para completar y las mismas cuentas (`lib/dominio/protocolo.ts`, celda por celda; el
   taller pidió no corregir ninguna), y sale en PDF con el formato de esa hoja. Lo ve solo el personal: para que lo vea la
-  empresa, se sube el PDF a los archivos de la orden.
+  empresa, se sube el PDF a los archivos de la orden. Arriba de la planilla se elige el conmutador, de **5 o 3 posiciones**,
+  según la cantidad de puntos cargados en la chapa: la de 3 es `Coema 25KVA Nro 5844.xlsx`, con las mismas fórmulas, sin las
+  columnas 2 y 4 y con las tensiones de los extremos calculadas (±5 %). La fila POSICION se puede cambiar, porque en la de 3
+  el taller la numera de distintas maneras.
 - En la lista, cada fila tiene **"Ver O.T."**, que lleva a la hoja en el próximo paso pendiente ("Cargar
   transformador", si le falta; "Reactivar", si está dada de baja). Debajo de 1024 px, cada O.T. es una tarjeta que se
   toca entera. El resumen de arriba (en el taller, esperan a la empresa, con aviso, entregados) filtra la lista al tocarlo. La etiqueta se imprime desde la hoja. La ventana "Cambiar estado"
@@ -190,7 +193,7 @@ directamente: esa cuenta no tendría empresa ni sería personal, así que no ver
 | `ordenes/{codigo}` | El personal; cada cliente, las de su empresa | El personal | `empresa`, `trafo`, `referencia`, `serie`, `numeroOrden`, `numeroOrdenTemporal`, `numeroTIngreso` (antes `numeroTrafo`), chapa, `archivos` (los PDF, ver abajo)… y `baja` |
 | `informes/{codigo}` | El personal | El personal | Informe de diagnóstico |
 | `datosTaller/{codigo}` | El personal | El personal | Datos del taller: bobinado (alambre, espiras, peso), prespan, derivaciones y materiales |
-| `protocolos/{codigo}` | El personal | El personal | Protocolo de ensayo eléctrico: las celdas que se completan en el Excel del taller, por su referencia (`H5`, `C25`…) |
+| `protocolos/{codigo}` | El personal | El personal | Protocolo de ensayo eléctrico: las celdas que se completan en el Excel del taller, por su referencia (`H5`, `C25`…), y las `posiciones` del conmutador (3 o 5; sin el campo, 5) |
 | `ajustes/avisos` | El personal | El administrador | `ingreso` y `aprobacion`: días (enteros, de 1 a 365) antes del aviso de demora |
 
 El estado y las etapas viven solo en `seguimiento/{codigo}`: el panel lo escribe y el portal y la consulta

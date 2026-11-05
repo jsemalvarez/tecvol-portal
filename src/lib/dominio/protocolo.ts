@@ -8,6 +8,10 @@ import { ordenParaEtiqueta } from "./trafo";
  * `referencias/taller/`): el taller pidió respetar sus cuentas y las celdas que completa el usuario. Por eso acá las
  * celdas se llaman como en el Excel (H5, C25…) y cada cuenta es la fórmula de esa celda: para revisarlas se pueden
  * poner una al lado de la otra.
+ *
+ * El taller usa esa hoja de dos maneras, según el conmutador: la de 5 posiciones ("Giorno 315KVA.xlsx") y la de 3
+ * ("Coema 25KVA Nro 5844.xlsx"). Las fórmulas son las mismas: la de 3 no usa las columnas 2 y 4 y calcula las tensiones
+ * de los extremos, que en la de 5 se escriben.
  */
 
 /** Las celdas de texto que completa el usuario. F4 (la fecha) se guarda como `aaaa-mm-dd`. */
@@ -19,7 +23,8 @@ const CELDAS_NUMERO = [
   "H2", "H4", "J4", "H5", "J5",
   // Valores nominales.
   "C7", "D7", "E7", "F7", "G7", "J7",
-  // Relación de transformación: la teórica del punto central y la medida, por fase y por punto.
+  // Relación de transformación: el número de cada posición, la teórica del punto central y la medida, por fase y por punto.
+  "C11", "D11", "E11", "F11", "G11",
   "E12",
   "C16", "D16", "E16", "F16", "G16",
   "C17", "D17", "E17", "F17", "G17",
@@ -41,12 +46,25 @@ export type Celda = CeldaTexto | CeldaNumero;
 /** Lo cargado en el protocolo. Una celda vacía no está. */
 export type Celdas = Partial<Record<CeldaTexto, string> & Record<CeldaNumero, number>>;
 
+/** Las posiciones del conmutador, que deciden cuál de las dos planillas se usa. */
+export type Posiciones = 3 | 5;
+
 /** El protocolo con quién lo guardó por última vez y cuándo. Lo pone el sistema, no el formulario. */
 export interface ProtocoloGuardado {
   celdas: Celdas;
+  posiciones: Posiciones;
   actualizado: Date | null;
   por?: string;
 }
+
+/** Lo guardado antes de que hubiera dos planillas no dice cuál usa: es la de 5 posiciones, la única que había. */
+export const leerPosiciones = (valor: unknown): Posiciones => (valor === 3 ? 3 : 5);
+
+/** Con 3 posiciones no se usan las columnas 2 y 4 de las filas del conmutador. */
+export const columnaSinUso = (celda: string, posiciones: Posiciones) => posiciones === 3 && /^[DF](?:[78]|1[1-8])$/.test(celda);
+
+/** Con 3 posiciones, las tensiones de los extremos no se escriben: salen de E7, como en el Excel de Coema. */
+export const extremoCalculado = (celda: string, posiciones: Posiciones): celda is "C7" | "G7" => posiciones === 3 && (celda === "C7" || celda === "G7");
 
 /** Las lecturas de los vatímetros: en vacío, una fase puede dar negativa (en el Excel de Giorno, W2 y W3). */
 const CON_SIGNO: ReadonlySet<Celda> = new Set<Celda>(["C30", "D30", "E30", "C41", "D41", "E41"]);
@@ -74,8 +92,11 @@ export function valoresDeCeldas(celdas: Celdas): ValoresProtocolo {
   return valores;
 }
 
-/** Las celdas con lo que se entiende de lo escrito y cuáles no se entienden. Se puede calcular a medio escribir. */
-export function leerValores(valores: ValoresProtocolo): { celdas: Celdas; invalidas: Celda[] } {
+/**
+ * Las celdas con lo que se entiende de lo escrito y cuáles no se entienden. Se puede calcular a medio escribir. Lo que
+ * la planilla elegida no usa no cuenta ni se guarda.
+ */
+export function leerValores(valores: ValoresProtocolo, posiciones: Posiciones): { celdas: Celdas; invalidas: Celda[] } {
   const celdas: Celdas = {};
   const invalidas: Celda[] = [];
   for (const celda of CELDAS_TEXTO) {
@@ -83,11 +104,17 @@ export function leerValores(valores: ValoresProtocolo): { celdas: Celdas; invali
     if (texto) celdas[celda] = texto;
   }
   for (const celda of CELDAS_NUMERO) {
+    if (columnaSinUso(celda, posiciones) || extremoCalculado(celda, posiciones)) continue;
     const numero = leerCeldaNumero(celda, valores[celda]);
     if (numero === null) invalidas.push(celda);
     else if (numero !== undefined) celdas[celda] = numero;
   }
   return { celdas, invalidas };
+}
+
+/** Lo escrito que cuenta para la planilla elegida, para saber si hay cambios sin guardar. */
+export function valoresEnUso(valores: ValoresProtocolo, posiciones: Posiciones): Partial<ValoresProtocolo> {
+  return Object.fromEntries(Object.entries(valores).filter(([celda]) => !columnaSinUso(celda, posiciones) && !extremoCalculado(celda, posiciones)));
 }
 
 /** Lee un protocolo guardado, descartando lo que no tenga la forma esperada. También sirve para guardarlo: sin vacíos. */
@@ -107,11 +134,26 @@ export function leerCeldas(valor: unknown): Celdas {
 
 const FIRMA_HABITUAL = "Ing. Sebastián Vasconcelo";
 
+/** La fila POSICION de cada planilla. Se puede cambiar: en la de 3, Coema va 3-2-1 y Faraday 1-2-3. */
+const NUMERACION: Record<Posiciones, Celdas> = {
+  5: { C11: 1, D11: 2, E11: 3, F11: 4, G11: 5 },
+  3: { C11: 3, E11: 2, G11: 1 },
+};
+
+/** Lo guardado antes de que la fila POSICION se pudiera cambiar no la tiene. */
+export const conNumeracion = (celdas: Celdas, posiciones: Posiciones): Celdas => ({ ...NUMERACION[posiciones], ...celdas });
+
+/** Los puntos del conmutador cargados en la chapa, de la tensión más alta a la más baja. */
+const puntosCargados = (placa: Placa) => (placa.conmutador ?? []).filter((v): v is number => v != null);
+
+/** La planilla que le corresponde a la chapa. Sin los puntos cargados no se sabe: va la de 5, y se puede cambiar. */
+export const posicionesDeChapa = (placa: Placa | undefined): Posiciones => (placa && puntosCargados(placa).length === 3 ? 3 : 5);
+
 /** "13200/400/+-5%": las tensiones de la chapa y lo que mueve el conmutador, como se escriben en la planilla. */
 function tensionesDeChapa(placa: Placa): string | undefined {
-  const { tensionPrimaria: primaria, tensionSecundaria: secundaria, conmutador } = placa;
+  const { tensionPrimaria: primaria, tensionSecundaria: secundaria } = placa;
   if (!primaria) return undefined;
-  const puntos = (conmutador ?? []).filter((v): v is number => v != null);
+  const puntos = puntosCargados(placa);
   const paso = puntos.length ? Math.round(((Math.max(...puntos) - primaria) / primaria) * 100) : 0;
   return [primaria, secundaria, paso > 0 ? `+-${paso}%` : undefined].filter(Boolean).join("/");
 }
@@ -125,6 +167,12 @@ function tensionesDeChapa(placa: Placa): string | undefined {
 export function celdasIniciales(equipo: EquipoTaller, empresa: string): Celdas {
   const placa = equipo.placa ?? {};
   const puntos = placa.conmutador ?? [];
+  const posiciones = posicionesDeChapa(placa);
+  // Con 3 puntos, el del medio es la tensión nominal, sea cual sea el campo de la chapa en que se cargó; los extremos se calculan.
+  const tensiones =
+    posiciones === 3
+      ? { E7: puntosCargados(placa)[1] }
+      : { C7: puntos[0], D7: puntos[1], E7: puntos[2] ?? placa.tensionPrimaria, F7: puntos[3], G7: puntos[4] };
   // Un N.º de trafo temporal (`NT-0001`) o una O.T. temporal no van en un protocolo.
   const serie = equipo.serie?.startsWith("NT-") ? undefined : equipo.serie;
   return leerCeldas({
@@ -139,11 +187,8 @@ export function celdasIniciales(equipo: EquipoTaller, empresa: string): Celdas {
     H4: placa.tensionCortocircuito,
     J4: placa.aceite,
     C5: ordenParaEtiqueta(equipo),
-    C7: puntos[0],
-    D7: puntos[1],
-    E7: puntos[2] ?? placa.tensionPrimaria,
-    F7: puntos[3],
-    G7: puntos[4],
+    ...tensiones,
+    ...NUMERACION[posiciones],
     J7: placa.tensionSecundaria,
     C20: 28.5,
     E20: placa.frecuencia ?? 50,
@@ -189,11 +234,24 @@ const enColumna = (tension: N, base: N, cuenta: (base: number) => number): N => 
 
 const errorRelacion = (medida: N, teorica: N): N => (medida === undefined || !teorica ? undefined : (medida - teorica) / teorica);
 
+/** Las celdas que entran en las cuentas de la planilla: con 3 posiciones, sin las columnas 2 y 4 y con los extremos calculados. */
+function celdasEnUso(celdas: Celdas, posiciones: Posiciones): Celdas {
+  if (posiciones === 5) return celdas;
+  const usadas = Object.fromEntries(Object.entries(celdas).filter(([celda]) => !columnaSinUso(celda, posiciones))) as Celdas;
+  return {
+    ...usadas,
+    C7: enColumna(celdas.E7, celdas.E7, (v) => (5 * v) / 100 + v),
+    G7: enColumna(celdas.E7, celdas.E7, (v) => -(5 * v) / 100 + v),
+  };
+}
+
 /**
  * Las cuentas del Excel, celda por celda. Cada línea es la fórmula de esa celda. Lo único distinto es que una celda
  * sin datos queda vacía, donde el Excel muestra 0 o #¡DIV/0!.
  */
-export function calcularProtocolo(c: Celdas) {
+export function calcularProtocolo(cargadas: Celdas, posiciones: Posiciones = 5) {
+  const c = celdasEnUso(cargadas, posiciones);
+
   // Valores nominales.
   const E8 = c.H5;
   const J8 = c.J5;
@@ -255,6 +313,8 @@ export function calcularProtocolo(c: Celdas) {
       : undefined;
 
   return {
+    C7: c.C7,
+    G7: c.G7,
     C8,
     D8,
     E8,
@@ -321,7 +381,22 @@ export function calcularProtocolo(c: Celdas) {
 export type Calculo = ReturnType<typeof calcularProtocolo>;
 export type CeldaCalculada = keyof Calculo;
 
-/** Tiene lo que importa de los dos ensayos: dan las pérdidas totales y la Ucc a 75°. */
+/**
+ * Lo escrito después de cambiar de planilla. La fila POSICION vuelve a la habitual. Lo de las columnas 2 y 4 queda, por
+ * si se vuelve atrás antes de guardar. Al pasar a 5, los extremos que se estaban calculando quedan escritos.
+ */
+export function valoresConPosiciones(valores: ValoresProtocolo, posiciones: Posiciones): ValoresProtocolo {
+  const nuevos = { ...valores };
+  for (const celda of ["C11", "D11", "E11", "F11", "G11"] as const) nuevos[celda] = numeroParaCampo(NUMERACION[posiciones][celda]);
+  if (posiciones === 5) {
+    const { C7, G7 } = calcularProtocolo(leerValores(valores, 3).celdas, 3);
+    if (!valores.C7.trim()) nuevos.C7 = numeroParaCampo(C7);
+    if (!valores.G7.trim()) nuevos.G7 = numeroParaCampo(G7);
+  }
+  return nuevos;
+}
+
+/** Tiene lo que importa de los dos ensayos: dan las pérdidas totales y la Ucc a 75°. Las dos planillas las calculan igual. */
 export function protocoloCompleto(celdas: Celdas): boolean {
   const { F45, E38 } = calcularProtocolo(celdas);
   return F45 !== undefined && E38 !== undefined;
@@ -338,6 +413,7 @@ export function mostrarCalculo(calculo: Calculo, celda: CeldaCalculada): string 
   const valor = calculo[celda];
   if (valor === undefined) return "";
   if (/^[C-G]1[345]$/.test(celda)) return `${fijo(valor * 100, 2)}%`;
+  if (celda === "C7" || celda === "G7") return fijo(valor, 0);
   if (celda === "F31") return formatearNumero(valor, 2);
   if (celda === "H27") return fijo(valor, 3);
   return fijo(valor, UN_DECIMAL.has(celda) ? 1 : 2);
@@ -345,6 +421,7 @@ export function mostrarCalculo(calculo: Calculo, celda: CeldaCalculada): string 
 
 const FORMATO_CARGA: Partial<Record<Celda, number>> = {
   C7: 0, D7: 0, E7: 0, F7: 0, G7: 0,
+  C11: 0, D11: 0, E11: 0, F11: 0, G11: 0,
   E12: 2,
   C16: 2, D16: 2, E16: 2, F16: 2, G16: 2,
   C17: 2, D17: 2, E17: 2, F17: 2, G17: 2,

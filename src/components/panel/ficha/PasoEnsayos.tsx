@@ -5,13 +5,19 @@ import { formatearNumero, intensidadNominal } from "@/lib/dominio/placa";
 import {
   calcularProtocolo,
   celdasIniciales,
+  conNumeracion,
   leerValores,
+  posicionesDeChapa,
+  valoresConPosiciones,
   valoresDeCeldas,
+  valoresEnUso,
   type Celda,
+  type Posiciones,
   type ProtocoloGuardado,
   type ValoresProtocolo,
 } from "@/lib/dominio/protocolo";
 import { mensajeDeError } from "../Dialogo";
+import { Opciones } from "../equipo/campos";
 import { FilaFecha, guardarFechas, PiePaso, UltimoGuardado, useFechasPaso, useSucio, type PropsPaso } from "./piezas";
 import { PlanillaProtocolo } from "./PlanillaProtocolo";
 
@@ -51,21 +57,31 @@ export function PasoEnsayos({
 }) {
   const id = useId();
   const fechas = useFechasPaso(equipo, ETAPAS);
-  const [base, setBase] = useState(() => valoresDeCeldas(guardado?.celdas ?? celdasIniciales(equipo, api.empresaDe(equipo))));
-  const [valores, setValores] = useState<ValoresProtocolo>(base);
+  const [posiciones, setPosiciones] = useState<Posiciones>(guardado?.posiciones ?? posicionesDeChapa(equipo.placa));
+  const [base, setBase] = useState(() => ({
+    posiciones,
+    valores: valoresDeCeldas(guardado ? conNumeracion(guardado.celdas, guardado.posiciones) : celdasIniciales(equipo, api.empresaDe(equipo))),
+  }));
+  const [valores, setValores] = useState<ValoresProtocolo>(base.valores);
   const [ultimo, setUltimo] = useState(guardado ? { actualizado: guardado.actualizado, por: guardado.por } : null);
   const [error, setError] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
   const [descargando, setDescargando] = useState(false);
   const planilla = useRef<HTMLDivElement>(null);
 
-  const { celdas, invalidas } = leerValores(valores);
-  const calculo = calcularProtocolo(celdas);
-  const sinGuardar = JSON.stringify(valores) !== JSON.stringify(base);
+  const { celdas, invalidas } = leerValores(valores, posiciones);
+  const calculo = calcularProtocolo(celdas, posiciones);
+  const sinGuardar = posiciones !== base.posiciones || JSON.stringify(valoresEnUso(valores, posiciones)) !== JSON.stringify(valoresEnUso(base.valores, base.posiciones));
   useSucio(sinGuardar || fechas.sucias, onSucio);
 
   function cambiar(celda: Celda, texto: string) {
     setValores((v) => ({ ...v, [celda]: texto }));
+    setError(null);
+  }
+
+  function cambiarPosiciones(nuevas: Posiciones) {
+    setPosiciones(nuevas);
+    setValores((v) => valoresConPosiciones(v, nuevas));
     setError(null);
   }
 
@@ -83,12 +99,12 @@ export function PasoEnsayos({
     if (!fechasBien) return null;
     setGuardando(true);
     try {
-      await api.acciones.guardarProtocolo(equipo.codigo, celdas);
+      await api.acciones.guardarProtocolo(equipo.codigo, celdas, posiciones);
       await guardarFechas(api, equipo, fechas, { seguir, principal: "ensayos" });
       const nuevo = { actualizado: new Date(), por: api.email };
-      setBase(valores);
+      setBase({ posiciones, valores });
       setUltimo(nuevo);
-      onGuardado({ celdas, ...nuevo });
+      onGuardado({ celdas, posiciones, ...nuevo });
       return celdas;
     } catch (e) {
       setError(mensajeDeError(e));
@@ -111,7 +127,7 @@ export function PasoEnsayos({
     setDescargando(true);
     try {
       const { descargarPdfProtocolo } = await import("../protocolo/pdf");
-      await descargarPdfProtocolo({ codigo: equipo.codigo, celdas: listas });
+      await descargarPdfProtocolo({ codigo: equipo.codigo, celdas: listas, posiciones });
     } catch {
       setError("No se pudo armar el PDF. Revise su conexión e intente de nuevo.");
     } finally {
@@ -137,9 +153,26 @@ export function PasoEnsayos({
             <IntensidadesDeChapa equipo={equipo} />
           </p>
         </div>
+        <div className="px-[var(--marco-px)] pt-5">
+          <Opciones<`${Posiciones}`>
+            id={`${id}-posiciones`}
+            leyenda="Conmutador"
+            opciones={[
+              { valor: "5", etiqueta: "5 posiciones" },
+              { valor: "3", etiqueta: "3 posiciones" },
+            ]}
+            valor={`${posiciones}`}
+            onCambio={(v) => cambiarPosiciones(Number(v) as Posiciones)}
+          />
+          {posiciones === 3 && (
+            <p className="mt-3 max-w-[70ch] text-[0.9375rem] leading-snug text-grafito">
+              Las columnas 2 y 4 no se usan. Las tensiones de los extremos se calculan con ±5 %, como en la planilla de 3 posiciones.
+            </p>
+          )}
+        </div>
         {/* Hasta 1280 px la columna es angosta: la planilla aprovecha todo el ancho de la placa. */}
         <div ref={planilla} className="px-3 pb-7 pt-5 xl:px-[var(--marco-px)]">
-          <PlanillaProtocolo valores={valores} calculo={calculo} invalidas={new Set(invalidas)} onCambio={cambiar} />
+          <PlanillaProtocolo valores={valores} calculo={calculo} posiciones={posiciones} invalidas={new Set(invalidas)} onCambio={cambiar} />
         </div>
       </section>
 

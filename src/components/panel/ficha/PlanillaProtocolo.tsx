@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { createContext, useContext, type KeyboardEvent, type ReactNode } from "react";
-import { mostrarCalculo, type Calculo, type Celda, type CeldaCalculada, type ValoresProtocolo } from "@/lib/dominio/protocolo";
+import { columnaSinUso, extremoCalculado, mostrarCalculo, type Calculo, type Celda, type CeldaCalculada, type Posiciones, type ValoresProtocolo } from "@/lib/dominio/protocolo";
 
 /** Los anchos de las columnas B a J del Excel. */
 const COLUMNAS = [14.6, 10.35, 10.35, 10.35, 10.35, 13.9, 8.9, 11.25, 9.95];
@@ -30,6 +30,7 @@ function alTeclear(evento: KeyboardEvent<HTMLDivElement>) {
 interface PropsPlanilla {
   valores: ValoresProtocolo;
   calculo: Calculo;
+  posiciones: Posiciones;
   invalidas: ReadonlySet<Celda>;
   onCambio: (celda: Celda, texto: string) => void;
 }
@@ -53,9 +54,16 @@ function Banda({ children, col = 9 }: { children: ReactNode; col?: number }) {
   );
 }
 
+/** Una columna que la planilla elegida no usa: las 2 y 4 con 3 posiciones. */
+function Apagada() {
+  return <td className="planilla-apagada" />;
+}
+
 /** Una celda para completar. `nombre` la identifica para lectores de pantalla. */
-function Carga({ c, nombre, col, fil, texto }: { c: Celda; nombre: string; col?: number; fil?: number; texto?: boolean }) {
-  const { valores, invalidas, onCambio } = useContext(ContextoPlanilla)!;
+function Carga({ c, nombre, col, fil, texto, fuerte }: { c: Celda; nombre: string; col?: number; fil?: number; texto?: boolean; fuerte?: boolean }) {
+  const { valores, invalidas, onCambio, posiciones } = useContext(ContextoPlanilla)!;
+  if (columnaSinUso(c, posiciones)) return <Apagada />;
+  if (extremoCalculado(c, posiciones)) return <Cuenta c={c} />;
   return (
     <td colSpan={col} rowSpan={fil}>
       <input
@@ -68,7 +76,7 @@ function Carga({ c, nombre, col, fil, texto }: { c: Celda; nombre: string; col?:
         autoComplete="off"
         spellCheck={false}
         maxLength={texto ? 120 : 14}
-        className={texto && (col ?? 1) <= 2 ? "planilla-angosta" : undefined}
+        className={fuerte ? "font-bold" : texto && (col ?? 1) <= 2 ? "planilla-angosta" : undefined}
         data-celda={c}
       />
     </td>
@@ -77,7 +85,8 @@ function Carga({ c, nombre, col, fil, texto }: { c: Celda; nombre: string; col?:
 
 /** Una celda que se calcula sola. */
 function Cuenta({ c, col, resultado }: { c: CeldaCalculada; col?: number; resultado?: boolean }) {
-  const { calculo } = useContext(ContextoPlanilla)!;
+  const { calculo, posiciones } = useContext(ContextoPlanilla)!;
+  if (columnaSinUso(c, posiciones)) return <Apagada />;
   return (
     <td colSpan={col} className={resultado ? "planilla-resultado" : "planilla-calculo"} data-celda={c}>
       {mostrarCalculo(calculo, c)}
@@ -185,10 +194,8 @@ export function PlanillaProtocolo(props: PropsPlanilla) {
             </tr>
             <tr>
               <Rotulo fuerte>POSICION</Rotulo>
-              {[1, 2, 3, 4, 5].map((punto) => (
-                <th key={punto} scope="col" className="font-bold">
-                  {punto}
-                </th>
+              {(["C", "D", "E", "F", "G"] as const).map((columna, i) => (
+                <Carga key={columna} c={`${columna}11`} nombre={`Número de la posición, columna ${i + 1}`} fuerte />
               ))}
             </tr>
             <tr>

@@ -289,6 +289,11 @@
     font-weight: 700;
   }
 
+  /* Una columna que la planilla elegida no usa: gris, para que no parezca una celda pendiente. */
+  .planilla .planilla-apagada {
+    background: color-mix(in srgb, var(--color-acero) 22%, var(--color-esmalte));
+  }
+
   .planilla input {
     display: block;
     width: 100%;

@@ -2,7 +2,7 @@ import type { LimitesAvisos } from "@/lib/dominio/avisos";
 import type { DatosTaller, DatosTallerGuardados } from "@/lib/dominio/datos-taller";
 import type { EstadoReparacion } from "@/lib/dominio/estados";
 import type { Informe, InformeGuardado } from "@/lib/dominio/informe";
-import type { Celdas, ProtocoloGuardado } from "@/lib/dominio/protocolo";
+import type { Celdas, Posiciones, ProtocoloGuardado } from "@/lib/dominio/protocolo";
 import type {
   ArchivoOrden,
   ConsultaNueva,
@@ -104,7 +104,7 @@ export interface PanelRepositorio {
   /** Protocolo de ensayo eléctrico de una O.T.; `null` si todavía no tiene. */
   obtenerProtocolo(codigo: string): Promise<ProtocoloGuardado | null>;
   /** Reemplaza el protocolo entero y anota quién lo guardó. */
-  guardarProtocolo(codigo: string, celdas: Celdas, por: string): Promise<void>;
+  guardarProtocolo(codigo: string, celdas: Celdas, posiciones: Posiciones, por: string): Promise<void>;
   /**
    * Sube un PDF a la orden y lo anota en ella a nombre de `por`; desde ahí lo ve también el cliente.
    * `alAvanzar` recibe cuánto se subió, de 0 a 1. Antes hay que revisarlo con `revisarPdf`.

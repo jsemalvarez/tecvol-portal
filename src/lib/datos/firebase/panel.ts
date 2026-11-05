@@ -23,7 +23,7 @@ import { datosTallerParaGuardar, leerDatosTaller, type DatosTaller, type DatosTa
 import { generarCodigo } from "@/lib/dominio/codigo";
 import type { EstadoReparacion } from "@/lib/dominio/estados";
 import { informeParaGuardar, leerInforme, type Informe, type InformeGuardado } from "@/lib/dominio/informe";
-import { leerCeldas, type Celdas, type ProtocoloGuardado } from "@/lib/dominio/protocolo";
+import { leerCeldas, leerPosiciones, type Celdas, type Posiciones, type ProtocoloGuardado } from "@/lib/dominio/protocolo";
 import { esUso, leerPlaca } from "@/lib/dominio/placa";
 import { esRolPersonal, puede } from "@/lib/dominio/roles";
 import { facturacionParaGuardar, leerFacturacion } from "@/lib/dominio/facturacion";
@@ -404,14 +404,15 @@ export class PanelFirestore implements PanelRepositorio {
     const datos = documento.data();
     return {
       celdas: leerCeldas(datos.celdas),
+      posiciones: leerPosiciones(datos.posiciones),
       actualizado: datos.actualizado instanceof Timestamp ? datos.actualizado.toDate() : null,
       por: texto(datos.por),
     };
   }
 
-  async guardarProtocolo(codigo: string, celdas: Celdas, por: string): Promise<void> {
+  async guardarProtocolo(codigo: string, celdas: Celdas, posiciones: Posiciones, por: string): Promise<void> {
     // Como el informe: se reemplaza entero, sin `merge`.
-    await guardar(() => setDoc(doc(obtenerFirestore(), "protocolos", codigo), { celdas: leerCeldas(celdas), por, actualizado: serverTimestamp() }));
+    await guardar(() => setDoc(doc(obtenerFirestore(), "protocolos", codigo), { celdas: leerCeldas(celdas), posiciones, por, actualizado: serverTimestamp() }));
   }
 
   async subirArchivo(codigo: string, archivo: File, por: string, alAvanzar: (fraccion: number) => void): Promise<ArchivoOrden> {
