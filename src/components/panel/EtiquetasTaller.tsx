@@ -38,7 +38,7 @@ export function EtiquetaExterna({ codigo }: { codigo: string }) {
   const origen = typeof window === "undefined" ? "" : window.location.origin;
 
   return (
-    <VistaEtiqueta descripcion="Se pega en el transformador. El QR abre la consulta pública del estado.">
+    <VistaEtiqueta descripcion="Vista previa. Se imprime y se pega en el transformador. El QR abre la consulta pública del estado.">
       <div className="impresion flex h-[64mm] w-[50mm] flex-col items-center justify-between rounded-[2mm] border border-tinta bg-blanco py-[2.5mm] text-tinta">
         <p className="text-[4mm] font-bold leading-none tracking-[0.03em] underline underline-offset-[0.8mm]">TECVOL S.R.L.</p>
         <CodigoQR valor={`${origen}/seguimiento/${codigo}`} className="w-[46mm]" />
@@ -57,51 +57,61 @@ function Tierra() {
   );
 }
 
-const CELDA = "border border-tinta p-0 text-center align-middle";
+/**
+ * Las líneas de la cuadrícula van de 2 px para que no se pierdan en un visor de PDF ni en la impresora: Firefox
+ * redondea el grosor a píxeles enteros e imprime las de 1 px con menos de 0,2 mm. Cada celda dibuja las suyas, abajo
+ * y a la derecha, sin juntar bordes.
+ */
+const CELDA = "border-b-2 border-r-2 border-tinta p-0 text-center align-middle";
 const ROTULO = "rotulo text-[4mm]";
 
-/** La letra de un dato: el nombre largo de una empresa entra achicándola, en lugar de cortarse. */
-const tamanoDato = (valor = "") => (valor.length > 60 ? "text-[2.7mm]" : valor.length > 34 ? "text-[3.5mm]" : "text-[4.4mm]");
+/**
+ * La letra de un dato: el nombre largo de una empresa entra achicándola, en lugar de cortarse. Cada fila admite dos
+ * renglones con la letra grande, tres con la mediana y cuatro con la chica; se cuenta con margen porque el corte
+ * de las palabras y el ancho de la letra cambian de un navegador a otro.
+ */
+const tamanoDato = (valor = "") => (valor.length > 50 ? "text-[2.7mm]" : valor.length > 24 ? "text-[3.5mm]" : "text-[4.4mm]");
 
 /**
  * La que acompaña al transformador en el taller cuando se desarma, según la nota del jefe de taller y con sus
  * palabras: los datos para reconocerlo a la izquierda y, a la derecha, las mediciones de aislación y de relación
- * de transformación, que se completan a mano. Lo que no está cargado sale en blanco, para escribirlo.
+ * de transformación, que se escriben con lapicera en el papel y después se cargan en el paso 3. Lo que no está
+ * cargado sale en blanco, para escribirlo.
  */
 export function EtiquetaInterna({ equipo, empresa }: { equipo: EquipoTaller; empresa: string }) {
   const potencia = equipo.placa?.potencia;
   const ingreso = equipo.etapas.ingresado;
-  const datos: { nombre: string; valor?: string; falta?: string }[] = [
-    { nombre: "OT", valor: ordenParaEtiqueta(equipo), falta: equipo.numeroOrdenTemporal ? "OT (la que tiene es temporal)" : undefined },
-    { nombre: "Marca", valor: equipo.placa?.fabricante },
-    { nombre: "Potencia", valor: potencia == null ? undefined : `${numeroParaCampo(potencia)} kVA` },
-    { nombre: "N.º fábrica", valor: equipo.serie },
-    { nombre: "Historial T", valor: equipo.numeroT ?? equipo.numeroTIngreso },
-    { nombre: "F. ingreso", valor: ingreso && formatearFecha(ingreso) },
-    { nombre: "F. compromiso", valor: equipo.compromiso && formatearFecha(equipo.compromiso) },
-    { nombre: "Cliente", valor: empresa },
+  // `paso`: dónde se carga cada dato de la hoja de la O.T.
+  const datos: { nombre: string; paso: 1 | 2; valor?: string; falta?: string }[] = [
+    { nombre: "OT", paso: 1, valor: ordenParaEtiqueta(equipo), falta: equipo.numeroOrdenTemporal ? "OT (la que tiene es temporal)" : undefined },
+    { nombre: "Marca", paso: 2, valor: equipo.placa?.fabricante },
+    { nombre: "Potencia", paso: 2, valor: potencia == null ? undefined : `${numeroParaCampo(potencia)} kVA` },
+    { nombre: "N.º fábrica", paso: 2, valor: equipo.serie },
+    { nombre: "Historial T", paso: 2, valor: equipo.numeroT ?? equipo.numeroTIngreso, falta: "Historial T (N.º T)" },
+    { nombre: "F. ingreso", paso: 1, valor: ingreso && formatearFecha(ingreso) },
+    { nombre: "F. compromiso", paso: 1, valor: equipo.compromiso && formatearFecha(equipo.compromiso) },
+    { nombre: "Cliente", paso: 1, valor: empresa },
   ];
-  const faltan = datos.filter((d) => !d.valor).map((d) => d.falta ?? d.nombre);
+  const faltan = ([1, 2] as const).flatMap((paso) => {
+    const nombres = datos.filter((d) => d.paso === paso && !d.valor).map((d) => d.falta ?? d.nombre);
+    return nombres.length > 0 ? [`Paso ${paso}: ${nombres.join(", ")}.`] : [];
+  });
 
   return (
     <VistaEtiqueta
-      descripcion="Acompaña al transformador en el taller cuando se desarma. Las mediciones se completan a mano."
-      nota={
-        faltan.length > 0
-          ? `Sin cargar: ${faltan.join(", ")}. ${faltan.length === 1 ? "Queda en blanco, para escribirlo" : "Quedan en blanco, para escribirlos"} a mano.`
-          : undefined
-      }
+      descripcion="Los datos se anotan sobre la etiqueta impresa."
+      nota={faltan.length > 0 ? `Sin cargar. ${faltan.join(" ")} Lo que se cargue ahí sale impreso; lo demás queda en blanco, para escribirlo en el papel.` : undefined}
     >
-      <div className="impresion grid h-[105mm] w-[148mm] grid-cols-[70mm_minmax(0,1fr)] grid-rows-1 overflow-hidden border border-tinta bg-blanco text-tinta">
+      <div className="impresion grid h-[105mm] w-[148mm] grid-cols-[70mm_minmax(0,1fr)] grid-rows-1 overflow-hidden border-2 border-tinta bg-blanco text-tinta">
         <dl className="grid min-h-0 grid-rows-8 border-r-2 border-tinta">
           {datos.map(({ nombre, valor }) => (
-            <div key={nombre} className="grid min-h-0 grid-cols-[26.5mm_minmax(0,1fr)] items-center gap-[1.5mm] overflow-hidden border-b border-tinta px-[2mm] last:border-b-0">
+            <div key={nombre} className="grid min-h-0 grid-cols-[26.5mm_minmax(0,1fr)] items-center gap-[1.5mm] overflow-hidden border-b-2 border-tinta px-[2mm] last:border-b-0">
               <dt className={ROTULO}>{nombre}</dt>
               <dd className={`break-words font-bold leading-[1.1] ${tamanoDato(valor)}`}>{valor}</dd>
             </div>
           ))}
         </dl>
-        <table className="h-full w-full table-fixed border-collapse border-hidden">
+        <table className="h-full w-full table-fixed border-separate border-spacing-0 [&_tbody_tr:last-child>*]:border-b-0 [&_tr>*:last-child]:border-r-0">
           <colgroup>
             <col className="w-[17mm]" />
           </colgroup>
