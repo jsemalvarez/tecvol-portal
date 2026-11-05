@@ -68,7 +68,8 @@ function Lista({ api }: { api: ApiPanel }) {
       .sort((a, b) => (b.ordenes[0]?.etapas.ingresado?.getTime() ?? 0) - (a.ordenes[0]?.etapas.ingresado?.getTime() ?? 0));
   }, [api.taller.transformadores, api.taller.equipos, texto, empresa, conBajas, nombres]);
 
-  const total = activos(api.taller.transformadores).length;
+  // Contra lo que se está mirando: con los dados de baja a la vista, ellos también cuentan.
+  const total = conBajas ? api.taller.transformadores.length : activos(api.taller.transformadores).length;
 
   return (
     <div className="mt-10">
@@ -105,7 +106,7 @@ function Lista({ api }: { api: ApiPanel }) {
         </label>
       </div>
       <p className="mt-3 text-[0.9375rem] text-grafito" aria-live="polite">
-        {filas.length === total && !conBajas ? `${total} ${total === 1 ? "transformador" : "transformadores"}` : `${filas.length} de ${total} transformadores`}
+        {filas.length === total ? `${total} ${total === 1 ? "transformador" : "transformadores"}` : `${filas.length} de ${total} transformadores`}
       </p>
 
       <div className="marco mt-6">
