@@ -2,6 +2,7 @@ import type { LimitesAvisos } from "@/lib/dominio/avisos";
 import type { DatosTallerGuardados } from "@/lib/dominio/datos-taller";
 import type { EstadoReparacion } from "@/lib/dominio/estados";
 import type { InformeGuardado } from "@/lib/dominio/informe";
+import type { ProtocoloGuardado } from "@/lib/dominio/protocolo";
 import type { Placa } from "@/lib/dominio/placa";
 import type { Uso } from "@/lib/dominio/placa";
 import { conTransformador, type CuentaCliente, type CuentaPersonal, type Empresa, type EquipoTaller, type SeguimientoPublico, type Transformador } from "@/lib/dominio/tipos";
@@ -288,6 +289,8 @@ export interface DatosLocales {
   informes?: Record<string, InformeGuardado>;
   /** Datos del taller por código. Falta en los datos guardados antes de que existieran. */
   datosTaller?: Record<string, DatosTallerGuardados>;
+  /** Protocolos de ensayo por código. Falta en los datos guardados antes de que existieran. */
+  protocolos?: Record<string, ProtocoloGuardado>;
   /** Límites de los avisos. Sin ellos, los de por defecto. */
   avisos?: LimitesAvisos;
   /**

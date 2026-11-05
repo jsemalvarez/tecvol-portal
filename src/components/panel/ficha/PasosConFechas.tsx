@@ -98,28 +98,6 @@ export function PasoPresupuesto({ informe, vaDespues, ...props }: PropsPaso & { 
   );
 }
 
-/** El paso 6: desde cuándo está en ensayos. El protocolo se va a cargar acá; mientras tanto, en PDF. */
-export function PasoEnsayos({ vaDespues, ...props }: PropsPaso & { vaDespues?: ReactNode }) {
-  return (
-    <PasoConFechas
-      {...props}
-      principal="ensayos"
-      filas={[{ etapa: "ensayos", etiqueta: "Desde el" }]}
-      antes={vaDespues}
-      despues={
-        <div className="mt-4 flex flex-col items-start gap-2.5 rounded-[var(--radius-placa)] border-2 border-dashed border-acero bg-esmalte px-6 py-5">
-          <span className="tarjeta-bloqueo">En preparación</span>
-          <p className="font-cartel text-[1.375rem] font-bold uppercase leading-tight tracking-[0.04em]">Protocolo de ensayo eléctrico</p>
-          <p className="max-w-[64ch]">
-            Se va a cargar acá: relación de transformación, tensión aplicada e inducida, ensayo en vacío y en cortocircuito, y aislación.
-            Mientras tanto, suba el protocolo en PDF en «Archivos para la empresa».
-          </p>
-        </div>
-      }
-    />
-  );
-}
-
 /** El paso 7: listo para la entrega y entregado. Con «Entregado», la O.T. se cierra. */
 export function PasoEntrega({ vaDespues, ...props }: PropsPaso & { vaDespues?: ReactNode }) {
   return (

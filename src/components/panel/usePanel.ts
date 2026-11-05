@@ -8,6 +8,7 @@ import type { DatosTaller, DatosTallerGuardados } from "@/lib/dominio/datos-tall
 import { estadoDeEtapas, etapasConEstado, type EstadoReparacion } from "@/lib/dominio/estados";
 import { facturacionParaGuardar } from "@/lib/dominio/facturacion";
 import type { Informe, InformeGuardado } from "@/lib/dominio/informe";
+import type { Celdas, ProtocoloGuardado } from "@/lib/dominio/protocolo";
 import { esPersonal } from "@/lib/dominio/roles";
 import { conCambioDeT } from "@/lib/dominio/trafo";
 import {
@@ -63,6 +64,9 @@ export interface AccionesPanel {
   obtenerDatosTaller(codigo: string): Promise<DatosTallerGuardados | null>;
   /** Guarda los datos del taller a nombre de quien tiene la sesión abierta. */
   guardarDatosTaller(codigo: string, datos: DatosTaller): Promise<void>;
+  obtenerProtocolo(codigo: string): Promise<ProtocoloGuardado | null>;
+  /** Guarda el protocolo de ensayo a nombre de quien tiene la sesión abierta. */
+  guardarProtocolo(codigo: string, celdas: Celdas): Promise<void>;
   /** Sube un PDF a la orden a nombre de quien tiene la sesión abierta (ver `PanelRepositorio.subirArchivo`). */
   subirArchivo(codigo: string, archivo: File, alAvanzar: (fraccion: number) => void): Promise<ArchivoOrden>;
   cambiarBajaArchivo(codigo: string, id: string, baja: boolean): Promise<void>;
@@ -203,6 +207,12 @@ export function usePanel() {
     },
     async guardarDatosTaller(codigo, datos) {
       await (await obtenerPanel()).guardarDatosTaller(codigo, datos, sesion?.email ?? "");
+    },
+    async obtenerProtocolo(codigo) {
+      return (await obtenerPanel()).obtenerProtocolo(codigo);
+    },
+    async guardarProtocolo(codigo, celdas) {
+      await (await obtenerPanel()).guardarProtocolo(codigo, celdas, sesion?.email ?? "");
     },
     async subirArchivo(codigo, archivo, alAvanzar) {
       const nuevo = await (await obtenerPanel()).subirArchivo(codigo, archivo, sesion?.email ?? "", alAvanzar);

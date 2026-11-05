@@ -2,6 +2,7 @@ import { datosTallerVacios, type DatosTaller } from "./datos-taller";
 import { ESTADOS, indiceEstado, type EstadoReparacion } from "./estados";
 import { fechaDeCampo, fechaParaCampo, formatearFecha } from "./fechas";
 import { ITEMS_INSPECCION, paraCotizar, type Informe } from "./informe";
+import { protocoloCompleto, type Celdas } from "./protocolo";
 import type { EquipoTaller } from "./tipos";
 import { nombreOrden, resumenChapa, trafoDeOrden } from "./trafo";
 
@@ -28,7 +29,9 @@ export interface DatosHoja {
   equipo?: EquipoTaller;
   informe: Informe | null;
   datosTaller: DatosTaller | null;
-  /** El informe y los datos del taller todavía no se leyeron: no se sabe si los pasos 3 y 5 tienen datos. */
+  /** Las celdas del protocolo de ensayo. */
+  protocolo: Celdas | null;
+  /** Lo de los pasos 3, 5 y 6 todavía no se leyó: no se sabe si tienen datos. */
   sinLeer?: boolean;
 }
 
@@ -71,8 +74,8 @@ export const faltaCorta = (n: NumeroPaso) => (n === 2 ? "Falta el paso 1" : "Fal
 /** La etapa que deja atrás a cada paso: si la O.T. ya llegó a ella, el paso quedó atrás, tenga o no sus datos. */
 const ETAPA_POSTERIOR: Partial<Record<NumeroPaso, EstadoReparacion>> = { 3: "presupuesto", 4: "reparacion", 5: "ensayos", 6: "listo", 7: "entregado" };
 
-/** El paso tiene todos sus datos cargados: el presupuesto, también aprobado; el diagnóstico y los datos del taller, enteros. */
-export function pasoCompleto(n: NumeroPaso, { equipo, informe, datosTaller }: DatosHoja): boolean {
+/** El paso tiene todos sus datos cargados: el presupuesto, también aprobado; el diagnóstico, los datos del taller y el protocolo, enteros. */
+export function pasoCompleto(n: NumeroPaso, { equipo, informe, datosTaller, protocolo }: DatosHoja): boolean {
   if (!equipo) return false;
   if (n === 1) return true;
   if (equipo.faltaTrafo) return false;
@@ -86,7 +89,7 @@ export function pasoCompleto(n: NumeroPaso, { equipo, informe, datosTaller }: Da
     case 5:
       return !!datosTaller && datosCargados(datosTaller) === CAMPOS_TALLER;
     case 6:
-      return !!equipo.etapas.ensayos;
+      return !!equipo.etapas.ensayos && !!protocolo && protocoloCompleto(protocolo);
     case 7:
       return equipo.estado === "entregado";
   }
@@ -97,16 +100,17 @@ export function pasoSalteado(n: NumeroPaso, datos: DatosHoja): boolean {
   const { equipo, sinLeer } = datos;
   const posterior = ETAPA_POSTERIOR[n];
   if (!equipo || equipo.faltaTrafo || !posterior || pasoCompleto(n, datos)) return false;
-  if (sinLeer && (n === 3 || n === 5)) return false;
+  if (sinLeer && (n === 3 || n === 5 || n === 6)) return false;
   return indiceEstado(equipo.estado) >= indiceEstado(posterior);
 }
 
 /** Cómo se nombra un paso que quedó atrás sin completar, según tenga algo cargado o nada. */
-export function rotuloSalteado(n: NumeroPaso, { equipo, informe, datosTaller }: DatosHoja) {
+export function rotuloSalteado(n: NumeroPaso, { equipo, informe, datosTaller, protocolo }: DatosHoja) {
   const algo =
     (n === 3 && paraCotizar(informe?.inspeccion ?? {}).revisados > 0) ||
     (n === 4 && !!equipo?.etapas.presupuesto) ||
-    (n === 5 && !!datosTaller && !datosTallerVacios(datosTaller));
+    (n === 5 && !!datosTaller && !datosTallerVacios(datosTaller)) ||
+    (n === 6 && (!!equipo?.etapas.ensayos || !!protocolo));
   return algo ? "A medias" : "Sin cargar";
 }
 
@@ -133,7 +137,7 @@ function datosCargados(d: DatosTaller) {
 }
 
 /** Lo que tiene cargado un paso, para verlo sin abrirlo. `null` si no tiene nada. */
-function resumenPaso(n: NumeroPaso, { equipo, informe, datosTaller }: DatosHoja, empresa: string): string | null {
+function resumenPaso(n: NumeroPaso, { equipo, informe, datosTaller, protocolo }: DatosHoja, empresa: string): string | null {
   if (!equipo) return null;
   const { etapas } = equipo;
   const desde = (fecha: Date | undefined) => (fecha ? formatearFecha(fecha) : "");
@@ -169,8 +173,11 @@ function resumenPaso(n: NumeroPaso, { equipo, informe, datosTaller }: DatosHoja,
       if (datosTaller && !datosTallerVacios(datosTaller)) return "Con notas cargadas";
       return null;
     }
-    case 6:
-      return etapas.ensayos ? `En ensayos desde el ${desde(etapas.ensayos)}` : null;
+    case 6: {
+      const partes = etapas.ensayos ? [`En ensayos desde el ${desde(etapas.ensayos)}`] : [];
+      if (protocolo) partes.push(protocoloCompleto(protocolo) ? "Protocolo cargado" : "Protocolo a medias");
+      return partes.join(" · ") || null;
+    }
     case 7:
       if (etapas.entregado) return `Entregado el ${desde(etapas.entregado)} · O.T. cerrada`;
       return etapas.listo ? `Listo para la entrega desde el ${desde(etapas.listo)}` : null;

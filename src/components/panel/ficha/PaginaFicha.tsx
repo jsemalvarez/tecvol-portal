@@ -14,6 +14,7 @@ import { datosTallerVacios, type DatosTallerGuardados } from "@/lib/dominio/dato
 import { DEFINICIONES, ESTADOS, indiceEstado, type EstadoReparacion } from "@/lib/dominio/estados";
 import { formatearFecha } from "@/lib/dominio/fechas";
 import type { InformeGuardado } from "@/lib/dominio/informe";
+import type { ProtocoloGuardado } from "@/lib/dominio/protocolo";
 import { esPaso, faltaCorta, faltaPara, pasoCompleto, pasoSalteado, PASOS, proximoPaso, rotuloSalteado, situacionPaso, textoPaso, type DatosHoja, type NumeroPaso } from "@/lib/dominio/pasos";
 import type { EquipoTaller } from "@/lib/dominio/tipos";
 import { nombreOrden, ordenesDelTrafo, resumenChapa, trafoDeOrden } from "@/lib/dominio/trafo";
@@ -25,9 +26,10 @@ import { dejarAviso, PaginaPanel, type ApiPanel } from "../PaginaPanel";
 import { dias, TextoDemoras } from "../Planilla";
 import { ArchivosOrden } from "./ArchivosOrden";
 import { PasoDiagnostico } from "./PasoDiagnostico";
+import { PasoEnsayos } from "./PasoEnsayos";
 import { PasoOrden } from "./PasoOrden";
 import { PasoReparacion, type DatosTallerAnteriores } from "./PasoReparacion";
-import { PasoEnsayos, PasoEntrega, PasoPresupuesto } from "./PasosConFechas";
+import { PasoEntrega, PasoPresupuesto } from "./PasosConFechas";
 import { PasoTransformador } from "./PasoTransformador";
 import { Paso, VaDespues } from "./piezas";
 
@@ -36,7 +38,7 @@ const enlace = "font-semibold underline decoration-naranja decoration-2 underlin
 const NOTA = (
   <>
     <strong className="font-semibold">Lo que se carga acá lo ve la empresa</strong> en su portal: el estado, las fechas y los archivos de cada O.T. El
-    diagnóstico y los datos del taller los ve solo el personal.
+    diagnóstico, los datos del taller y el protocolo de ensayo los ve solo el personal.
   </>
 );
 
@@ -103,15 +105,27 @@ export function PanelRegistrar() {
   );
 }
 
-type Carga = { informe: InformeGuardado | null; datosTaller: DatosTallerGuardados | null; anterior: DatosTallerAnteriores | null };
+type FallaDeCarga = "error" | "permiso";
 
-const SIN_CARGAR: Carga = { informe: null, datosTaller: null, anterior: null };
+const fallaDeCarga = (e: unknown): FallaDeCarga => (e instanceof ErrorDePanel && e.motivo === "permiso" ? "permiso" : "error");
 
-/** El informe y los datos del taller de la O.T., que están aparte. Una O.T. sin transformador todavía no tiene. */
+type Carga = {
+  informe: InformeGuardado | null;
+  datosTaller: DatosTallerGuardados | null;
+  anterior: DatosTallerAnteriores | null;
+  protocolo: ProtocoloGuardado | null | FallaDeCarga;
+};
+
+const SIN_CARGAR: Carga = { informe: null, datosTaller: null, anterior: null, protocolo: null };
+
+/** El protocolo, si se pudo leer y ya tiene algo guardado. */
+const protocoloDe = (carga: Carga | null) => (carga?.protocolo && typeof carga.protocolo === "object" ? carga.protocolo : null);
+
+/** El informe, los datos del taller y el protocolo de la O.T., que están aparte. Una O.T. sin transformador todavía no tiene. */
 function useCarga(api: ApiPanel, equipo: EquipoTaller | undefined) {
   const [carga, setCarga] = useState<Carga | "error" | "permiso" | null>(null);
   const [intento, setIntento] = useState(0);
-  const { obtenerInforme, obtenerDatosTaller } = api.acciones;
+  const { obtenerInforme, obtenerDatosTaller, obtenerProtocolo } = api.acciones;
   const conTrafo = !!equipo && !equipo.faltaTrafo;
   // Otras órdenes del mismo transformador, de la más nueva a la más vieja.
   const anteriores = conTrafo ? ordenesDelTrafo(api.taller.equipos, equipo.trafo, { excepto: equipo.codigo }) : [];
@@ -120,13 +134,19 @@ function useCarga(api: ApiPanel, equipo: EquipoTaller | undefined) {
   useEffect(() => {
     if (!conTrafo) return;
     let activo = true;
-    Promise.all([obtenerInforme(equipo.codigo), obtenerDatosTaller(equipo.codigo), Promise.all(anteriores.map((e) => obtenerDatosTaller(e.codigo)))])
-      .then(([informe, datosTaller, previos]) => {
+    Promise.all([
+      obtenerInforme(equipo.codigo),
+      obtenerDatosTaller(equipo.codigo),
+      Promise.all(anteriores.map((e) => obtenerDatosTaller(e.codigo))),
+      // Si no se puede leer, se pierde solo el paso 6: los pasos 3 y 5 siguen andando.
+      obtenerProtocolo(equipo.codigo).catch(fallaDeCarga),
+    ])
+      .then(([informe, datosTaller, previos, protocolo]) => {
         // La reparación anterior más nueva que tenga algo cargado.
         const i = previos.findIndex((d) => d && !datosTallerVacios(d));
-        if (activo) setCarga({ informe, datosTaller, anterior: i >= 0 ? { equipo: anteriores[i], datos: previos[i]! } : null });
+        if (activo) setCarga({ informe, datosTaller, anterior: i >= 0 ? { equipo: anteriores[i], datos: previos[i]! } : null, protocolo });
       })
-      .catch((e) => activo && setCarga(e instanceof ErrorDePanel && e.motivo === "permiso" ? "permiso" : "error"));
+      .catch((e) => activo && setCarga(fallaDeCarga(e)));
     return () => {
       activo = false;
     };
@@ -208,7 +228,7 @@ function Hoja({
   const equipo = codigo === undefined ? undefined : api.taller.equipos.find((e) => e.codigo === codigo);
   const { carga, setCarga, reintentar } = useCarga(api, equipo);
   const lista = carga && carga !== "error" && carga !== "permiso" ? carga : null;
-  const datos: DatosHoja = { equipo, informe: lista?.informe ?? null, datosTaller: lista?.datosTaller ?? null, sinLeer: !lista };
+  const datos: DatosHoja = { equipo, informe: lista?.informe ?? null, datosTaller: lista?.datosTaller ?? null, protocolo: protocoloDe(lista)?.celdas ?? null, sinLeer: !lista };
 
   // Hasta que se termina de leer no se sabe cuál abrir. Después, el primero que queda por hacer (ver `yaLlego`).
   const [abierto, setAbierto] = useState<NumeroPaso | null | undefined>(pasoInicial);
@@ -306,12 +326,14 @@ function Hoja({
         return <PasoTransformador key={equipo.empresa} {...comun} trafoInicial={trafoElegido} />;
       case 3:
       case 5:
-        if (carga === "error" || carga === "permiso") {
+      case 6: {
+        const falla = carga === "error" || carga === "permiso" ? carga : n === 6 && typeof lista?.protocolo === "string" ? lista.protocolo : null;
+        if (falla) {
           return (
             <div className="marco-cuerpo flex flex-col items-start gap-5">
               <p role="alert" className="flex max-w-[52ch] items-start gap-2 text-lg font-medium text-rojo">
                 <Alerta className="mt-1 size-5 shrink-0" />
-                {carga === "permiso"
+                {falla === "permiso"
                   ? "Su cuenta no tiene permiso para ver estos datos. Avise a quien administra el sistema."
                   : "No se pudieron cargar estos datos. Revise su conexión e intente de nuevo."}
               </p>
@@ -329,6 +351,16 @@ function Hoja({
           );
         }
         if (n === 3) return <PasoDiagnostico {...comun} guardado={lista.informe} onGuardado={(informe) => setCarga({ ...lista, informe })} />;
+        if (n === 6) {
+          return (
+            <PasoEnsayos
+              {...comun}
+              guardado={protocoloDe(lista)}
+              vaDespues={nota(6, "Los ensayos van después de la reparación, pero puede cargarlos igual.")}
+              onGuardado={(protocolo) => setCarga({ ...lista, protocolo })}
+            />
+          );
+        }
         return (
           <PasoReparacion
             {...comun}
@@ -338,10 +370,9 @@ function Hoja({
             onGuardado={(datosTaller) => setCarga({ ...lista, datosTaller })}
           />
         );
+      }
       case 4:
         return <PasoPresupuesto {...comun} informe={lista?.informe ?? null} vaDespues={nota(4, "Normalmente se anota con el diagnóstico terminado, pero puede cargarlo igual.")} />;
-      case 6:
-        return <PasoEnsayos {...comun} vaDespues={nota(6, "Los ensayos van después de la reparación, pero puede cargarlos igual.")} />;
       case 7:
         return <PasoEntrega {...comun} vaDespues={nota(7, "La entrega va después de los ensayos, pero puede cargarla igual.")} />;
     }

@@ -207,6 +207,13 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Protocolo de ensayo eléctrico de cada O.T., con las celdas del Excel del taller: solo el personal. La
+    // empresa lo ve cuando el taller sube el PDF a los archivos de la orden.
+    match /protocolos/{codigo} {
+      allow read, create, update: if esPersonal();
+      allow delete: if false;
+    }
+
     // Límites de los avisos del panel (días en el taller y desde la aprobación del presupuesto): los lee
     // el personal; los cambia el administrador, con números enteros de 1 a 365.
     match /ajustes/avisos {

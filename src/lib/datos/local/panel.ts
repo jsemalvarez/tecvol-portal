@@ -4,6 +4,7 @@ import { generarCodigo } from "@/lib/dominio/codigo";
 import type { EstadoReparacion } from "@/lib/dominio/estados";
 import { facturacionParaGuardar } from "@/lib/dominio/facturacion";
 import { informeParaGuardar, type Informe, type InformeGuardado } from "@/lib/dominio/informe";
+import { leerCeldas, type Celdas, type ProtocoloGuardado } from "@/lib/dominio/protocolo";
 import { puede } from "@/lib/dominio/roles";
 import {
   conBaja,
@@ -158,6 +159,18 @@ export class PanelLocal implements PanelRepositorio {
     await esperar(350);
     const datos = leerDatos();
     datos.datosTaller = { ...datos.datosTaller, [codigo]: { ...datosTallerParaGuardar(datosTaller), por, actualizado: new Date() } };
+    guardarDatos(datos);
+  }
+
+  async obtenerProtocolo(codigo: string): Promise<ProtocoloGuardado | null> {
+    await esperar(300);
+    return leerDatos().protocolos?.[codigo] ?? null;
+  }
+
+  async guardarProtocolo(codigo: string, celdas: Celdas, por: string): Promise<void> {
+    await esperar(350);
+    const datos = leerDatos();
+    datos.protocolos = { ...datos.protocolos, [codigo]: { celdas: leerCeldas(celdas), por, actualizado: new Date() } };
     guardarDatos(datos);
   }
 
