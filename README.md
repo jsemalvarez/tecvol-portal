@@ -104,15 +104,18 @@ En `/panel` el personal (los dos roles):
   se carga en la hoja de la O.T. (ver abajo), paso por paso. El paso 1 es la orden: el cliente, el N.º de O.T.
   (obligatorio: lo genera el sistema de gestión de la empresa y se usa para facturar; si todavía no llegó, el
   botón "Usar N.º temporal" pone uno, `TEMP-0001`, que queda marcado como temporal hasta que se escribe el
-  verdadero; si ya está en otra O.T. avisa pero deja seguir, porque varias se facturan juntas), la fecha, la
-  referencia y el motivo del ingreso. Al guardarlo se genera el código de seguimiento y se crea
+  verdadero; si ya está en otra O.T. avisa pero deja seguir, porque varias se facturan juntas), la fecha de
+  recepción, la de compromiso (opcional: el portal no la muestra), la referencia y el motivo del ingreso. Al guardarlo se genera el código de seguimiento y se crea
   `ordenes/{codigo}` con `faltaTrafo`: la O.T. queda en el panel como "Falta el transformador", el cliente no
   la ve y el código no sirve en la consulta pública, porque todavía no existe `seguimiento/{codigo}`. El paso 2
   es el transformador: se busca entre los del cliente por N.º de trafo o N.º T (también uno que tuvo antes); si
   ya pasó por el taller se elige, y si llegó con otro N.º T se le cambia ahí mismo; si no, se da de alta con su
-  chapa. Al guardarlo se crea `seguimiento/{codigo}`, el cliente ve la O.T. como «Ingresado» y ya se puede
-  imprimir la **etiqueta** con el código y un QR que abre `/seguimiento/{codigo}` (sin el N.º de O.T. si es
-  temporal). Las que quedan sin transformador siguen en la lista hasta completarlas o darlas de baja.
+  chapa. Al guardarlo se crea `seguimiento/{codigo}`, el cliente ve la O.T. como «Ingresado» y ya se pueden
+  imprimir las **etiquetas**: la **externa** (50 × 64 mm), para pegar en el transformador, con TECVOL S.R.L., un
+  QR que abre `/seguimiento/{codigo}` y el código; y la **interna** (148 × 105 mm), para el taller cuando lo
+  desarma, según la nota del jefe de taller: N.º de O.T. (si es temporal, en blanco), marca, potencia, N.º de
+  fábrica, N.º T, fechas de ingreso y de compromiso y empresa, más las mediciones de aislación y de relación de
+  transformación para completar a mano. Las que quedan sin transformador siguen en la lista hasta completarlas o darlas de baja.
 - Cada **transformador** (`transformadores/{id}`) es de un solo cliente y no cambia de dueño. Tiene su
   **N.º de trafo** (el de fábrica; obligatorio, y si no lo tiene o no se ve en la chapa, el botón "Usar N.º
   temporal" pone uno, `NT-0001`, marcado como temporal hasta que se corrige), su **N.º T** (el interno del
@@ -154,7 +157,7 @@ En `/panel` el personal (los dos roles):
   el taller la numera de distintas maneras.
 - En la lista, cada fila tiene **"Ver O.T."**, que lleva a la hoja en el próximo paso pendiente ("Cargar
   transformador", si le falta; "Reactivar", si está dada de baja). Debajo de 1024 px, cada O.T. es una tarjeta que se
-  toca entera. El resumen de arriba (en el taller, esperan a la empresa, con aviso, entregados) filtra la lista al tocarlo. La etiqueta se imprime desde la hoja. La ventana "Cambiar estado"
+  toca entera. El resumen de arriba (en el taller, esperan a la empresa, con aviso, entregados) filtra la lista al tocarlo. Las etiquetas se imprimen desde la franja fija de arriba de la hoja, siempre a la vista. La ventana "Cambiar estado"
   (`FormularioEstado.tsx`) quedó en el código sin ningún botón que la abra, mientras el cliente prueba sin ella.
 - **Edita los datos** de un equipo y carga su **informe de diagnóstico** en los pasos 1 y 3 de la hoja.
 - **Lleva el orden de los trabajos**: la lista muestra cuántos días lleva cada equipo en el taller (desde el
@@ -190,7 +193,7 @@ directamente: esa cuenta no tendría empresa ni sería personal, así que no ver
 | `personal/{uid}` | El administrador; cada uno, el suyo | El administrador (no el suyo) | `rol`, `email` y `baja` (opcional) |
 | `empresas/{id}` | El personal; cada cliente, la suya | El administrador | `nombre`: como lo ve el cliente en su portal; `baja` |
 | `clientes/{uid}` | El administrador; cada cliente, la suya | El administrador | `empresa` (el ID de `empresas`), `email` y `baja` |
-| `ordenes/{codigo}` | El personal; cada cliente, las de su empresa | El personal | `empresa`, `trafo`, `referencia`, `serie`, `numeroOrden`, `numeroOrdenTemporal`, `numeroTIngreso` (antes `numeroTrafo`), chapa, `archivos` (los PDF, ver abajo)… y `baja` |
+| `ordenes/{codigo}` | El personal; cada cliente, las de su empresa | El personal | `empresa`, `trafo`, `referencia`, `serie`, `numeroOrden`, `numeroOrdenTemporal`, `numeroTIngreso` (antes `numeroTrafo`), `compromiso`, chapa, `archivos` (los PDF, ver abajo)… y `baja` |
 | `informes/{codigo}` | El personal | El personal | Informe de diagnóstico |
 | `datosTaller/{codigo}` | El personal | El personal | Datos del taller: bobinado (alambre, espiras, peso), prespan, derivaciones y materiales |
 | `protocolos/{codigo}` | El personal | El personal | Protocolo de ensayo eléctrico: las celdas que se completan en el Excel del taller, por su referencia (`H5`, `C25`…), y las `posiciones` del conmutador (3 o 5; sin el campo, 5) |
@@ -203,7 +206,7 @@ dos roles.
 
 El portal es de consulta: el cliente ve los equipos de su empresa, el estado de cada uno, la fecha de cada
 etapa y los entregados. Con "Compartir seguimiento" le pasa un equipo a otra persona (un operario, por
-ejemplo): la misma etiqueta con QR del panel y el enlace a `/seguimiento/{codigo}`, que en el celular se
+ejemplo): una tarjeta con el QR y los datos del equipo, y el enlace a `/seguimiento/{codigo}`, que en el celular se
 manda con el menú de compartir del teléfono. No aprueba presupuestos ni manda mensajes desde la app; eso se arregla con el taller.
 Una cuenta sin `clientes/{uid}` entra al portal y ve el aviso de que todavía no está asociada a una empresa.
 

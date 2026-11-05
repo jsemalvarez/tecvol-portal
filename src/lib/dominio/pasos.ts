@@ -147,6 +147,7 @@ function resumenPaso(n: NumeroPaso, { equipo, informe, datosTaller, protocolo }:
         empresa || "Sin empresa",
         `${nombreOrden(equipo)}${equipo.numeroOrdenTemporal ? " (temporal)" : ""}`,
         etapas.ingresado ? `ingresó el ${desde(etapas.ingresado)}` : "",
+        equipo.compromiso ? `compromiso ${desde(equipo.compromiso)}` : "",
       ]
         .filter(Boolean)
         .join(" · ");

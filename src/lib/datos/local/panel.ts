@@ -123,6 +123,7 @@ export class PanelLocal implements PanelRepositorio {
       numeroOrdenTemporal: nuevos.numeroOrdenTemporal,
       referencia: nuevos.referencia,
       motivo: nuevos.motivo,
+      compromiso: nuevos.compromiso,
       actualizado: new Date(),
     };
     datos.equipos = datos.equipos.map((e) => (e.codigo === codigo ? { ...e, ...cambios } : e));

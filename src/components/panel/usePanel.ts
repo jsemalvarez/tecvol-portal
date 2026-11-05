@@ -183,6 +183,7 @@ export function usePanel() {
         numeroOrdenTemporal: datos.numeroOrdenTemporal,
         referencia: datos.referencia,
         motivo: datos.motivo,
+        compromiso: datos.compromiso,
         actualizado: new Date(),
       });
     },

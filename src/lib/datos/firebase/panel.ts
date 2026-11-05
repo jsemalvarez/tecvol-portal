@@ -162,6 +162,7 @@ export class PanelFirestore implements PanelRepositorio {
             numeroOrden: texto(orden.numeroOrden),
             ...(orden.numeroOrdenTemporal === true ? { numeroOrdenTemporal: true } : {}),
             motivo: texto(orden.motivo),
+            compromiso: fecha(orden.compromiso),
             // Las cargadas antes de que existieran los transformadores tienen el N.º T como `numeroTrafo`.
             numeroTIngreso: texto(orden.numeroTIngreso) ?? texto(orden.numeroTrafo),
             archivos: leerArchivos(orden.archivos),
@@ -188,6 +189,7 @@ export class PanelFirestore implements PanelRepositorio {
         numeroOrden: texto(orden.numeroOrden),
         ...(orden.numeroOrdenTemporal === true ? { numeroOrdenTemporal: true } : {}),
         motivo: texto(orden.motivo),
+        compromiso: fecha(orden.compromiso),
         baja: fecha(orden.baja),
       });
     }
@@ -246,6 +248,7 @@ export class PanelFirestore implements PanelRepositorio {
         ...(datos.numeroOrdenTemporal ? { numeroOrdenTemporal: true } : {}),
         ...(datos.referencia ? { referencia: datos.referencia } : {}),
         ...(datos.motivo ? { motivo: datos.motivo } : {}),
+        ...(datos.compromiso ? { compromiso: Timestamp.fromDate(datos.compromiso) } : {}),
         creada: serverTimestamp(),
       });
       return { codigo, trafo: "", faltaTrafo: true, empresa, estado: "ingresado", equipo: "", etapas: { ingresado: ingreso }, actualizado: new Date(), ...datos };
@@ -326,6 +329,7 @@ export class PanelFirestore implements PanelRepositorio {
         numeroOrdenTemporal: datos.numeroOrdenTemporal ? true : deleteField(),
         referencia: datos.referencia ?? deleteField(),
         motivo: datos.motivo ?? deleteField(),
+        compromiso: datos.compromiso ? Timestamp.fromDate(datos.compromiso) : deleteField(),
       }),
     );
   }

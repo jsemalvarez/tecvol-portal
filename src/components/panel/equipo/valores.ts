@@ -20,6 +20,8 @@ export interface ValoresOrden {
   numeroOrdenTemporal: boolean;
   referencia: string;
   motivo: string;
+  /** Fecha de compromiso, como en el campo. Vacía si todavía no se acordó. */
+  compromiso: string;
 }
 
 /** Lo que hay escrito en cada campo del transformador y su chapa, tal cual. */
@@ -80,6 +82,7 @@ export function valoresOrdenDe(equipo: EquipoTaller | undefined, hoy: string, em
     numeroOrdenTemporal: !!equipo?.numeroOrdenTemporal,
     referencia: equipo?.referencia ?? "",
     motivo: equipo?.motivo ?? "",
+    compromiso: equipo?.compromiso ? fechaParaCampo(equipo.compromiso) : "",
   };
 }
 
@@ -156,6 +159,9 @@ export function revisarOrden(valores: ValoresOrden, { nuevo, hoy }: { nuevo: boo
   if (!valores.numeroOrden.trim()) errores.numeroOrden = FALTA_NUMERO_ORDEN;
   if (nuevo && (!/^\d{4}-\d{2}-\d{2}$/.test(valores.ingreso) || valores.ingreso > hoy)) {
     errores.ingreso = "Elija una fecha de recepción de hoy o anterior.";
+  }
+  if (valores.compromiso && valores.compromiso < valores.ingreso) {
+    errores.compromiso = "La fecha de compromiso no puede ser anterior a la recepción.";
   }
   return errores;
 }

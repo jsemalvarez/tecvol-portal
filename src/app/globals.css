@@ -830,10 +830,22 @@
   }
 }
 
-/* Al imprimir desde el panel sale solo la etiqueta del equipo, arriba a la izquierda de la hoja. */
+/*
+ * Al imprimir sale solo la etiqueta, arriba a la izquierda de la hoja. Lo demás no se muestra ni ocupa lugar: si
+ * solo se ocultara, una página larga como la hoja de la O.T. saldría en varias hojas en blanco.
+ */
 @media print {
   @page {
     margin: 10mm;
+  }
+
+  html:has(.impresion),
+  body:has(.impresion) {
+    background: #fff;
+  }
+
+  body:has(.impresion) *:not(:has(.impresion), .impresion, .impresion *) {
+    display: none;
   }
 
   body:has(.impresion) * {

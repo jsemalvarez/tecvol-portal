@@ -19,6 +19,7 @@ import { esPaso, faltaCorta, faltaPara, pasoCompleto, pasoSalteado, PASOS, proxi
 import type { EquipoTaller } from "@/lib/dominio/tipos";
 import { nombreOrden, ordenesDelTrafo, resumenChapa, trafoDeOrden } from "@/lib/dominio/trafo";
 import { Dialogo, ErrorFormulario, mensajeDeError } from "../Dialogo";
+import { TITULO_ETIQUETA } from "../EtiquetasTaller";
 import { MarcaTemporal } from "../equipo/campos";
 import { HistorialTrafo } from "../equipo/HistorialTrafo";
 import { useAvisoAlSalir } from "../equipo/useAvisoAlSalir";
@@ -178,9 +179,10 @@ function useTituloFuera() {
 
 /**
  * De qué transformador es la O.T., siempre a la vista: los formularios son largos y hay que saber en cuál se está
- * cargando. Cuando el título queda fuera de la pantalla, suma el N.º de O.T. y la vuelta a la lista.
+ * cargando. Cuando el título queda fuera de la pantalla, suma el N.º de O.T. y la vuelta a la lista. Las etiquetas
+ * van acá porque la hoja se abre en el paso pendiente: en cualquier otro lugar pueden quedar fuera de la pantalla.
  */
-function Identidad({ equipo }: { equipo: EquipoTaller }) {
+function Identidad({ equipo, api }: { equipo: EquipoTaller; api: ApiPanel }) {
   const fuera = useTituloFuera();
   return (
     <div className={`sticky top-0 z-30 mt-1 flex min-h-11 items-center gap-2 border-b-2 bg-esmalte py-1 ${fuera ? "border-acero" : "border-transparent"}`}>
@@ -189,7 +191,7 @@ function Identidad({ equipo }: { equipo: EquipoTaller }) {
           <Flecha className="size-5 rotate-180" />
         </Link>
       )}
-      <p className="min-w-0 truncate text-lg">
+      <p className="min-w-0 flex-1 truncate text-lg">
         {fuera && <strong className="font-semibold">{nombreOrden(equipo)} · </strong>}
         {equipo.faltaTrafo ? (
           <strong className="font-semibold">Falta el transformador</strong>
@@ -200,6 +202,16 @@ function Identidad({ equipo }: { equipo: EquipoTaller }) {
           </>
         )}
       </p>
+      {!equipo.faltaTrafo && (
+        <div className="flex shrink-0 items-center gap-2">
+          <span className="rotulo hidden text-[0.9375rem] text-grafito sm:inline">Etiqueta</span>
+          {(["externa", "interna"] as const).map((clase) => (
+            <button key={clase} type="button" aria-label={TITULO_ETIQUETA[clase]} onClick={() => api.abrirEtiqueta(equipo, clase)} className="placa-secundaria min-h-10 px-3">
+              {clase}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -382,7 +394,7 @@ function Hoja({
 
   return (
     <>
-      {equipo && <Identidad equipo={equipo} />}
+      {equipo && <Identidad equipo={equipo} api={api} />}
       <p className={`${equipo ? "mt-1" : "mt-3"} max-w-[70ch] text-lg`}>
         {equipo ? (
           <>
@@ -533,12 +545,6 @@ function Costado({ api, equipo, datos, abierto }: { api: ApiPanel; equipo?: Equi
         <div className="border-t-[3px] border-acero pt-4 sm:col-span-2 lg:col-span-1">
           <h2 className="rotulo text-base">Esta O.T.</h2>
           <ul className="mt-1">
-            <li className="border-b border-acero">
-              <button type="button" onClick={() => api.abrirEtiqueta(equipo)} className="flex w-full cursor-pointer items-center justify-between gap-3 py-3 text-left font-semibold hover:text-naranja">
-                Imprimir etiqueta
-                <span aria-hidden="true">→</span>
-              </button>
-            </li>
             <li>
               <Link href={`/panel/transformador?id=${equipo.trafo}`} className="flex items-center justify-between gap-3 py-3 font-semibold no-underline hover:text-naranja">
                 Ver el transformador y sus O.T.

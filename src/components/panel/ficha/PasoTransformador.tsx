@@ -146,7 +146,7 @@ function ElegirTransformador({ api, equipo, trafoInicial, onSeguir, onSucio }: P
         await acciones.editarTransformador(elegido.id, { ...datosDe(elegido), numeroT: cambioT?.trim() || undefined });
       }
       await acciones.asignarTrafo(equipo, modo.tipo === "existente" ? modo.id : { empresa, datos: datosTransformador(valores) });
-      api.avisar("Se guardó el transformador. La empresa ya ve la O.T. como «Ingresado». Ya puede imprimir la etiqueta.");
+      api.avisar("Se guardó el transformador. La empresa ya ve la O.T. como «Ingresado». Ya puede imprimir las etiquetas.");
       onSeguir();
     } catch (e) {
       setError(mensajeDeError(e));
@@ -258,7 +258,7 @@ function ElegirTransformador({ api, equipo, trafoInicial, onSeguir, onSucio }: P
           primero={false}
         />
       )}
-      <PiePaso guardando={guardando} error={error} nota="Al guardar, la empresa ve la O.T. como «Ingresado» y ya se puede imprimir la etiqueta." />
+      <PiePaso guardando={guardando} error={error} nota="Al guardar, la empresa ve la O.T. como «Ingresado» y ya se pueden imprimir las etiquetas." />
     </form>
   );
 }

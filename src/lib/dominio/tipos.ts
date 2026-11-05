@@ -151,6 +151,8 @@ export interface DatosOrden {
   referencia?: string;
   /** Lo que informa el cliente al mandarlo: la falla, una pérdida de aceite, un mantenimiento… */
   motivo?: string;
+  /** Para cuándo se le prometió a la empresa. La lleva la etiqueta interna; el portal no la muestra. */
+  compromiso?: Date;
 }
 
 /**
@@ -170,6 +172,7 @@ export interface EquipoTaller extends EquipoCliente {
   numeroOrden?: string;
   numeroOrdenTemporal?: boolean;
   motivo?: string;
+  compromiso?: Date;
   /** El N.º T que tiene hoy el transformador. `serie` es su N.º de trafo, el de fábrica. */
   numeroT?: string;
   /**

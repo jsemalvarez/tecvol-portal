@@ -9,11 +9,10 @@ import { CLAVE_CUENTAS_NUEVAS, reiniciarDatos } from "@/lib/datos/local/datos";
 import { modoDatos } from "@/lib/datos/repositorios";
 import { formatearCodigo } from "@/lib/dominio/codigo";
 import { DEFINICIONES, type EstadoReparacion } from "@/lib/dominio/estados";
-import { ordenParaEtiqueta } from "@/lib/dominio/trafo";
 import { NOMBRES_ROL, puede, type Permiso } from "@/lib/dominio/roles";
 import { activos, type CuentaCliente, type CuentaPersonal, type Empresa, type EquipoTaller, type Registro, type RolPersonal, type Taller } from "@/lib/dominio/tipos";
 import { Dialogo, mensajeDeError } from "./Dialogo";
-import { Etiqueta } from "./Etiqueta";
+import { EtiquetaExterna, EtiquetaInterna, TITULO_ETIQUETA, type ClaseEtiqueta } from "./EtiquetasTaller";
 import { FormularioAvisos } from "./FormularioAvisos";
 import { FormularioEstado } from "./FormularioEstado";
 import { FormularioCuenta, FormularioEditarCuenta, FormularioEmpresa } from "./FormulariosEmpresa";
@@ -31,7 +30,7 @@ export interface ApiPanel {
   puede: (permiso: Permiso) => boolean;
   empresaDe: (equipo: EquipoTaller) => string;
   abrirEstado: (equipo: EquipoTaller) => void;
-  abrirEtiqueta: (equipo: EquipoTaller) => void;
+  abrirEtiqueta: (equipo: EquipoTaller, clase: ClaseEtiqueta) => void;
   abrirCuenta: (empresa: Empresa) => void;
   abrir: (ventana: Ventana) => void;
   avisar: (texto: string, deshacer?: () => Promise<void>) => void;
@@ -43,7 +42,8 @@ export interface ApiPanel {
 }
 
 export type Ventana =
-  | { tipo: "estado" | "etiqueta"; codigo: string }
+  | { tipo: "estado"; codigo: string }
+  | { tipo: "etiqueta"; codigo: string; clase: ClaseEtiqueta }
   /** Con `onCreada`, se abrió desde un formulario, para elegirla ahí apenas se crea. */
   | { tipo: "empresa"; onCreada?: (empresa: Empresa) => void }
   | { tipo: "editar-empresa"; empresa: Empresa }
@@ -148,7 +148,7 @@ export function PaginaPanel({
       puede: (permiso) => puede(sesion.rol, permiso),
       empresaDe: (equipo) => nombreEmpresa(equipo.empresa),
       abrirEstado: (equipo) => setVentana({ tipo: "estado", codigo: equipo.codigo }),
-      abrirEtiqueta: (equipo) => setVentana({ tipo: "etiqueta", codigo: equipo.codigo }),
+      abrirEtiqueta: (equipo, clase) => setVentana({ tipo: "etiqueta", codigo: equipo.codigo, clase }),
       abrirCuenta: (empresa) => setVentana({ tipo: "cuenta", empresa }),
       abrir: setVentana,
       avisar,
@@ -374,13 +374,16 @@ export function PaginaPanel({
 
           <Dialogo
             abierto={ventana?.tipo === "etiqueta" && !!enVentana}
-            titulo="Etiqueta del equipo"
+            titulo={ventana?.tipo === "etiqueta" ? TITULO_ETIQUETA[ventana.clase] : "Etiqueta"}
             onCerrar={cerrar}
-            ancho="max-w-[34rem]"
+            ancho={ventana?.tipo === "etiqueta" && ventana.clase === "interna" ? "max-w-[42rem]" : "max-w-[30rem]"}
           >
-            {enVentana && ventana?.tipo === "etiqueta" && (
-              <Etiqueta equipo={enVentana} empresa={nombreEmpresa(enVentana.empresa)} orden={ordenParaEtiqueta(enVentana)} />
-            )}
+            {enVentana && ventana?.tipo === "etiqueta" &&
+              (ventana.clase === "interna" ? (
+                <EtiquetaInterna equipo={enVentana} empresa={nombreEmpresa(enVentana.empresa)} />
+              ) : (
+                <EtiquetaExterna codigo={enVentana.codigo} />
+              ))}
           </Dialogo>
 
           <Dialogo abierto={ventana?.tipo === "avisos"} titulo="Avisos de demora" onCerrar={cerrar}>

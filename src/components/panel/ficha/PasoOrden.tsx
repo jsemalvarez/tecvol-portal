@@ -24,6 +24,7 @@ function datosOrden(orden: ValoresOrden): DatosOrden {
     numeroOrdenTemporal: orden.numeroOrdenTemporal || undefined,
     referencia: orden.referencia.trim() || undefined,
     motivo: orden.motivo.trim() || undefined,
+    compromiso: fechaDeCampo(orden.compromiso) ?? undefined,
   };
 }
 
@@ -242,15 +243,17 @@ export function PasoOrden({
             )}
           </p>
         </div>
-        <CampoNumeroOrden
-          id={campoId("numeroOrden")}
-          orden={orden}
-          setOrden={setOrden}
-          error={errores.numeroOrden}
-          quitarError={() => setErrores((e) => ({ ...e, numeroOrden: undefined }))}
-          equipos={taller.equipos}
-          excepto={equipo?.codigo}
-        />
+        <div className="sm:col-span-2">
+          <CampoNumeroOrden
+            id={campoId("numeroOrden")}
+            orden={orden}
+            setOrden={setOrden}
+            error={errores.numeroOrden}
+            quitarError={() => setErrores((e) => ({ ...e, numeroOrden: undefined }))}
+            equipos={taller.equipos}
+            excepto={equipo?.codigo}
+          />
+        </div>
         <div>
           <label htmlFor={campoId("ingreso")} className="rotulo block text-[0.9375rem]">
             Fecha de recepción <span className="font-semibold normal-case tracking-normal text-grafito">(obligatorio)</span>
@@ -266,6 +269,25 @@ export function PasoOrden({
             className="renglon mt-1 w-[11.5rem]"
           />
           <MensajeCampo id={`${campoId("ingreso")}-error`} texto={errores.ingreso} />
+        </div>
+        <div>
+          <label htmlFor={campoId("compromiso")} className="rotulo block text-[0.9375rem]">
+            Fecha de compromiso
+          </label>
+          <input
+            id={campoId("compromiso")}
+            type="date"
+            value={orden.compromiso}
+            min={orden.ingreso || undefined}
+            onChange={(e) => cambiar("compromiso")(e.target.value)}
+            aria-invalid={errores.compromiso ? true : undefined}
+            aria-describedby={errores.compromiso ? `${campoId("compromiso")}-error` : `${campoId("compromiso")}-ayuda`}
+            className="renglon mt-1 w-[11.5rem]"
+          />
+          <MensajeCampo id={`${campoId("compromiso")}-error`} texto={errores.compromiso} />
+          <p id={`${campoId("compromiso")}-ayuda`} className="mt-2 text-[0.9375rem] leading-snug text-grafito">
+            Para cuándo se le prometió a la empresa. Sale en la etiqueta interna.
+          </p>
         </div>
         <CampoTexto
           id={campoId("referencia")}
