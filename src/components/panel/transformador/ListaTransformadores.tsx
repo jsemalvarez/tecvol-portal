@@ -116,7 +116,7 @@ function Lista({ api }: { api: ApiPanel }) {
           <span className="rotulo text-base">{filas.length}</span>
         </div>
         {filas.length === 0 ? (
-          <p className="marco-cuerpo">{total === 0 ? "Todavía no hay transformadores: se dan de alta con «Nuevo transformador» o al crear su primera O.T." : "Ninguno coincide con la búsqueda."}</p>
+          <p className="marco-cuerpo">{total === 0 ? "Todavía no hay transformadores: se dan de alta al crear su primera O.T." : "Ninguno coincide con la búsqueda."}</p>
         ) : (
           <>
             <table className="hidden w-full text-left lg:table">

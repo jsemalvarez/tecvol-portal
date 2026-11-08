@@ -159,12 +159,14 @@ function Planilla({ api }: { api: ApiPanel }) {
                   <th scope="col" className="rotulo px-4 py-3 text-[0.8125rem]">
                     Transformador
                   </th>
-                  <th scope="col" className="rotulo px-4 py-3 text-[0.8125rem]">
+                  <th scope="col" className="rotulo py-3 pl-4 pr-[var(--marco-px)] text-[0.8125rem]">
                     Empresa
                   </th>
-                  <th scope="col" className="py-3 pl-4 pr-[var(--marco-px)]">
-                    <span className="sr-only">Acciones</span>
-                  </th>
+                  {vistaBajas && (
+                    <th scope="col" className="py-3 pl-4 pr-[var(--marco-px)]">
+                      <span className="sr-only">Acciones</span>
+                    </th>
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -202,10 +204,12 @@ function Planilla({ api }: { api: ApiPanel }) {
                           </>
                         )}
                       </td>
-                      <td className="px-4 py-3.5 align-middle text-[0.9375rem]">{api.empresaDe(equipo) || <span className="text-grafito">Sin empresa</span>}</td>
-                      <td className="py-3.5 pl-4 pr-[var(--marco-px)] align-middle">
-                        <Acciones api={api} equipo={equipo} />
-                      </td>
+                      <td className="py-3.5 pl-4 pr-[var(--marco-px)] align-middle text-[0.9375rem]">{api.empresaDe(equipo) || <span className="text-grafito">Sin empresa</span>}</td>
+                      {vistaBajas && (
+                        <td className="py-3.5 pl-4 pr-[var(--marco-px)] align-middle">
+                          <Reactivar api={api} equipo={equipo} />
+                        </td>
+                      )}
                     </tr>
                   );
                 })}
@@ -251,9 +255,9 @@ function Planilla({ api }: { api: ApiPanel }) {
                       </div>
                       <Flecha className="size-5 shrink-0 text-grafito" />
                     </div>
-                    {(equipo.baja || equipo.faltaTrafo) && (
+                    {equipo.baja && (
                       <div className="relative z-[1] mt-2.5 ml-[3.25rem] sm:ml-14">
-                        <Acciones api={api} equipo={equipo} />
+                        <Reactivar api={api} equipo={equipo} />
                       </div>
                     )}
                   </li>
@@ -278,35 +282,19 @@ function Planilla({ api }: { api: ApiPanel }) {
   );
 }
 
-function Acciones({ api, equipo }: { api: ApiPanel; equipo: EquipoTaller }) {
+/** Una O.T. dada de baja no se trabaja: solo se puede reactivar. Las demás se abren desde su número. */
+function Reactivar({ api, equipo }: { api: ApiPanel; equipo: EquipoTaller }) {
   const nombre = equipo.faltaTrafo ? nombreOrden(equipo) : nombreDe(equipo);
-  // Un equipo dado de baja no se trabaja: solo se puede reactivar.
-  if (equipo.baja) {
-    return (
-      <div className="flex lg:justify-end">
-        <button
-          type="button"
-          onClick={() => api.reactivar("equipo", equipo.codigo, nombre)}
-          className="placa-secundaria justify-center whitespace-nowrap"
-          aria-label={`Reactivar ${nombre}`}
-        >
-          Reactivar
-        </button>
-      </div>
-    );
-  }
-  // Todo se trabaja en la hoja de la O.T., que abre en el próximo paso pendiente.
   return (
     <div className="flex lg:justify-end">
-      {equipo.faltaTrafo ? (
-        <Link href={`/panel/equipo?codigo=${equipo.codigo}&paso=2`} className="placa-secundaria justify-center whitespace-nowrap" aria-label={`Cargar el transformador de ${nombre}`}>
-          Cargar transformador
-        </Link>
-      ) : (
-        <Link href={`/panel/equipo?codigo=${equipo.codigo}`} className="placa-secundaria justify-center whitespace-nowrap" aria-label={`Ver O.T. de ${nombre}`}>
-          Ver O.T.
-        </Link>
-      )}
+      <button
+        type="button"
+        onClick={() => api.reactivar("equipo", equipo.codigo, nombre)}
+        className="placa-secundaria justify-center whitespace-nowrap"
+        aria-label={`Reactivar ${nombre}`}
+      >
+        Reactivar
+      </button>
     </div>
   );
 }

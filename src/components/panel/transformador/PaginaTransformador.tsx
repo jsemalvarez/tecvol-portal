@@ -5,13 +5,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { TornillosMarco } from "@/components/inicio/TornillosMarco";
 import { formatearFecha } from "@/lib/dominio/fechas";
-import { formatearNumero, NOMBRE_FASES, NOMBRE_USOS } from "@/lib/dominio/placa";
 import type { Transformador } from "@/lib/dominio/tipos";
 import { historialNumeroT, nombreOrden, nombreTrafo, numerosTAnteriores, ordenesDelTrafo, resumenChapa } from "@/lib/dominio/trafo";
 import { Dialogo, ErrorFormulario, mensajeDeError } from "../Dialogo";
 import { MarcaTemporal } from "../equipo/campos";
 import { ListaOrdenes } from "../equipo/HistorialTrafo";
 import { dejarAviso, PaginaPanel, type ApiPanel } from "../PaginaPanel";
+import { DatosYChapa } from "./DatosYChapa";
 import { FormularioTransformador } from "./FormularioTransformador";
 
 const enlace = "font-semibold underline decoration-naranja decoration-2 underline-offset-4";
@@ -29,8 +29,9 @@ function NoEncontrado() {
 }
 
 /**
- * Ficha de un transformador: sus números, su chapa, todas las órdenes de trabajo que tuvo y el historial
- * de su N.º T. Desde acá se crea su O.T. nueva cuando vuelve al taller y se lo da de baja si se destruyó.
+ * Ficha de un transformador: sus datos y su chapa (desplegables y editables ahí mismo), todas las órdenes de
+ * trabajo que tuvo y el historial de su N.º T. Desde acá se crea su O.T. nueva cuando vuelve al taller y se lo da
+ * de baja si se destruyó.
  */
 export function PanelTransformador() {
   const id = useSearchParams().get("id") ?? "";
@@ -85,52 +86,49 @@ function FichaTransformador({ api, id }: { api: ApiPanel; id: string }) {
         </p>
       )}
 
-      <div className="mt-10 grid gap-10 lg:grid-cols-12 lg:gap-12">
-        <div className="flex flex-col gap-10 lg:col-span-8">
-          <section aria-labelledby="ordenes-trafo" className="marco">
+      {/* Una sola columna, como la hoja de la O.T.: los datos arriba, desplegables, y después sus órdenes. */}
+      <div className="mt-10 flex flex-col gap-10">
+        {/* Pasar a otro trafo (desde la trazabilidad) es la misma página: con la clave, cada uno arranca cerrado. */}
+        <DatosYChapa key={trafo.id} api={api} trafo={trafo} empresa={empresa} anteriores={anteriores} />
+        <section aria-labelledby="ordenes-trafo" className="marco">
+          <TornillosMarco />
+          <div className="marco-cabecera">
+            <h2 id="ordenes-trafo" className="rotulo text-base">
+              Sus órdenes de trabajo
+            </h2>
+            <span className="rotulo text-base">{ordenes.length}</span>
+          </div>
+          {ordenes.length ? (
+            <>
+              <p className="marco-cuerpo pb-2 text-[0.9375rem]">
+                {ordenes.length === 1 ? "Pasó una vez por el taller." : `Pasó ${ordenes.length} veces por el taller.`} De la más nueva a la más vieja.
+              </p>
+              <ListaOrdenes ordenes={ordenes} />
+            </>
+          ) : (
+            <p className="marco-cuerpo">Todavía no tiene órdenes de trabajo.</p>
+          )}
+        </section>
+
+        {numerosT.length > 0 && (
+          <section aria-labelledby="historial-t" className="marco">
             <TornillosMarco />
             <div className="marco-cabecera">
-              <h2 id="ordenes-trafo" className="rotulo text-base">
-                Sus órdenes de trabajo
+              <h2 id="historial-t" className="rotulo text-base">
+                Trazabilidad del N.º T
               </h2>
-              <span className="rotulo text-base">{ordenes.length}</span>
             </div>
-            {ordenes.length ? (
-              <>
-                <p className="marco-cuerpo pb-2 text-[0.9375rem]">
-                  {ordenes.length === 1 ? "Pasó una vez por el taller." : `Pasó ${ordenes.length} veces por el taller.`} De la más nueva a la más
-                  vieja.
-                </p>
-                <ListaOrdenes ordenes={ordenes} />
-              </>
-            ) : (
-              <p className="marco-cuerpo">Todavía no tiene órdenes de trabajo.</p>
-            )}
+            <p className="marco-cuerpo pb-2 text-[0.9375rem]">
+              El N.º T lo pone la empresa y puede pasar de un transformador a otro. Por cada número que tuvo este, los transformadores de{" "}
+              {empresa} que lo tuvieron y las O.T. con las que ingresaron con él.
+            </p>
+            {numerosT.map((numero) => (
+              <HistorialNumeroT key={numero} api={api} trafo={trafo} numero={numero} />
+            ))}
           </section>
+        )}
 
-          {numerosT.length > 0 && (
-            <section aria-labelledby="historial-t" className="marco">
-              <TornillosMarco />
-              <div className="marco-cabecera">
-                <h2 id="historial-t" className="rotulo text-base">
-                  Trazabilidad del N.º T
-                </h2>
-              </div>
-              <p className="marco-cuerpo pb-2 text-[0.9375rem]">
-                El N.º T lo pone la empresa y puede pasar de un transformador a otro. Por cada número que tuvo este, los transformadores de{" "}
-                {empresa} que lo tuvieron y las O.T. con las que ingresaron con él.
-              </p>
-              {numerosT.map((numero) => (
-                <HistorialNumeroT key={numero} api={api} trafo={trafo} numero={numero} />
-              ))}
-            </section>
-          )}
-        </div>
-
-        <aside className="flex flex-col gap-10 lg:col-span-4">
-          <Datos trafo={trafo} empresa={empresa} anteriores={anteriores} />
-          <Baja trafo={trafo} api={api} />
-        </aside>
+        <Baja trafo={trafo} api={api} />
       </div>
     </>
   );
@@ -195,50 +193,6 @@ function HistorialNumeroT({ api, trafo, numero }: { api: ApiPanel; trafo: Transf
   );
 }
 
-function Datos({ trafo, empresa, anteriores }: { trafo: Transformador; empresa: string; anteriores: string[] }) {
-  const placa = trafo.placa;
-  const filas: [string, string | undefined][] = [
-    ["N.º de trafo (de fábrica)", trafo.provisorio ? `${trafo.numero} (temporal)` : trafo.numero],
-    ["N.º T", trafo.numeroT],
-    ...(anteriores.length ? [["N.º T que tuvo antes", anteriores.join(", ")] as [string, string]] : []),
-    ["Empresa", empresa],
-    ["Uso", trafo.uso ? NOMBRE_USOS[trafo.uso] : undefined],
-    ["Fabricante", placa?.fabricante],
-    ["Fases", placa?.fases ? NOMBRE_FASES[placa.fases] : undefined],
-    ["Potencia", placa?.potencia ? `${formatearNumero(placa.potencia)} kVA` : undefined],
-    [
-      "Tensiones",
-      placa?.tensionPrimaria && placa.tensionSecundaria ? `${formatearNumero(placa.tensionPrimaria)} / ${formatearNumero(placa.tensionSecundaria)} V` : undefined,
-    ],
-    ["Año de fabricación", placa?.anio ? String(placa.anio) : undefined],
-  ];
-  return (
-    <section aria-labelledby="datos-trafo" className="marco">
-      <TornillosMarco />
-      <div className="marco-cabecera">
-        <h2 id="datos-trafo" className="rotulo text-base">
-          Datos y chapa
-        </h2>
-      </div>
-      <dl className="marco-cuerpo flex flex-col gap-3">
-        {filas.map(([nombre, valor]) => (
-          <div key={nombre}>
-            <dt className="rotulo text-[0.8125rem] text-grafito">{nombre}</dt>
-            <dd className={`mt-0.5 ${valor ? "" : "text-grafito"}`}>{valor ?? "Sin cargar"}</dd>
-          </div>
-        ))}
-      </dl>
-      {!trafo.baja && (
-        <div className="marco-pie px-[var(--marco-px)] py-4">
-          <Link href={`/panel/transformador/editar?id=${trafo.id}`} className="placa-secundaria">
-            Editar datos y chapa
-          </Link>
-        </div>
-      )}
-    </section>
-  );
-}
-
 /** Dar de baja el transformador (se destruyó o el cliente ya no lo tiene), o reactivarlo. Los dos roles del personal. */
 function Baja({ trafo, api }: { trafo: Transformador; api: ApiPanel }) {
   const [confirmando, setConfirmando] = useState(false);
@@ -248,7 +202,7 @@ function Baja({ trafo, api }: { trafo: Transformador; api: ApiPanel }) {
 
   if (trafo.baja) {
     return (
-      <section className="border-t-[3px] border-acero pt-5">
+      <section className="max-w-[60ch] border-t-[3px] border-acero pt-5">
         <h2 className="rotulo text-base">Dado de baja</h2>
         <p className="mt-2 text-[0.9375rem]">Desde el {formatearFecha(trafo.baja)}. Sus O.T. quedan en el historial.</p>
         <button type="button" onClick={() => api.reactivar("transformador", trafo.id, nombreTrafo(trafo))} className="placa-secundaria mt-4">
@@ -272,7 +226,7 @@ function Baja({ trafo, api }: { trafo: Transformador; api: ApiPanel }) {
   }
 
   return (
-    <section aria-labelledby="baja-trafo" className="border-t-[3px] border-acero pt-5">
+    <section aria-labelledby="baja-trafo" className="max-w-[60ch] border-t-[3px] border-acero pt-5">
       <h2 id="baja-trafo" className="rotulo text-base">
         Dar de baja
       </h2>

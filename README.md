@@ -129,10 +129,15 @@ En `/panel` el personal (los dos roles):
   (`migrarTransformadores`): el N.º de fabricación pasa a ser el N.º de trafo y el N.º de trafo de antes
   (`numeroTrafo`), el N.º T y el N.º T con el que ingresaron.
 - La sección **Transformadores** (`/panel/transformadores`) los lista con su última O.T. y un botón **"Ver trafo"** (debajo de 1024 px, tarjetas que se tocan enteras) y los busca también
-  por un N.º T que tuvieron antes o por el N.º de cualquiera de sus O.T. Su botón "Nuevo transformador"
-  (`/panel/transformador/nuevo`) da de alta uno sin O.T.: el cliente, el N.º de trafo (o uno temporal), el N.º T
-  y la chapa, con aviso si el cliente ya tiene uno con el mismo N.º de trafo. La **ficha del transformador**
-  (`/panel/transformador?id=`) muestra sus datos y su chapa (se editan en `/panel/transformador/editar`), todas
+  por un N.º T que tuvieron antes o por el N.º de cualquiera de sus O.T. Se dan de alta desde el paso 2 de la hoja
+  de la O.T. La página `/panel/transformador/nuevo`, que da de alta uno sin O.T. (el cliente, el N.º de trafo o uno
+  temporal, el N.º T y la chapa, con aviso si el cliente ya tiene uno con el mismo N.º de trafo), quedó en el código
+  sin ningún botón que la abra. La **ficha del transformador**
+  (`/panel/transformador?id=`), en una sola columna, muestra arriba **"Datos y chapa"**, un desplegable como los
+  pasos de la hoja (`transformador/DatosYChapa.tsx`): cerrado dice cuántos de los 17 datos de la chapa tiene
+  cargados; abierto, todos, agrupados como en la chapa. Al final, **"Editar datos de chapa"** abre ahí mismo el
+  formulario de "Corregir la chapa" del paso 2 y lleva al comienzo; lo que se cambia se ve en todas sus O.T. La página `/panel/transformador/editar`
+  quedó en el código sin ningún botón que la abra. Debajo van todas
   sus O.T. (cada una con el N.º T con el que ingresó, si era otro), la **trazabilidad de cada N.º T** que tuvo
   (qué transformadores lo tuvieron, hasta cuándo y con qué O.T. ingresaron con él), el botón para crear su O.T.
   nueva cuando vuelve al taller y la baja (los dos roles). Por ahora la ve solo el taller.
@@ -155,8 +160,8 @@ En `/panel` el personal (los dos roles):
   según la cantidad de puntos cargados en la chapa: la de 3 es `Coema 25KVA Nro 5844.xlsx`, con las mismas fórmulas, sin las
   columnas 2 y 4 y con las tensiones de los extremos calculadas (±5 %). La fila POSICION se puede cambiar, porque en la de 3
   el taller la numera de distintas maneras.
-- En la lista, cada fila tiene **"Ver O.T."**, que lleva a la hoja en el próximo paso pendiente ("Cargar
-  transformador", si le falta; "Reactivar", si está dada de baja). Debajo de 1024 px, cada O.T. es una tarjeta que se
+- En la lista, el número de cada O.T. lleva a la hoja en el próximo paso pendiente; solo las dadas de baja
+  tienen un botón, "Reactivar". Debajo de 1024 px, cada O.T. es una tarjeta que se
   toca entera. El resumen de arriba (en el taller, esperan a la empresa, con aviso, entregados) filtra la lista al tocarlo. Las etiquetas se imprimen desde la grilla de arriba de la hoja. La ventana "Cambiar estado"
   (`FormularioEstado.tsx`) quedó en el código sin ningún botón que la abra, mientras el cliente prueba sin ella.
 - **Edita los datos** de un equipo y carga su **informe de diagnóstico** en los pasos 1 y 3 de la hoja.

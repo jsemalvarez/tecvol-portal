@@ -314,11 +314,6 @@ export function PaginaPanel({
               <span className="text-[0.9375rem] text-grafito">(OT) Orden de Trabajo</span>
             </div>
           )}
-          {conEncabezado && seccion === "transformadores" && (
-            <Link href="/panel/transformador/nuevo" className="placa">
-              + Nuevo transformador
-            </Link>
-          )}
           {conEncabezado && seccion === "empresas" && (
             <button type="button" onClick={() => setVentana({ tipo: "empresa" })} className="placa">
               Nueva empresa

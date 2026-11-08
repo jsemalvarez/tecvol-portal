@@ -319,8 +319,11 @@ function TransformadorDeLaOrden({ api, equipo, onSeguir, onSucio }: PropsPaso) {
   );
 }
 
-/** Corrige los datos y la chapa del transformador: todas sus O.T. muestran lo nuevo. */
-function CorregirTransformador({ api, trafo, onSucio, onListo }: { api: PropsPaso["api"]; trafo: Transformador; onSucio: (sucio: boolean) => void; onListo: () => void }) {
+/**
+ * Corrige los datos y la chapa del transformador: todas sus O.T. muestran lo nuevo. Lo usan el paso 2 de la hoja y el
+ * desplegable de datos de la ficha del transformador.
+ */
+export function CorregirTransformador({ api, trafo, onSucio, onListo }: { api: PropsPaso["api"]; trafo: Transformador; onSucio: (sucio: boolean) => void; onListo: () => void }) {
   const id = useId();
   const hoy = fechaParaCampo(new Date());
   const { taller, acciones } = api;
