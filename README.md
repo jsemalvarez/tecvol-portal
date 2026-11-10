@@ -112,7 +112,7 @@ En `/panel` el personal (los dos roles):
   ya pasó por el taller se elige, y si llegó con otro N.º T se le cambia ahí mismo; si no, se da de alta con su
   chapa. Al guardarlo se crea `seguimiento/{codigo}`, el cliente ve la O.T. como «Ingresado» y ya se pueden
   imprimir las **etiquetas**: la **externa** (50 × 64 mm), para pegar en el transformador, con TECVOL S.R.L., un
-  QR que abre `/seguimiento/{codigo}` y el código; y la **interna** (148 × 105 mm), para el taller cuando lo
+  QR que abre `/seguimiento/{codigo}` y el código; y la **interna** (a todo el ancho de la hoja), para el taller cuando lo
   desarma, según la nota del jefe de taller: N.º de O.T. (si es temporal, en blanco), marca, potencia, N.º de
   fábrica, N.º T, fechas de ingreso y de compromiso y empresa, más las mediciones de aislación y de relación de
   transformación para completar a mano. Las que quedan sin transformador siguen en la lista hasta completarlas o darlas de baja.

@@ -17,7 +17,7 @@ export const TITULO_ETIQUETA: Record<ClaseEtiqueta, string> = {
 };
 
 /**
- * La etiqueta a tamaño real con su botón de imprimir: al imprimir sale solo ella, arriba a la izquierda de la
+ * La etiqueta con su botón de imprimir: al imprimir sale solo ella, arriba a la izquierda de la
  * hoja (ver `.impresion`). En una pantalla angosta se corre de costado en lugar de achicarse.
  */
 function VistaEtiqueta({ descripcion, nota, children }: { descripcion: string; nota?: string; children: ReactNode }) {
@@ -51,7 +51,7 @@ export function EtiquetaExterna({ codigo }: { codigo: string }) {
 /** El símbolo de tierra de "AT/tierra" y "BT/tierra", como lo dibuja el taller. */
 function Tierra() {
   return (
-    <svg viewBox="0 0 12 13" role="img" aria-label="tierra" className="inline-block h-[3.4mm] w-[3.1mm] align-[-0.3mm]">
+    <svg viewBox="0 0 12 13" role="img" aria-label="tierra" className="inline-block h-[0.85em] w-[0.78em] align-[-0.08em]">
       <path d="M6 0v6M.5 6h11M2.5 9h7M4.5 12h3" fill="none" stroke="currentColor" strokeWidth="1.4" />
     </svg>
   );
@@ -63,20 +63,25 @@ function Tierra() {
  * y a la derecha, sin juntar bordes.
  */
 const CELDA = "border-b-2 border-r-2 border-tinta p-0 text-center align-middle";
-const ROTULO = "rotulo text-[4mm]";
+const ROTULO = "rotulo text-[calc(4*var(--mm))]";
+const FILA = "h-[calc(11.5*var(--mm))]";
 
 /**
  * La letra de un dato: el nombre largo de una empresa entra achicándola, en lugar de cortarse. Cada fila admite dos
  * renglones con la letra grande, tres con la mediana y cuatro con la chica; se cuenta con margen porque el corte
  * de las palabras y el ancho de la letra cambian de un navegador a otro.
  */
-const tamanoDato = (valor = "") => (valor.length > 50 ? "text-[2.7mm]" : valor.length > 24 ? "text-[3.5mm]" : "text-[4.4mm]");
+const tamanoDato = (valor = "") =>
+  valor.length > 50 ? "text-[calc(2.7*var(--mm))]" : valor.length > 24 ? "text-[calc(3.5*var(--mm))]" : "text-[calc(4.4*var(--mm))]";
 
 /**
  * La que acompaña al transformador en el taller cuando se desarma, según la nota del jefe de taller y con sus
  * palabras: los datos para reconocerlo a la izquierda y, a la derecha, las mediciones de aislación y de relación
  * de transformación, que se escriben con lapicera en el papel y después se cargan en el paso 3. Lo que no está
  * cargado sale en blanco, para escribirlo.
+ *
+ * Al imprimir ocupa todo el ancho de la hoja, sea cual sea el papel, y crece entera: sus medidas van en `--mm`, un
+ * milímetro de la etiqueta en pantalla (148 × 105 mm), que se calcula con el ancho que le toque.
  */
 export function EtiquetaInterna({ equipo, empresa }: { equipo: EquipoTaller; empresa: string }) {
   const potencia = equipo.placa?.potencia;
@@ -102,10 +107,10 @@ export function EtiquetaInterna({ equipo, empresa }: { equipo: EquipoTaller; emp
       descripcion="Los datos se anotan sobre la etiqueta impresa."
       nota={faltan.length > 0 ? `Sin cargar. ${faltan.join(" ")} Lo que se cargue ahí sale impreso; lo demás queda en blanco, para escribirlo en el papel.` : undefined}
     >
-      <div className="impresion grid h-[105mm] w-[148mm] grid-cols-[70mm_minmax(0,1fr)] grid-rows-1 overflow-hidden border-2 border-tinta bg-blanco text-tinta">
+      <div className="impresion @container grid aspect-[148/105] w-[148mm] grid-cols-[minmax(0,70fr)_minmax(0,78fr)] grid-rows-1 overflow-hidden border-2 border-tinta bg-blanco text-tinta [--mm:calc(100cqw/148)] print:w-full">
         <dl className="grid min-h-0 grid-rows-8 border-r-2 border-tinta">
           {datos.map(({ nombre, valor }) => (
-            <div key={nombre} className="grid min-h-0 grid-cols-[26.5mm_minmax(0,1fr)] items-center gap-[1.5mm] overflow-hidden border-b-2 border-tinta px-[2mm] last:border-b-0">
+            <div key={nombre} className="grid min-h-0 grid-cols-[calc(26.5*var(--mm))_minmax(0,1fr)] items-center gap-[calc(1.5*var(--mm))] overflow-hidden border-b-2 border-tinta px-[calc(2*var(--mm))] last:border-b-0">
               <dt className={ROTULO}>{nombre}</dt>
               <dd className={`break-words font-bold leading-[1.1] ${tamanoDato(valor)}`}>{valor}</dd>
             </div>
@@ -113,10 +118,10 @@ export function EtiquetaInterna({ equipo, empresa }: { equipo: EquipoTaller; emp
         </dl>
         <table className="h-full w-full table-fixed border-separate border-spacing-0 [&_tbody_tr:last-child>*]:border-b-0 [&_tr>*:last-child]:border-r-0">
           <colgroup>
-            <col className="w-[17mm]" />
+            <col className="w-[calc(17*var(--mm))]" />
           </colgroup>
           <thead>
-            <tr className="h-[11.5mm]">
+            <tr className={FILA}>
               <td className={CELDA} />
               <th scope="col" className={`${CELDA} ${ROTULO}`}>
                 AT/
@@ -132,20 +137,20 @@ export function EtiquetaInterna({ equipo, empresa }: { equipo: EquipoTaller; emp
             </tr>
           </thead>
           <tbody>
-            <tr className="h-[11.5mm]">
-              <th scope="row" className={`${CELDA} rotulo text-[3.4mm]`}>
+            <tr className={FILA}>
+              <th scope="row" className={`${CELDA} rotulo text-[calc(3.4*var(--mm))]`}>
                 Aislación
               </th>
               <td className={CELDA} />
               <td className={CELDA} />
               <td className={CELDA} />
             </tr>
-            <tr className="h-[11.5mm]">
+            <tr className={FILA}>
               <th scope="colgroup" colSpan={4} className={`${CELDA} ${ROTULO} border-t-2`}>
                 Relación de transformación
               </th>
             </tr>
-            <tr className="h-[11.5mm]">
+            <tr className={FILA}>
               <td className={CELDA} />
               <th scope="col" className={`${CELDA} ${ROTULO}`}>
                 U
@@ -158,7 +163,7 @@ export function EtiquetaInterna({ equipo, empresa }: { equipo: EquipoTaller; emp
               </th>
             </tr>
             {[1, 2, 3, 4, 5].map((punto) => (
-              <tr key={punto} className="h-[11.5mm]">
+              <tr key={punto} className={FILA}>
                 <th scope="row" className={`${CELDA} ${ROTULO}`}>
                   {punto})
                 </th>
